@@ -36,7 +36,7 @@ def on_cycle(dt):
 		bucks=Es[4]
 		if curalg==None:
 			curalg=MergeSort(bucks[0].itemc)
-		for x in range(10):
+		for x in range(50):
 			act=curalg.cycle(curval)
 			if act==None:#pass
 				pass

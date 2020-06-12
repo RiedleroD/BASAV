@@ -85,31 +85,37 @@ class MergeSort(BaseAlgorithm):
 	il=0#left bucket index
 	ir=0#right bucket index
 	def cycle(self,v=None):
+		print(self.a)
 		if self.a==0:#new bucket with item 0
 			if self.s>=self.l:
-				self.a=7
-				return (FIN,)
+				if self.i==2:
+					return (FIN,)
+				else:
+					self.i+=1
+					return (DEL_BUCK,1)
 			self.a=1
 			self.il=1
-			return (NEW_BUCK,self.i,0)
+			if self.f:
+				return (BUCKINSERT,self.i,0,0,1)
+			else:
+				return (NEW_BUCK,self.i,0)
 		elif self.a==1:#fill left bucket,then create new bucket with item 0
-			if self.i+self.il>=self.l:#if list and block size don't match, and there's an overflow: put everything back where it was, then start next cycle
-				self.a=6
-				self.il=self.s-self.il+1
-				self.ir=-1
-				return (BUCKINSERT,0,1,self.i-1,0)
-			elif self.il==self.s:
+			if self.il==self.s:
 				self.il=0
 				self.a=2
 				self.ir=1
-				return (NEW_BUCK,self.i,0)
+				if self.f:
+					return (BUCKINSERT,self.i,0,0,2)
+				else:
+					self.f=True
+					return (NEW_BUCK,self.i,0)
 			elif self.il>self.s:
 				raise Exception("MergeSort: il unexpectedly bigger than s in s1")
 			else:
 				self.il+=1
 				return (BUCKINSERT,self.i,0,self.il-1,1)
 		elif self.a==2:#fill right bucket, then read first item of left bucket
-			if self.ir==self.s or self.i+self.ir>=self.l-self.s:
+			if self.ir==self.s:
 				self.ir=0
 				self.a=3
 				return (READ,0,1)
@@ -135,13 +141,15 @@ class MergeSort(BaseAlgorithm):
 			if self.v2==None:
 				if v==None:
 					self.a=6
-					return (DEL_BUCK,2)
+					self.ir=1
+					return PASS
 				self.v2=v
 			elif self.v1==None:
 				if v==None:
 					self.a=6
 					self.il=self.ir
-					return (DEL_BUCK,1)
+					self.ir=2
+					return PASS
 				self.v1=v
 			self.a=4
 			self.i+=1
@@ -156,16 +164,16 @@ class MergeSort(BaseAlgorithm):
 		elif self.a==6:#dumps second bucket to i, then delete it
 			if self.il==self.s:
 				self.a=0
-				if self.i>=self.l or self.ir==-1:
+				if self.i>=self.l:
 					self.s*=2
 					self.i=0
-				return (DEL_BUCK,1)
+				return PASS
 			elif self.il>self.s:
 				raise Exception("Mergesort: il is unexpectedly bigger than s in a6")
 			else:
 				self.il+=1
 				self.i+=1
-				return (BUCKINSERT,0,1,self.i-1,0)
+				return (BUCKINSERT,0,self.ir,self.i-1,0)
 		elif self.a==7:
 			raise Exception("MergeSort: Unexpected cycle after finishing")
 
