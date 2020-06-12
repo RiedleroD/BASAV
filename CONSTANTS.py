@@ -3,7 +3,7 @@ import os,sys,pyglet
 from pyglet import window as pgw
 from time import time
 
-window=pgw.Window(fullscreen=False,style=pgw.Window.WINDOW_STYLE_BORDERLESS,caption="Riedler Sound of Sorting",vsync=False,visible=False)
+window=pgw.Window(fullscreen=False,style=pgw.Window.WINDOW_STYLE_BORDERLESS,caption="Riedler Sound of Sorting",vsync=True,visible=False)
 screen=window.display.get_default_screen()
 window.set_size(screen.width,screen.height)
 window.set_visible(True)

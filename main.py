@@ -37,7 +37,7 @@ def on_cycle(dt):
 	if btns[0].pressed:
 		bucks=Es[4]
 		if curalg==None:
-			curalg=MergeSort(bucks[0].itemc)
+			curalg=BubbleSort(bucks[0].itemc)
 		for x in range(100):
 			act=curalg.cycle(curval)
 			if act==None:#pass
@@ -80,13 +80,14 @@ def on_cycle(dt):
 def on_draw():
 	global Es,TIME
 	t=time()
-	Es[0][0].setText("FPS:%02i"%(round(1/(t-TIME))))
+	Es[0][0].setText("FPS:%02i"%(round(1/(t-TIME))))#for some reason, pyglet.clock.tick() doesn't return the correct time, so I had to calculate it manually
 	TIME=t
 	del t
 	window.clear()
-	for div in Es:	#for btns, guys, stageparts, ect. in Es
+	for div in Es:	#for btns, ect. in Es
 		for item in div:
 			item.draw()		#draw the darn thing
+	pyglet.clock.tick()
 
 @window.event
 def on_mouse_press(x,y,button,modifiers):
