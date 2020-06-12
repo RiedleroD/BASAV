@@ -1,6 +1,4 @@
 #!/usr/bin/python3
-import pyglet
-from pyglet import window as pgw
 from Entities import *
 from Algs import *
 
@@ -31,14 +29,14 @@ def on_cycle(dt):
 		Es[4][0].reverse()
 		curalg=None
 	if btns[1].pressed:
-		Es[4][0].shuffle()
 		btns[1].release()
-		curalg=None
+		curalg=Randomizer(Es[4][0].itemc)
+		btns[0].press()
 	if btns[0].pressed:
 		bucks=Es[4]
 		if curalg==None:
-			curalg=BubbleSort(bucks[0].itemc)
-		for x in range(100):
+			curalg=MergeSort(bucks[0].itemc)
+		for x in range(10):
 			act=curalg.cycle(curval)
 			if act==None:#pass
 				pass

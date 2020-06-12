@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import os,sys
+import random
 
 PASS=None
 READ=0
@@ -20,7 +21,7 @@ class BaseAlgorithm():
 	i=0#current index;optional
 	v1=None#current value;optional
 	v2=None#current value;optional
-	f=True#var to store if finished
+	f=False#var to store if finished
 	def __init__(self,l):
 		self.l=l#array length
 	#cycle returns a tuple that tells the main program what to do - it doesn't have access to the list.
@@ -43,6 +44,7 @@ class BubbleSort(BaseAlgorithm):
 	def cycle(self,v=None):
 		if self.a==0:#read current item
 			self.a=1
+			self.f=True
 			return (READ,self.i,0)
 		elif self.a==1:#store current item & read next item
 			if self.v1==None:
@@ -58,8 +60,8 @@ class BubbleSort(BaseAlgorithm):
 				else:#if unfinished: start over & read first item
 					self.i=0
 					self.a=1
-					self.v1=None
 					self.f=True
+					self.v1=None
 					return (READ,self.i,0)
 			else:
 				self.v2=v
@@ -85,6 +87,7 @@ class MergeSort(BaseAlgorithm):
 	def cycle(self,v=None):
 		if self.a==0:#new bucket with item 0
 			if self.s>=self.l:
+				self.a=7
 				return (FIN,)
 			self.a=1
 			self.il=1
@@ -163,5 +166,57 @@ class MergeSort(BaseAlgorithm):
 				self.il+=1
 				self.i+=1
 				return (BUCKINSERT,0,1,self.i-1,0)
+		elif self.a==7:
+			raise Exception("MergeSort: Unexpected cycle after finishing")
 
-algs=[BubbleSort,MergeSort]
+class BogoSort(BaseAlgorithm):
+	name="Bogo Sort"
+	description="Randomizes the whole set, then checks if it's sorted"
+	def cycle(self,v=None):
+		if self.a==0:#read item
+			self.a=1
+			return (READ,self.i,0)
+		elif self.a==1:#store v1 and read item
+			self.v1=v
+			self.a=2
+			self.i+=1
+			return (READ,self.i,0)
+		elif self.a==2:#store v2 and see below
+			self.v2=v
+			self.i+=1
+			if self.v1>self.v2:#if not sorted
+				self.a=3
+				self.i=0
+				return (SWAP,self.i,random.randrange(self.l),0)
+			elif self.i==self.l:#if end of list is reached
+				self.a=7
+				return (FIN,)
+			else:
+				self.v1=self.v2
+				return (READ,self.i,0)
+		elif self.a==3:#randomize list, then read item and goto a1
+			self.i+=1
+			if self.i==self.l:
+				self.a=1
+				self.i=0
+				return (READ,self.i,0)
+			else:
+				return (SWAP,self.i,random.randrange(self.l),0)
+		elif self.a==7:
+			raise Exception("BogoSort: Unexpected cycle after finishing")
+			
+class Randomizer(BaseAlgorithm):
+	name="Randomizer"
+	description="Randomizes the whole set, then checks if it's sorted"
+	def cycle(self,v=None):
+		if self.a==0:#randomize list, then finish
+			self.i+=1
+			if self.i==self.l:
+				self.a=7
+				return (FIN,)
+			else:
+				return (SWAP,self.i,random.randrange(self.l),0)
+		elif self.a==7:
+			raise Exception("BogoSort: Unexpected cycle after finishing")
+
+algs=[BubbleSort,MergeSort,BogoSort]
