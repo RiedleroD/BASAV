@@ -4,13 +4,13 @@ from Algs import *
 
 Es= [
 	 [Label(WIDTH2,HEIGHT,0,0,"FPS:00",6),
-	  Label(WIDTH2,HEIGHT-15,0,0,"UPS:00",6)],
+	  Label(WIDTH2,HEIGHT-15,0,0,"UPS:00/60",6)],
 	 [ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",8,pressedText="Stop"),
 	  Button(WIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Shuffle",8),
 	  Button(WIDTH,HEIGHT-BTNHEIGHT*2,BTNWIDTH,BTNHEIGHT,"Reverse",8),
 	  Button(WIDTH,0,BTNWIDTH,BTNHEIGHT,"Quit",2,pgw.key.ESCAPE)],
-	 [RadioList(WIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT*len(algs),[alg.name for alg in algs],8,selected=0)],#radiolists
-	 [],#Textedits
+	 [RadioList(WIDTH,HEIGHT-BTNHEIGHT*5,BTNWIDTH,BTNHEIGHT*len(algs),[alg.name for alg in algs],8,selected=0)],#radiolists
+	 [IntEdit(WIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Speed","100",8)],#Edits
 	 [Bucket(0,0,WIDTH2,HEIGHT,256)]#buckets
 	]
 
@@ -19,7 +19,7 @@ curval=None
 
 def on_cycle(dt):
 	global Es,curalg,curval
-	Es[0][1].setText("UPS:%02i"%(round(1/(dt))))
+	Es[0][1].setText("UPS:%02i/60"%(round(1/(dt))))
 	btns=Es[1]
 	if btns[-1].pressed:
 		btns[3].release()
@@ -36,7 +36,7 @@ def on_cycle(dt):
 		bucks=Es[4]
 		if curalg==None:
 			curalg=algs[Es[2][0].getSelected()](bucks[0].itemc)
-		for x in range(100):
+		for x in range(Es[3][0].getNum()):
 			act=curalg.cycle(curval)
 			if act==None:#pass
 				pass
@@ -92,9 +92,17 @@ def on_mouse_press(x,y,button,modifiers):
 	MP[button]=True
 	if button==pgw.mouse.LEFT:
 		for btn in Es[1]:
-			btn.checkpress(x,y)
+			ret=btn.checkpress(x,y)
+			if ret:
+				return ret
 		for rad in Es[2]:
-			rad.checkpress(x,y)
+			ret=rad.checkpress(x,y)
+			if ret:
+				return ret
+		for edit in Es[3]:
+			ret=edit.checkpress(x,y)
+			if ret:
+				return ret
 	elif button==pgw.mouse.RIGHT:
 		pass
 	elif button==pgw.mouse.MIDDLE:
@@ -106,12 +114,18 @@ def on_mouse_release(x,y,button,modifiers):
 
 @window.event
 def on_key_press(symbol,modifiers):
-	res=None
+	for edit in Es[3]:
+		ret=edit.checkKey(symbol)
+		if ret:
+			return ret
+	for rad in Es[2]:
+		ret=rad.checkKey(symbol)
+		if ret:
+			return ret
 	for btn in Es[1]:
 		ret=btn.checkKey(symbol)
 		if ret:
-			res=ret
-	return res
+			return ret
 
 #event_logger = pgw.event.WindowEventLogger()
 #window.push_handlers(event_logger)

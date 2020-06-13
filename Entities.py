@@ -146,22 +146,54 @@ class TextEdit(Button):#also unused
 	def __init__(self,x,y,w,h,desc,value="",anch=0,key=None,size=12):
 		self.desc=desc
 		self.value=value
-		super().__init__(x,y,w,h,"%s: %s"%(desc,value),anch,key,size)
+		super().__init__(x,y,w,h,desc,anch,key,size)
 	def checkKey(self,key):
 		if self.pressed:
 			if key==pgw.key.BACKSPACE:
-				self.value=value[:-1]
+				self.value=self.value[:-1]
+				self.setText("[%s]"%self.value)
 			elif key in (pgw.key.RETURN,pgw.key.ESCAPE):
 				self.release()
-				self.setText("%s"%(self.value))
 			else:
-				self.value+=key
-				self.setText("%s: %s"%(self.desc,self.value))
-		elif self.key!=None and key==self.key:
-			self.pressed=True
+				self.value+=chr(key)
+				self.setText("[%s]"%(self.value))
 			return pyglet.event.EVENT_HANDLED
-		else:
-			return None
+		elif self.key!=None and key==self.key:
+			return self.press()
+	def press(self):
+		if not self.pressed:
+			self.pressed=True
+			self.setText("[%s]"%self.value)
+			self.setBgColor((255,255,255,255))
+			return pyglet.event.EVENT_HANDLED
+	def release(self):
+		if self.pressed:
+			self.pressed=False
+			self.setText(self.desc)
+			self.setBgColor((255,255,255,255))
+			return pyglet.event.EVENT_HANDLED
+
+class IntEdit(TextEdit):
+	nums=("0","1","2","3","4","5","6","7","8","9")
+	def checkKey(self,key):
+		if self.pressed:
+			if key==pgw.key.BACKSPACE:
+				self.value=self.value[:-1]
+				self.setText("[%s]"%self.value)
+			elif key in (pgw.key.RETURN,pgw.key.ESCAPE):
+				if len(self.value)==0:
+					self.value="0"
+				self.release()
+			else:
+				char=chr(key)
+				if char in self.nums:
+					self.value+=chr(key)
+					self.setText("[%s]"%(self.value))
+			return pyglet.event.EVENT_HANDLED
+		elif self.key!=None and key==self.key:
+			return self.press()
+	def getNum(self):
+		return int(self.value)
 
 class RadioList(Entity):
 	def __init__(self,x,y,w,h,texts,anch=0,keys=None,pressedTexts=None,selected=None,size=12):
@@ -186,6 +218,18 @@ class RadioList(Entity):
 			for i,btn in enumerate(self.btns):
 				if i!=prsd:
 					btn.release()
+			return pyglet.event.EVENT_HANDLED
+	def checkKey(self,key):
+		for i,btn in enumerate(self.btns):
+			prsd=btn.checkKey(key)
+			if prsd:
+				prsd=i
+				break
+		if prsd!=None:
+			for i,btn in enumerate(self.btns):
+				if i!=prsd:
+					btn.release()
+			return pyglet.event.EVENT_HANDLED
 	def render(self):
 		self.quad=('v2f',(self.x,self.y,self._x,self.y,self._x,self._y,self.x,self._y))
 		self.rendered=True
