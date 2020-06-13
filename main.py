@@ -9,7 +9,7 @@ Es= [
 	  Button(WIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Shuffle",8),
 	  Button(WIDTH,HEIGHT-BTNHEIGHT*2,BTNWIDTH,BTNHEIGHT,"Reverse",8),
 	  Button(WIDTH,0,BTNWIDTH,BTNHEIGHT,"Quit",2,pgw.key.ESCAPE)],
-	 [],#radios
+	 [RadioList(WIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT*len(algs),[alg.name for alg in algs],8,selected=0)],#radiolists
 	 [],#Textedits
 	 [Bucket(0,0,WIDTH2,HEIGHT,256)]#buckets
 	]
@@ -35,8 +35,8 @@ def on_cycle(dt):
 	if btns[0].pressed:
 		bucks=Es[4]
 		if curalg==None:
-			curalg=MergeSort(bucks[0].itemc)
-		for x in range(50):
+			curalg=algs[Es[2][0].getSelected()](bucks[0].itemc)
+		for x in range(100):
 			act=curalg.cycle(curval)
 			if act==None:#pass
 				pass

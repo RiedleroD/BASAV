@@ -85,7 +85,6 @@ class MergeSort(BaseAlgorithm):
 	il=0#left bucket index
 	ir=0#right bucket index
 	def cycle(self,v=None):
-		print(self.a)
 		if self.a==0:#new bucket with item 0
 			if self.s>=self.l:
 				if self.i==2:

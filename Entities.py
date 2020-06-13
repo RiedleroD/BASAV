@@ -117,23 +117,22 @@ class Button(Label):
 			self.cquad=("c4B",(128,128,128,255,128,128,128,255,*color,*color))
 	def checkpress(self,x,y):
 		if self.doesPointCollide(x,y):
-			self.press()
+			return self.press()
+	def checkKey(self,key):
+		if self.key!=None and key==self.key:
+			return self.press()
 	def press(self):
 		if not self.pressed:
 			self.pressed=True
 			self.setText(self.pressedText)
 			self.setBgColor((255,255,255,255))
+			return pyglet.event.EVENT_HANDLED
 	def release(self):
 		if self.pressed:
 			self.pressed=False
 			self.setText(self.unpressedText)
 			self.setBgColor((255,255,255,255))
-	def checkKey(self,key):
-		if self.key!=None and key==self.key:
-			self.pressed=True
 			return pyglet.event.EVENT_HANDLED
-		else:
-			return None
 
 class ButtonSwitch(Button):
 	def checkpress(self,x,y):
@@ -143,32 +142,7 @@ class ButtonSwitch(Button):
 			else:
 				self.press()
 
-class Radio(Button):#currently unused
-	def __init__(self,x,y,w,h,group,text,anch=0,key=None,size=12):
-		RDG[group].append(self)
-		self.group=group
-		self.gindex=len(RDG[group])-1
-		super().__init__(x,y,w,h,text,anch,key,size)
-	def checkpress(self,x,y):
-		if self.doesPointCollide(x,y):
-			for rb in RDG[self.group]:
-				rb.release()
-			self.pressed=True
-			self.setBgColor((255,255,255,255))
-	def checkKey(self,key):
-		if self.key!=None and key==self.key:
-			for rb in RDG[self.group]:
-				rb.release()
-			self.pressed=True
-			return pyglet.event.EVENT_HANDLED
-		else:
-			return None
-	def clear(self):
-		del RDG[self.group][self.gindex]
-		self.group=None
-		self.gindex=None
-
-class TextEdit(Button):
+class TextEdit(Button):#also unused
 	def __init__(self,x,y,w,h,desc,value="",anch=0,key=None,size=12):
 		self.desc=desc
 		self.value=value
@@ -188,6 +162,45 @@ class TextEdit(Button):
 			return pyglet.event.EVENT_HANDLED
 		else:
 			return None
+
+class RadioList(Entity):
+	def __init__(self,x,y,w,h,texts,anch=0,keys=None,pressedTexts=None,selected=None,size=12):
+		btnc=len(texts)
+		if keys==None:
+			keys=[None for i in range(btnc)]
+		if pressedTexts==None:
+			pressedTexts=[None for i in range(btnc)]
+		self.btns=[Button(x,y-i*h/btnc,w,h/btnc,text,anch,keys[i],size,pressedTexts[i]) for i,text in enumerate(texts)]
+		self.setBgColor((255,255,255))
+		if selected!=None:
+			self.btns[selected].press()
+		super().__init__(x,y,w,h,anch)
+	def checkpress(self,x,y):
+		prsd=None
+		for i,btn in enumerate(self.btns):
+			prsd=btn.checkpress(x,y)
+			if prsd:
+				prsd=i
+				break
+		if prsd!=None:
+			for i,btn in enumerate(self.btns):
+				if i!=prsd:
+					btn.release()
+	def render(self):
+		self.quad=('v2f',(self.x,self.y,self._x,self.y,self._x,self._y,self.x,self._y))
+		self.rendered=True
+	def setBgColor(self,color):
+		self.cquad=("c3B",color*4)
+	def draw(self):
+		if not self.rendered:
+			self.render()
+		pyglet.graphics.draw(4,pyglet.gl.GL_QUADS,self.quad,self.cquad)
+		for btn in self.btns:
+			btn.draw()
+	def getSelected(self):
+		for i,btn in enumerate(self.btns):
+			if btn.pressed:
+				return i
 
 class Bucket(Entity):
 	def __init__(self,x,y,w,h,itemc,anch=0,scolor=(255,0,0),ecolor=(0,255,255)):
