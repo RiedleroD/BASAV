@@ -287,6 +287,14 @@ class Bucket(Entity):
 		self.wacts.add(x)
 		self.wacts.add(i)
 		self.rendered=False
+	def swap_from(self,x,y,other):
+		if other.itemc>x and self.itemc>y:
+			self.items[y],other.items[x]=self.items[x],other.items[y]
+			self.wacts.add(y)
+			other.wacts.add(x)
+			self.rendered=other.rendered=False
+		else:
+			raise Exception("Bucket: out-of-scope call to swap_from")
 	def insert_from(self,x,y,other):
 		if other.itemc>x and self.itemc>=y:
 			self.items.insert(y,other.items.pop(x))

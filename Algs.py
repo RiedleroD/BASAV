@@ -211,6 +211,46 @@ class BogoSort(BaseAlgorithm):
 				return (SWAP,self.i,random.randrange(self.l),0)
 		elif self.a==7:
 			raise Exception("BogoSort: Unexpected cycle after finishing")
+
+class InsertionSort(BaseAlgorithm):
+	name="Insertion Sort"
+	description="Takes the first element of list, compare it with all other elements in list, and swaps if element is smaller"
+	i2=0
+	def cycle(self,v=None):
+		if self.a==0:
+			self.i2=self.i+1
+			self.a=1
+			return (READ,self.i,0)
+		elif self.a==1:
+			self.v1=v
+			self.a=3
+			return (READ,self.i2,0)
+		elif self.a==2:
+			self.a=3
+			self.i2+=1
+			return (READ,self.i2,0)
+		elif self.a==3:
+			self.v2=v
+			if self.v2<self.v1:
+				if self.i2+1==self.l:
+					if self.i+2==self.l:
+						return (FIN,)
+					else:
+						self.i+=1
+						self.a=0
+						return self.cycle()
+				else:
+					self.a=2
+					self.v1=self.v2
+					return (SWAP,self.i,self.i2,0)
+			else:
+				self.i2+=1
+				if self.i2==self.l:
+					self.i+=1
+					self.a=0
+					return self.cycle()
+				else:
+					return (READ,self.i2,0)
 			
 class Randomizer(BaseAlgorithm):
 	name="Randomizer"
@@ -226,4 +266,4 @@ class Randomizer(BaseAlgorithm):
 		elif self.a==7:
 			raise Exception("BogoSort: Unexpected cycle after finishing")
 
-algs=[BubbleSort,MergeSort,BogoSort]
+algs=[BubbleSort,InsertionSort,MergeSort,BogoSort]
