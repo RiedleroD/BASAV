@@ -4,7 +4,12 @@ from Algs import *
 
 Es= [
 	 [Label(WIDTH2,HEIGHT,0,0,"FPS:00",6),
-	  Label(WIDTH2,HEIGHT-15,0,0,"UPS:00/60",6)],
+	  Label(WIDTH2,HEIGHT-15,0,0,"UPS:00/60",6),
+	  Label(WIDTH2,HEIGHT-45,0,0,"Read:00",6),
+	  Label(WIDTH2,HEIGHT-60,0,0,"Swap:00",6),
+	  Label(WIDTH2,HEIGHT-75,0,0,"Insert:00",6),
+	  Label(WIDTH2,HEIGHT-90,0,0,"Bucket:00",6),
+	  Label(WIDTH2,HEIGHT-105,0,0,"Pass:00",6)],
 	 [ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",8,pressedText="Stop"),
 	  Button(WIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Shuffle",8),
 	  Button(WIDTH,HEIGHT-BTNHEIGHT*2,BTNWIDTH,BTNHEIGHT,"Reverse",8),
@@ -16,9 +21,10 @@ Es= [
 
 curalg=None
 curval=None
+stats=[0,0,0,0,0]
 
 def on_cycle(dt):
-	global Es,curalg,curval
+	global Es,curalg,curval,stats
 	Es[0][1].setText("UPS:%02i/60"%(round(1/(dt))))
 	btns=Es[1]
 	if btns[-1].pressed:
@@ -36,16 +42,20 @@ def on_cycle(dt):
 		bucks=Es[4]
 		if curalg==None:
 			curalg=algs[Es[2][0].getSelected()](bucks[0].itemc)
+			stats=[0,0,0,0,0]
 		for x in range(Es[3][0].getNum()):
 			act=curalg.cycle(curval)
-			if act==None:#pass
-				pass
+			if act==PASS:#pass
+				stats[4]+=1
 			elif act[0]==READ:#read value
 				curval=bucks[act[2]].getvalue(act[1])
+				stats[0]+=1
 			elif act[0]==SWAP:#swap items
 				bucks[act[3]].swapitems(act[1],act[2])
+				stats[1]+=1
 			elif act[0]==INSERT:#insert item to index
 				bucks[act[3]].insertitem(act[1],act[2])
+				stats[2]+=1
 			elif act[0]==NEW_BUCK:#create new bucket
 				bucks.append(Bucket(0,0,0,0,0))
 				chunksize=WIDTH2/len(Es[4])
@@ -53,10 +63,12 @@ def on_cycle(dt):
 					buck.set_size(chunksize,HEIGHT)
 					buck.set_pos(chunksize*i,0)
 				bucks[-1].insert_from(act[1],0,bucks[act[2]])
+				stats[3]+=1
 			elif act[0]==BUCKINSERT:#insert from bucket into another
 				#(BUCKINSERT,src_i,src_buck,dst_i,dst_buck)
 				#(0         ,1    ,2       ,3    ,4       )
 				bucks[act[4]].insert_from(act[1],act[3],bucks[act[2]])
+				stats[2]+=1
 			elif act[0]==DEL_BUCK:#delete bucket
 				if bucks[act[1]].itemc==0:
 					del bucks[act[1]]
@@ -66,6 +78,7 @@ def on_cycle(dt):
 						buck.set_pos(chunksize*i,0)
 				else:
 					raise Exception("Unexpected call to DEL_BUCK for non-empty bucket")
+				stats[3]+=1
 			elif act[0]==FIN:#finished
 				btns[0].release()
 				curalg=None
@@ -73,6 +86,11 @@ def on_cycle(dt):
 				bucks[0].wacts.clear()
 				bucks[0].rendered=False
 				break
+	Es[0][2].setText("Read:%02i"%stats[0])
+	Es[0][3].setText("Swap:%02i"%stats[1])
+	Es[0][4].setText("Insert:%02i"%stats[2])
+	Es[0][5].setText("Bucket:%02i"%stats[3])
+	Es[0][6].setText("Pass:%02i"%stats[4])
 
 @window.event
 def on_draw():
