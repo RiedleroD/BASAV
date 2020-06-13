@@ -37,6 +37,7 @@ def on_cycle(dt):
 	if btns[1].pressed:
 		btns[1].release()
 		curalg=Randomizer(Es[4][0].itemc)
+		stats=[0,0,0,0,0]
 		btns[0].press()
 	if btns[0].pressed:
 		bucks=Es[4]
@@ -86,6 +87,10 @@ def on_cycle(dt):
 				bucks[0].wacts.clear()
 				bucks[0].rendered=False
 				break
+	elif curalg!=None:
+		curalg=None
+		del Es[4][:]
+		Es[4].append(Bucket(0,0,WIDTH2,HEIGHT,256))
 	Es[0][2].setText("Read:%02i"%stats[0])
 	Es[0][3].setText("Swap:%02i"%stats[1])
 	Es[0][4].setText("Insert:%02i"%stats[2])
