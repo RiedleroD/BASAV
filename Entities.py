@@ -255,6 +255,7 @@ class Bucket(Entity):
 		self.scolor=scolor
 		self.ecolor=ecolor
 		self.itemc=itemc
+		self.maxic=itemc
 		self.items=[(i,self.colorlamb(i/itemc)) for i in range(itemc)]
 		self.racts=set()
 		self.wacts=set()
@@ -298,13 +299,15 @@ class Bucket(Entity):
 			raise Exception("Bucket: out-of-scope call to insert_from")
 	def render(self):
 		self.batch=pyglet.graphics.Batch()
+		if self.itemc>self.maxic:
+			self.maxic=self.itemc
 		if self.itemc>0:
 			for i,item in enumerate(self.items):
-				self.batch.add(4,pyglet.gl.GL_QUADS,None,('v2f',self.getquad(i/self.itemc,(i+1)/self.itemc)),('c3B',item[1]*4))
+				self.batch.add(4,pyglet.gl.GL_QUADS,None,('v2f',self.getquad(i/self.maxic,(i+1)/self.maxic)),('c3B',item[1]*4))
 			for i,act in enumerate(self.racts):
-				self.batch.add(4,pyglet.gl.GL_QUADS,None,('v2f',self.getract(act/self.itemc,(act+1)/self.itemc)),('c3B',(0,255,0,0,255,0,0,255,0,0,255,0)))
+				self.batch.add(4,pyglet.gl.GL_QUADS,None,('v2f',self.getract(act/self.maxic,(act+1)/self.maxic)),('c3B',(0,255,0,0,255,0,0,255,0,0,255,0)))
 			for i,act in enumerate(self.wacts):
-				self.batch.add(4,pyglet.gl.GL_QUADS,None,('v2f',self.getwact(act/self.itemc,(act+1)/self.itemc)),('c3B',(255,0,0,255,0,0,255,0,0,255,0,0)))
+				self.batch.add(4,pyglet.gl.GL_QUADS,None,('v2f',self.getwact(act/self.maxic,(act+1)/self.maxic)),('c3B',(255,0,0,255,0,0,255,0,0,255,0,0)))
 		self.rendered=True
 	def draw(self):
 		if not self.rendered:
