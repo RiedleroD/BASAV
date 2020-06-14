@@ -32,8 +32,9 @@ def on_cycle(dt):
 		sys.exit(0)
 	if btns[2].pressed:
 		btns[2].release()
-		Es[4][0].reverse()
-		curalg=None
+		curalg=Reverser(Es[4][0].itemc)
+		stats=[0,0,0,0,0]
+		btns[0].press()
 	if btns[1].pressed:
 		btns[1].release()
 		curalg=Randomizer(Es[4][0].itemc)
@@ -64,6 +65,7 @@ def on_cycle(dt):
 					buck.set_size(chunksize,HEIGHT)
 					buck.set_pos(chunksize*i,0)
 				bucks[-1].insert_from(act[1],0,bucks[act[2]])
+				bucks[-1].maxic=bucks[0].maxic
 				stats[3]+=1
 			elif act[0]==BUCKSWAP:#swap from bucket into another
 				#(BUCKSWAP,x_i,x_buck,y_i,y_buck)

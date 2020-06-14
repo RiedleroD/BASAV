@@ -249,10 +249,21 @@ class InsertionSort(BaseAlgorithm):
 			else:
 				self.i2+=1
 				return (READ,self.i2,0)
+
+class Reverser(BaseAlgorithm):
+	name="Reverser"
+	description="reverses the set"
+	def cycle(self,v=None):
+		if self.a==0:
+			self.i+=1
+			if self.i*2>=self.l:
+				return (7,)
+			else:
+				return (SWAP,self.i-1,self.l-self.i,0)
 			
 class Randomizer(BaseAlgorithm):
 	name="Randomizer"
-	description="Randomizes the whole set, then checks if it's sorted"
+	description="Randomizes the whole set"
 	def cycle(self,v=None):
 		if self.a==0:#randomize list, then finish
 			self.i+=1
