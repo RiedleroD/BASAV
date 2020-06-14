@@ -322,5 +322,9 @@ class Bucket(Entity):
 		if not self.rendered:
 			self.render()
 		self.batch.draw()
-		self.racts.clear()
-		self.wacts.clear()
+		if len(self.racts)>0:
+			self.racts.clear()
+			self.rendered=False
+		if len(self.wacts)>0:
+			self.wacts.clear()
+			self.rendered=False
