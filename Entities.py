@@ -271,6 +271,7 @@ class Bucket(Entity):
 		if i>=self.itemc or i<0:
 			return None
 		else:
+			self.rendered=False
 			self.racts.add(i)
 			return self.items[i][0]
 	def swapitems(self,x,y):
