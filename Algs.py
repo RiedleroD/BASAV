@@ -250,6 +250,33 @@ class InsertionSort(BaseAlgorithm):
 				self.i2+=1
 				return (READ,self.i2,0)
 
+class SelectionSort(BaseAlgorithm):
+	name="SelectionSort"
+	description="Swaps the smalles unsorted item with the first unsorted item until the list is sorted"
+	i=0
+	i2=0
+	i3=0
+	def cycle(self,v=None):
+		if self.a==0:
+			self.i2=self.i
+			self.v1=None
+			self.a=1
+			return (READ,self.i2,0)
+		elif self.a==1:
+			if self.i+2==self.l:
+				self.a=7
+				return (FIN,)
+			if self.v1==None or v<self.v1:
+				self.v1=v
+				self.i3=self.i2
+			if self.i2+1==self.l:
+				self.a=0
+				self.i+=1
+				return (SWAP,self.i-1,self.i3,0)
+			else:
+				self.i2+=1
+				return (READ,self.i2,0)
+
 class Reverser(BaseAlgorithm):
 	name="Reverser"
 	description="reverses the set"
@@ -275,4 +302,4 @@ class Randomizer(BaseAlgorithm):
 		elif self.a==7:
 			raise Exception("BogoSort: Unexpected cycle after finishing")
 
-algs=[BubbleSort,InsertionSort,MergeSort,BogoSort]
+algs=[BubbleSort,InsertionSort,SelectionSort,MergeSort,BogoSort]
