@@ -309,6 +309,41 @@ class SelectionSortOOP(BaseAlgorithm):
 		elif self.a==7:
 			return (FIN,)
 
+class OddEvenSort(BaseAlgorithm):
+	name="Odd-Even Sort"
+	desc="Like bubble sort, but parallelalizable. Too bad that's not possible here."
+	odd=False
+	f=None
+	def cycle(self,v=None):
+		if self.a==0:
+			if self.i+1>=self.l:
+				if self.f==True:
+					return (7,)
+				elif self.f==None:
+					self.f=True
+				else:
+					self.f=None
+				self.odd=not self.odd	#lol
+				if self.odd:
+					self.i=1
+				else:
+					self.i=0
+			self.a=1
+			return (READ,self.i,0)
+		elif self.a==1:
+			self.v1=v
+			self.a=2
+			return (READ,self.i+1,0)
+		elif self.a==2:
+			self.v2=v
+			self.a=0
+			self.i+=2
+			if self.v1>self.v2:
+				self.f=False
+				return (SWAP,self.i-2,self.i-1,0)
+			else:
+				return self.cycle()
+
 class Reverser(BaseAlgorithm):
 	name="Reverser"
 	description="reverses the set"
@@ -334,4 +369,4 @@ class Randomizer(BaseAlgorithm):
 		elif self.a==7:
 			raise Exception("BogoSort: Unexpected cycle after finishing")
 
-algs=[BubbleSort,InsertionSort,SelectionSort,SelectionSortOOP,MergeSort,BogoSort]
+algs=[BubbleSort,InsertionSort,SelectionSort,SelectionSortOOP,OddEvenSort,MergeSort,BogoSort]
