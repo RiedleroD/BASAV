@@ -141,14 +141,14 @@ class MergeSort(BaseAlgorithm):
 				if v==None:
 					self.a=6
 					self.ir=1
-					return PASS
+					return self.cycle()
 				self.v2=v
 			elif self.v1==None:
 				if v==None:
 					self.a=6
 					self.il=self.ir
 					self.ir=2
-					return PASS
+					return self.cycle()
 				self.v1=v
 			self.a=4
 			self.i+=1
@@ -166,7 +166,7 @@ class MergeSort(BaseAlgorithm):
 				if self.i>=self.l:
 					self.s*=2
 					self.i=0
-				return PASS
+				return self.cycle()
 			elif self.il>self.s:
 				raise Exception("Mergesort: il is unexpectedly bigger than s in a6")
 			else:
