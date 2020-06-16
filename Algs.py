@@ -29,7 +29,7 @@ class BaseAlgorithm():
 	#(0,x,i)	→ reads value of item x in bucket i and puts it into the value param next cycle; None means there is no item at this index
 	#(1,x,y,i)	→ swaps item x with item y in bucket i
 	#(2,x,y,i)	→ inserts item x at index y and pushes all items between one index to the old index
-	#(3,x,i)	→ creates a new bucket and transfers item x from bucket i to it
+	#(3,x,i)	→ creates a new bucket and optionally transfers item x from bucket i to it (if only one argument is passed, bucket is empty)
 	#(4,x,i,y,j)→ swaps item x in bucket i to index y in bucket j
 	#(5,x,i,y,j)→inserts item x in bucket i at index y in bucket j
 	#(6,i)		→ destroys bucket i (only empty buckets can be destroyed)
@@ -277,6 +277,38 @@ class SelectionSort(BaseAlgorithm):
 				self.i2+=1
 				return (READ,self.i2,0)
 
+class SelectionSortOOP(BaseAlgorithm):
+	name="SelectionSort OOP"
+	description="Swaps the smalles unsorted item with the first unsorted item until the list is sorted, but OOP"
+	i=0
+	i2=0
+	i3=0
+	def cycle(self,v=None):
+		if self.a==0:
+			self.a=1
+			return (NEW_BUCK,)
+		elif self.a==1:
+			self.i2=0
+			self.v1=None
+			self.a=2
+			return (READ,self.i2,0)
+		elif self.a==2:
+			if self.i==self.l:
+				self.a=7
+				return (DEL_BUCK,0)
+			if self.v1==None or v<self.v1:
+				self.v1=v
+				self.i3=self.i2
+			if self.i2+self.i+1==self.l:
+				self.a=1
+				self.i+=1
+				return (BUCKINSERT,self.i3,0,self.i-1,1)
+			else:
+				self.i2+=1
+				return (READ,self.i2,0)
+		elif self.a==7:
+			return (FIN,)
+
 class Reverser(BaseAlgorithm):
 	name="Reverser"
 	description="reverses the set"
@@ -302,4 +334,4 @@ class Randomizer(BaseAlgorithm):
 		elif self.a==7:
 			raise Exception("BogoSort: Unexpected cycle after finishing")
 
-algs=[BubbleSort,InsertionSort,SelectionSort,MergeSort,BogoSort]
+algs=[BubbleSort,InsertionSort,SelectionSort,SelectionSortOOP,MergeSort,BogoSort]

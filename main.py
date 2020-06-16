@@ -64,7 +64,8 @@ def on_cycle(dt):
 				for i,buck in enumerate(Es[4]):
 					buck.set_size(chunksize,HEIGHT)
 					buck.set_pos(chunksize*i,0)
-				bucks[-1].insert_from(act[1],0,bucks[act[2]])
+				if len(act)>1:
+					bucks[-1].insert_from(act[1],0,bucks[act[2]])
 				bucks[-1].maxic=bucks[0].maxic
 				stats[3]+=1
 			elif act[0]==BUCKSWAP:#swap from bucket into another
