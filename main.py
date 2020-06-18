@@ -5,8 +5,10 @@ from Algs import *
 class GameWin(pyglet.window.Window):
 	def __init__(self,*args,**kwargs):
 		self.push_handlers(KP)
-		self.ft=0
-		self.set_ft(1/60)
+		self.tc=0
+		self.dt=0
+		self.fps=0
+		self.set_fps(60)#set_fps needs self.fps to exist & sets more than that, so I have to do both here.
 		self.curalg=None
 		self.curval=None
 		self.stats=[0,0,0,0,0]
@@ -17,15 +19,20 @@ class GameWin(pyglet.window.Window):
 		self.bucks=[]
 		self.batch=pyglet.graphics.Batch()
 		super().__init__(*args,**kwargs)
-	def set_ft(self,ft):
-		if ft!=self.ft:
-			self.ft=ft
+	def set_fps(self,fps):
+		if fps!=self.fps and fps>0:
+			self.fps=fps
 			pyglet.clock.unschedule(self.update)
-			pyglet.clock.schedule_interval(self.update,ft)
+			pyglet.clock.schedule_interval(self.update,1/fps)
 	def update(self,dt):
-		self.labels[1].setText("UPS:%02i/%02i"%(round(1/(dt)),1/self.ft))
+		self.tc+=1
+		self.dt+=dt
+		if self.dt>=0.1:
+			self.labels[1].setText("UPS:%02i/%02i"%(round(self.tc/self.dt),self.fps))
+			self.tc=0
+			self.dt=0
 		if not self.edits[1].pressed:
-			self.set_ft(1/self.edits[1].getNum())
+			self.set_fps(self.edits[1].getNum())
 		if self.btns[-1].pressed:
 			self.btns[3].release()
 			sys.exit(0)
@@ -103,9 +110,14 @@ class GameWin(pyglet.window.Window):
 		self.labels[5].setText("Bucket:%02i"%self.stats[3])
 		self.labels[6].setText("Pass:%02i"%self.stats[4])
 	def on_draw(self):
-		global TIME
+		global TIME,DTIME,TIMEC
 		t=time()
-		self.labels[0].setText("FPS:%02i"%(round(1/(t-TIME))))#for some reason, pyglet.clock.tick() doesn't return the correct time, so I had to calculate it manually
+		DTIME+=t-TIME
+		TIMEC+=1
+		if DTIME>=0.1:
+			self.labels[0].setText("FPS:%02i/%02i"%(round(TIMEC/DTIME),self.fps))
+			TIMEC=0
+			DTIME=0
 		TIME=t
 		del t
 		self.clear()
@@ -159,7 +171,7 @@ window.btns=[	ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",8,pressedText=
 			 	Button(WIDTH,0,BTNWIDTH,BTNHEIGHT,"Quit",2,pgw.key.ESCAPE,batch=window.batch)]
 window.rads=[	RadioList(WIDTH,HEIGHT-BTNHEIGHT*6,BTNWIDTH,BTNHEIGHT*len(algs),[alg.name for alg in algs],8,selected=0,batch=window.batch)]#radiolists
 window.edits=[	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Speed","100",8,batch=window.batch),#Edits
-			  	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"FPS","60",8,batch=window.batch)]
+			  	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"FPS/UPS","60",8,batch=window.batch)]
 window.bucks=[	Bucket(0,0,WIDTH2,HEIGHT,256)]#buckets
 
 pyglet.app.run()
