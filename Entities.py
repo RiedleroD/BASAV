@@ -2,11 +2,12 @@
 from CONSTANTS import *
 from random import shuffle
 class Entity:
-	def __init__(self,x,y,w,h,anch=0):
+	def __init__(self,x,y,w,h,anch=0,batch=None):
 		self.w=w
 		self.h=h
 		self.set_pos(x,y,anch)
 		self.rendered=False
+		self.batch=batch
 	def set_pos(self,x,y,anch=0):
 		#anchor:
 		#______
@@ -72,36 +73,45 @@ class Entity:
 		pyglet.graphics.draw(4,pyglet.gl.GL_QUADS,self.quad)
 
 class Label(Entity):
-	def __init__(self,x,y,w,h,text,anch=0,color=(255,255,255,255),bgcolor=(0,0,0,0),size=12):
-		self.text=text
+	def __init__(self,x,y,w,h,text,anch=0,color=(255,255,255,255),bgcolor=(0,0,0,0),size=12,batch=None):
+		self.label=pyglet.text.Label(text,x=0,y=0,color=color,font_size=size,batch=batch)
+		self.setText(text)
 		self.setColor(color)
 		self.setBgColor(bgcolor)
 		self.anch=anch
 		self.size=size
-		super().__init__(x,y,w,h,anch)
+		super().__init__(x,y,w,h,anch,batch=batch)
 	def setBgColor(self,color):
 		self.cquad=("c4B",color*4)
 	def setColor(self,color):
 		self.color=color
+		self.label.color=self.color
 	def setText(self,text):
 		self.text=text
-		self.rendered=False
+		self.label.text=text
 	def render(self):
 		if self.w>0 and self.h>0:
 			self.quad=('v2f',(self.x,self.y,self._x,self.y,self._x,self._y,self.x,self._y))
-			self.label=pyglet.text.Label(self.text,x=self.cx,y=self.cy,anchor_x=ANCHORSx[1],anchor_y=ANCHORSy[1],color=self.color,font_size=self.size)
+			self.label.x=self.cx
+			self.label.y=self.cy
+			self.label.anchor_x=ANCHORSx[1]
+			self.label.anchor_y=ANCHORSy[1]
 		else:
-			self.label=pyglet.text.Label(self.text,x=self.x,y=self.y,anchor_x=ANCHORSx[self.anch%3],anchor_y=ANCHORSy[self.anch//3],color=self.color,font_size=self.size)
+			self.label.x=self.x
+			self.label.y=self.y
+			self.label.anchor_x=ANCHORSx[self.anch%3]
+			self.label.anchor_y=ANCHORSy[self.anch//3]
 		self.rendered=True
 	def draw(self):
 		if not self.rendered:
 			self.render()
 		if self.w>0 and self.h>0:
 			pyglet.graphics.draw(4,pyglet.gl.GL_QUADS,self.quad,self.cquad)
-		self.label.draw()
+		if self.batch==None:
+			self.label.draw()
 
 class Button(Label):
-	def __init__(self,x,y,w,h,text,anch=0,key=None,size=12,pressedText=None):
+	def __init__(self,x,y,w,h,text,anch=0,key=None,size=12,pressedText=None,batch=None):
 		self.pressed=False
 		self.key=key
 		if pressedText:
@@ -109,7 +119,7 @@ class Button(Label):
 			self.unpressedText=text
 		else:
 			self.pressedText=self.unpressedText=text
-		super().__init__(x,y,w,h,text,anch,(0,0,0,255),(255,255,255,255),size)
+		super().__init__(x,y,w,h,text,anch,(0,0,0,255),(255,255,255,255),size,batch=batch)
 	def setBgColor(self,color):
 		if self.pressed:
 			self.cquad=("c4B",(*color,*color,128,128,128,255,128,128,128,255))
@@ -143,10 +153,10 @@ class ButtonSwitch(Button):
 				self.press()
 
 class TextEdit(Button):#also unused
-	def __init__(self,x,y,w,h,desc,value="",anch=0,key=None,size=12):
+	def __init__(self,x,y,w,h,desc,value="",anch=0,key=None,size=12,batch=None):
 		self.desc=desc
 		self.value=value
-		super().__init__(x,y,w,h,desc,anch,key,size)
+		super().__init__(x,y,w,h,desc,anch,key,size,batch=batch)
 	def checkKey(self,key):
 		if self.pressed:
 			if key==pgw.key.BACKSPACE:
@@ -196,17 +206,17 @@ class IntEdit(TextEdit):
 		return int(self.value)
 
 class RadioList(Entity):
-	def __init__(self,x,y,w,h,texts,anch=0,keys=None,pressedTexts=None,selected=None,size=12):
+	def __init__(self,x,y,w,h,texts,anch=0,keys=None,pressedTexts=None,selected=None,size=12,batch=None):
 		btnc=len(texts)
 		if keys==None:
 			keys=[None for i in range(btnc)]
 		if pressedTexts==None:
 			pressedTexts=[None for i in range(btnc)]
-		self.btns=[Button(x,y-i*h/btnc,w,h/btnc,text,anch,keys[i],size,pressedTexts[i]) for i,text in enumerate(texts)]
+		self.btns=[Button(x,y-i*h/btnc,w,h/btnc,text,anch,keys[i],size,pressedTexts[i],batch=batch) for i,text in enumerate(texts)]
 		self.setBgColor((255,255,255))
 		if selected!=None:
 			self.btns[selected].press()
-		super().__init__(x,y,w,h,anch)
+		super().__init__(x,y,w,h,anch,batch=batch)
 	def checkpress(self,x,y):
 		prsd=None
 		for i,btn in enumerate(self.btns):
@@ -259,8 +269,7 @@ class Bucket(Entity):
 		self.items=[(i,self.colorlamb(i/itemc)) for i in range(itemc)]
 		self.racts=set()
 		self.wacts=set()
-		super().__init__(x,y,w,h,anch)
-		self.rendered=False
+		super().__init__(x,y,w,h,anch,batch=pyglet.graphics.Batch())
 	def shuffle(self):
 		shuffle(self.items)
 		self.rendered=False
@@ -311,12 +320,11 @@ class Bucket(Entity):
 		if self.itemc>self.maxic:
 			self.maxic=self.itemc
 		if self.itemc>0:
-			for i,item in enumerate(self.items):
-				self.batch.add(4,pyglet.gl.GL_QUADS,None,('v2f',self.getquad(i/self.maxic,(i+1)/self.maxic)),('c3B',item[1]*4))
-			for i,act in enumerate(self.racts):
-				self.batch.add(4,pyglet.gl.GL_QUADS,None,('v2f',self.getract(act/self.maxic,(act+1)/self.maxic)),('c3B',(0,255,0,0,255,0,0,255,0,0,255,0)))
-			for i,act in enumerate(self.wacts):
-				self.batch.add(4,pyglet.gl.GL_QUADS,None,('v2f',self.getwact(act/self.maxic,(act+1)/self.maxic)),('c3B',(255,0,0,255,0,0,255,0,0,255,0,0)))
+			self.batch.add(4*self.itemc,pyglet.gl.GL_QUADS,None,('v2f',tuple(quad for i in range(self.itemc) for quad in self.getquad(i/self.maxic,(i+1)/self.maxic))),('c3B',tuple(cquad for item in self.items for cquad in item[1]*4)))
+			if len(self.racts)>0:
+				self.batch.add(4*len(self.racts),pyglet.gl.GL_QUADS,None,('v2f',tuple(quad for act in self.racts for quad in self.getract(act/self.maxic,(act+1)/self.maxic))),('c3B',(0,255,0,0,255,0,0,255,0,0,255,0)*len(self.racts)))
+			if len(self.wacts)>0:
+				self.batch.add(4*len(self.wacts),pyglet.gl.GL_QUADS,None,('v2f',tuple(quad for act in self.wacts for quad in self.getwact(act/self.maxic,(act+1)/self.maxic))),('c3B',(255,0,0,255,0,0,255,0,0,255,0,0)*len(self.wacts)))
 		self.rendered=True
 	def draw(self):
 		if not self.rendered:
