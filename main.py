@@ -5,7 +5,8 @@ from Algs import *
 class GameWin(pyglet.window.Window):
 	def __init__(self,*args,**kwargs):
 		self.push_handlers(KP)
-		pyglet.clock.schedule_interval(self.update,1/60)
+		self.ft=0
+		self.set_ft(1/60)
 		self.curalg=None
 		self.curval=None
 		self.stats=[0,0,0,0,0]
@@ -16,8 +17,15 @@ class GameWin(pyglet.window.Window):
 		self.bucks=[]
 		self.batch=pyglet.graphics.Batch()
 		super().__init__(*args,**kwargs)
+	def set_ft(self,ft):
+		if ft!=self.ft:
+			self.ft=ft
+			pyglet.clock.unschedule(self.update)
+			pyglet.clock.schedule_interval(self.update,ft)
 	def update(self,dt):
-		self.labels[1].setText("UPS:%02i/60"%(round(1/(dt))))
+		self.labels[1].setText("UPS:%02i/%02i"%(round(1/(dt)),1/self.ft))
+		if not self.edits[1].pressed:
+			self.set_ft(1/self.edits[1].getNum())
 		if self.btns[-1].pressed:
 			self.btns[3].release()
 			sys.exit(0)
@@ -138,19 +146,20 @@ BTNWIDTH2=BTNWIDTH/2
 BTNHEIGHT=HEIGHT/20
 BTNHEIGHT2=BTNHEIGHT/2
 
-window.labels=[Label(WIDTH2,HEIGHT,0,0,"FPS:00",6,batch=window.batch),
-		Label(WIDTH2,HEIGHT-15,0,0,"UPS:00/60",6,batch=window.batch),
-		Label(WIDTH2,HEIGHT-45,0,0,"Read:00",6,batch=window.batch),
-		Label(WIDTH2,HEIGHT-60,0,0,"Swap:00",6,batch=window.batch),
-		Label(WIDTH2,HEIGHT-75,0,0,"Insert:00",6,batch=window.batch),
-		Label(WIDTH2,HEIGHT-90,0,0,"Bucket:00",6,batch=window.batch),
-		Label(WIDTH2,HEIGHT-105,0,0,"Pass:00",6,batch=window.batch)]
-window.btns=[ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",8,pressedText="Stop",batch=window.batch),
-	  Button(WIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Shuffle",8,batch=window.batch),
-	  Button(WIDTH,HEIGHT-BTNHEIGHT*2,BTNWIDTH,BTNHEIGHT,"Reverse",8,batch=window.batch),
-	  Button(WIDTH,0,BTNWIDTH,BTNHEIGHT,"Quit",2,pgw.key.ESCAPE,batch=window.batch)]
-window.rads=[RadioList(WIDTH,HEIGHT-BTNHEIGHT*5,BTNWIDTH,BTNHEIGHT*len(algs),[alg.name for alg in algs],8,selected=0,batch=window.batch)]#radiolists
-window.edits=[IntEdit(WIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Speed","100",8,batch=window.batch)]#Edits
-window.bucks=[Bucket(0,0,WIDTH2,HEIGHT,256)]#buckets
+window.labels=[	Label(WIDTH2,HEIGHT,0,0,"FPS:00",6,batch=window.batch),
+				Label(WIDTH2,HEIGHT-15,0,0,"UPS:00/60",6,batch=window.batch),
+				Label(WIDTH2,HEIGHT-45,0,0,"Read:00",6,batch=window.batch),
+				Label(WIDTH2,HEIGHT-60,0,0,"Swap:00",6,batch=window.batch),
+				Label(WIDTH2,HEIGHT-75,0,0,"Insert:00",6,batch=window.batch),
+				Label(WIDTH2,HEIGHT-90,0,0,"Bucket:00",6,batch=window.batch),
+				Label(WIDTH2,HEIGHT-105,0,0,"Pass:00",6,batch=window.batch)]
+window.btns=[	ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",8,pressedText="Stop",batch=window.batch),
+			 	Button(WIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Shuffle",8,batch=window.batch),
+			 	Button(WIDTH,HEIGHT-BTNHEIGHT*2,BTNWIDTH,BTNHEIGHT,"Reverse",8,batch=window.batch),
+			 	Button(WIDTH,0,BTNWIDTH,BTNHEIGHT,"Quit",2,pgw.key.ESCAPE,batch=window.batch)]
+window.rads=[	RadioList(WIDTH,HEIGHT-BTNHEIGHT*6,BTNWIDTH,BTNHEIGHT*len(algs),[alg.name for alg in algs],8,selected=0,batch=window.batch)]#radiolists
+window.edits=[	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Speed","100",8,batch=window.batch),#Edits
+			  	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"FPS","60",8,batch=window.batch)]
+window.bucks=[	Bucket(0,0,WIDTH2,HEIGHT,256)]#buckets
 
 pyglet.app.run()
