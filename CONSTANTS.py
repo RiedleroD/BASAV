@@ -3,20 +3,6 @@ import os,sys,pyglet
 from pyglet import window as pgw
 from time import time
 
-window=pgw.Window(fullscreen=False,style=pgw.Window.WINDOW_STYLE_BORDERLESS,caption="Riedler Sound of Sorting",vsync=True,visible=False)
-screen=window.display.get_default_screen()
-window.set_size(screen.width,screen.height)
-window.set_visible(True)
-
-WIDTH,HEIGHT=window.get_size()
-WIDTH2=WIDTH/2
-HEIGHT2=HEIGHT/2
-SIZE=(WIDTH+HEIGHT)/2#only for scaling stuff
-BTNWIDTH=WIDTH/10
-BTNWIDTH2=BTNWIDTH/2
-BTNHEIGHT=HEIGHT/20
-BTNHEIGHT2=BTNHEIGHT/2
-
 ANCHORSy=("bottom","center","top")
 ANCHORSx=("left","center","right")
 
