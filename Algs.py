@@ -300,31 +300,6 @@ class SelectionSortOOP(BaseAlgorithm):
 		elif self.a==7:
 			return (FIN,)
 
-class Reverser(BaseAlgorithm):
-	name="Reverser"
-	description="reverses the set"
-	def cycle(self,v=None):
-		if self.a==0:
-			self.i+=1
-			if self.i*2>=self.l:
-				return (7,)
-			else:
-				return (SWAP,self.i-1,self.l-self.i,0)
-			
-class Randomizer(BaseAlgorithm):
-	name="Randomizer"
-	description="Randomizes the whole set"
-	def cycle(self,v=None):
-		if self.a==0:#randomize list, then finish
-			self.i+=1
-			if self.i==self.l:
-				self.a=7
-				return (FIN,)
-			else:
-				return (SWAP,self.i,random.randrange(self.l),0)
-		elif self.a==7:
-			raise Exception("BogoSort: Unexpected cycle after finishing")
-
 class OddEvenSort(BaseAlgorithm):
 	name="Odd-Even Sort"
 	desc="Like bubble sort, but parallelalizable. Too bad that's not possible here."
@@ -359,5 +334,30 @@ class OddEvenSort(BaseAlgorithm):
 				return (SWAP,self.i-2,self.i-1,0)
 			else:
 				return self.cycle()
+
+class Reverser(BaseAlgorithm):
+	name="Reverser"
+	description="reverses the set"
+	def cycle(self,v=None):
+		if self.a==0:
+			self.i+=1
+			if self.i*2>=self.l:
+				return (7,)
+			else:
+				return (SWAP,self.i-1,self.l-self.i,0)
+
+class Randomizer(BaseAlgorithm):
+	name="Randomizer"
+	description="Randomizes the whole set"
+	def cycle(self,v=None):
+		if self.a==0:#randomize list, then finish
+			self.i+=1
+			if self.i==self.l:
+				self.a=7
+				return (FIN,)
+			else:
+				return (SWAP,self.i,random.randrange(self.l),0)
+		elif self.a==7:
+			raise Exception("Randomizer: Unexpected cycle after finishing")
 
 algs=[BubbleSort,InsertionSort,SelectionSort,SelectionSortOOP,OddEvenSort,MergeSort,BogoSort]
