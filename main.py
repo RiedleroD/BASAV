@@ -169,7 +169,7 @@ window.btns=[	ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",8,pressedText=
 			 	Button(WIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Shuffle",8,batch=window.batch),
 			 	Button(WIDTH,HEIGHT-BTNHEIGHT*2,BTNWIDTH,BTNHEIGHT,"Reverse",8,batch=window.batch),
 			 	Button(WIDTH,0,BTNWIDTH,BTNHEIGHT,"Quit",2,pgw.key.ESCAPE,batch=window.batch)]
-window.rads=[	RadioList(WIDTH,HEIGHT-BTNHEIGHT*6,BTNWIDTH,BTNHEIGHT*len(algs),[alg.name for alg in algs],8,selected=0,batch=window.batch)]#radiolists
+window.rads=[	RadioListPaged(WIDTH,HEIGHT-BTNHEIGHT*6,BTNWIDTH,BTNHEIGHT*6,[alg.name for alg in algs],5,8,selected=0,batch=window.batch)]#radiolists
 window.edits=[	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Speed","100",8,batch=window.batch),#Edits
 			  	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"FPS/UPS","60",8,batch=window.batch)]
 window.bucks=[	Bucket(0,0,WIDTH2,HEIGHT,256)]#buckets

@@ -213,7 +213,7 @@ class RadioList(Entity):
 		if pressedTexts==None:
 			pressedTexts=[None for i in range(btnc)]
 		self.btns=[Button(x,y-i*h/btnc,w,h/btnc,text,anch,keys[i],size,pressedTexts[i],batch=batch) for i,text in enumerate(texts)]
-		self.setBgColor((255,255,255))
+		self.setBgColor((192,192,192))#average color in btns
 		if selected!=None:
 			self.btns[selected].press()
 		super().__init__(x,y,w,h,anch,batch=batch)
@@ -226,7 +226,7 @@ class RadioList(Entity):
 				break
 		if prsd!=None:
 			for i,btn in enumerate(self.btns):
-				if i!=prsd:
+				if i!=prsd and btn.pressed:
 					btn.release()
 			return pyglet.event.EVENT_HANDLED
 	def checkKey(self,key):
@@ -255,6 +255,78 @@ class RadioList(Entity):
 		for i,btn in enumerate(self.btns):
 			if btn.pressed:
 				return i
+
+class RadioListPaged(RadioList):
+	def __init__(self,x,y,w,h,texts,pageic,anch=0,keys=None,pressedTexts=None,selected=None,size=12,batch=None):
+		self.pageic=pageic
+		self.page=0
+		btnc=len(texts)
+		btnh=h/(pageic+1)
+		super().__init__(x,y,w,h,texts,anch,keys,pressedTexts,selected,size,batch)
+		for i,btn in enumerate(self.btns):#correct btn position based on pages
+			btn.set_pos(x,y-btnh*(i%self.pageic),anch)
+		self.prev=Button(x,y-btnh*pageic,w/2,btnh,"→",anch,None,size,batch=batch)
+		self.next=Button(x-w/2,y-btnh*pageic,w/2,btnh,"←",anch,None,size,batch=batch)
+	def checkpress(self,x,y):
+		if self.prev.checkpress(x,y):
+			prsd=-1
+		elif self.next.checkpress(x,y):
+			prsd=1
+		else:
+			prsd=None
+		if prsd:
+			self.page+=prsd
+			#make sure that self.page wraps around if too big
+			self.page%=-(-len(self.btns)//self.pageic)#ceiling division
+		onscr=self.btns[self.page*self.pageic:(self.page+1)*self.pageic]#get buttons which should be on screen
+		if prsd:
+			#remove text from all buttons that shouldn't be on screen (because the labels get rendered in batch)
+			#re-add text from all buttons that should be on screen
+			for btn in self.btns:
+				if btn in onscr:
+					btn.label.text=btn.text
+				else:
+					btn.label.text=""
+			prsd=None
+		for btn in onscr:
+			prsd=btn.checkpress(x,y)
+			if prsd:
+				prsd=btn
+				break
+		if prsd!=None:
+			for btn in self.btns:
+				if btn is not prsd and btn.pressed:
+					btn.release()
+					if btn not in onscr:
+						btn.label.text=""
+			return pyglet.event.EVENT_HANDLED
+	def checkKey(self,key):
+		for i,btn in enumerate(self.btns):
+			prsd=btn.checkKey(key)
+			if prsd:
+				prsd=i
+				break
+		if prsd!=None:
+			for i,btn in enumerate(self.btns):
+				if i!=prsd:
+					btn.release()
+			return pyglet.event.EVENT_HANDLED
+	def draw(self):
+		if not self.rendered:
+			self.render()
+		onscr=self.btns[self.page*self.pageic:(self.page+1)*self.pageic]#get buttons which should be on screen
+		#draw the background plane
+		pyglet.graphics.draw(4,pyglet.gl.GL_QUADS,self.quad,self.cquad)
+		#draw the buttons in the current page plus prev and next
+		for btn in onscr:
+			btn.draw()
+		self.prev.draw()
+		self.next.draw()
+		#releasing next & previous buttons only after drawing to show single-frame click
+		if self.prev.pressed:
+			self.prev.release()
+		if self.next.pressed:
+			self.next.release()
 
 class Bucket(Entity):
 	def __init__(self,x,y,w,h,itemc,anch=0,scolor=(255,0,0),ecolor=(0,255,255)):
