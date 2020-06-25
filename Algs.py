@@ -214,40 +214,31 @@ class BogoSort(BaseAlgorithm):
 
 class InsertionSort(BaseAlgorithm):
 	name="Insertion Sort"
-	description="Takes the first element of list, compare it with all other elements in list, and swaps if element is smaller"
+	description="Inserts first unsorted item into sorted array until no unsorted items remain"
 	i2=0
 	i3=0
 	def cycle(self,v=None):
 		if self.a==0:
-			self.i2=self.i+1
-			self.i3=-1
 			self.a=1
+			self.i+=1
+			if self.i==self.l:
+				return (FIN,)
+			self.i2=self.i-1
 			return (READ,self.i,0)
 		elif self.a==1:
+			self.a=2
 			self.v1=v
-			self.a=3
 			return (READ,self.i2,0)
 		elif self.a==2:
-			self.a=3
-			self.i2+=1
-			return (READ,self.i2,0)
-		elif self.a==3:
 			self.v2=v
-			if self.v2<self.v1:
-				self.i3=self.i2
-				self.v1=self.v2
-			if self.i2+1==self.l:
-				if self.i+2==self.l:
-					return (FIN,)
-				else:
-					self.i+=1
-					self.a=0
-					if self.i3!=-1:
-						return (SWAP,self.i-1,self.i3,0)
-					else:
-						return self.cycle()
+			if self.v2>self.v1:
+				self.a=0
+				return (INSERT,self.i,self.i2+1,0)
+			elif self.i2==0:
+				self.a=0
+				return (INSERT,self.i,self.i2,0)
 			else:
-				self.i2+=1
+				self.i2-=1
 				return (READ,self.i2,0)
 
 class SelectionSort(BaseAlgorithm):
