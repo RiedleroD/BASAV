@@ -263,8 +263,9 @@ class RadioListPaged(RadioList):
 		btnc=len(texts)
 		btnh=h/(pageic+1)
 		super().__init__(x,y,w,h,texts,anch,keys,pressedTexts,selected,size,batch)
-		for i,btn in enumerate(self.btns):#correct btn position based on pages
+		for i,btn in enumerate(self.btns):#correct btn position and height based on pages
 			btn.set_pos(x,y-btnh*(i%self.pageic),anch)
+			btn.set_size(w,btnh)
 		self.prev=Button(x,y-btnh*pageic,w/2,btnh,"→",anch,None,size,batch=batch)
 		self.next=Button(x-w/2,y-btnh*pageic,w/2,btnh,"←",anch,None,size,batch=batch)
 	def checkpress(self,x,y):
