@@ -346,9 +346,37 @@ class Reverser(BaseAlgorithm):
 			else:
 				return (SWAP,self.i-1,self.l-self.i,0)
 
-class Randomizer(BaseAlgorithm):
-	name="Randomizer"
-	description="Randomizes the whole set"
+class Shuffler(BaseAlgorithm):
+	name="Shuffler"
+	description="Shuffles the list"
+	def cycle(self,v=None):
+		if self.a==0:#randomize list, then finish
+			self.i+=1
+			if self.i+1==self.l:
+				self.a=7
+				return (FIN,)
+			else:
+				return (SWAP,self.i-1,random.randrange(self.l),0)
+		elif self.a==7:
+			raise Exception("Randomizer: Unexpected cycle after finishing")
+
+class ShufflerOneSide(BaseAlgorithm):
+	name="One-Sided Shuffler"
+	description="Shuffles the list one-sided (not 100% random)"
+	def cycle(self,v=None):
+		if self.a==0:#randomize list, then finish
+			self.i+=1
+			if self.i+1==self.l:
+				self.a=7
+				return (FIN,)
+			else:
+				return (SWAP,self.i-1,random.randrange(self.i,self.l),0)
+		elif self.a==7:
+			raise Exception("Randomizer: Unexpected cycle after finishing")
+
+class ShufflerInsert(BaseAlgorithm):
+	name="Shuffler"
+	description="Shuffles the list by inserting (pretty bad)"
 	def cycle(self,v=None):
 		if self.a==0:#randomize list, then finish
 			self.i+=1
@@ -356,8 +384,23 @@ class Randomizer(BaseAlgorithm):
 				self.a=7
 				return (FIN,)
 			else:
-				return (SWAP,self.i,random.randrange(self.l),0)
+				return (INSERT,self.i-1,random.randrange(self.l),0)
 		elif self.a==7:
 			raise Exception("Randomizer: Unexpected cycle after finishing")
 
+class ShufflerOneSideInsert(BaseAlgorithm):
+	name="Shuffler"
+	description="Shuffles the list one-sided by inserting (very,very bad)"
+	def cycle(self,v=None):
+		if self.a==0:#randomize list, then finish
+			self.i+=1
+			if self.i+1==self.l:
+				self.a=7
+				return (FIN,)
+			else:
+				return (INSERT,self.i-1,random.randrange(self.i+1,self.l),0)
+		elif self.a==7:
+			raise Exception("Randomizer: Unexpected cycle after finishing")
+
+shufflers=[ShufflerOneSideInsert,ShufflerInsert,ShufflerOneSide,Shuffler]#shufflers from worst to best
 algs=[BubbleSort,InsertionSort,SelectionSort,SelectionSortOOP,OddEvenSort,MergeSort,BogoSort]

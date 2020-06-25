@@ -152,6 +152,22 @@ class ButtonSwitch(Button):
 			else:
 				self.press()
 
+class ButtonFlipthrough(Button):
+	def __init__(self,x,y,w,h,text,values,anch=0,key=None,size=12,batch=None):
+		self.vals=values
+		self.i=0
+		self.text=text
+		super().__init__(x,y,w,h,text%values[0],anch,key,size,batch=batch)
+	def setText(self,text):
+		self.label.text=text
+	def getCurval(self):
+		return self.vals[self.i]
+	def press(self):
+		self.i+=1
+		self.i%=len(self.vals)
+		self.setText(self.text%self.getCurval())
+		return pyglet.event.EVENT_HANDLED
+
 class TextEdit(Button):#also unused
 	def __init__(self,x,y,w,h,desc,value="",anch=0,key=None,size=12,batch=None):
 		self.desc=desc

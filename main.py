@@ -43,7 +43,7 @@ class GameWin(pyglet.window.Window):
 			self.btns[0].press()
 		if self.btns[1].pressed:
 			self.btns[1].release()
-			self.curalg=Randomizer(self.bucks[0].itemc)
+			self.curalg=shufflers[self.btns[3].getCurval()](self.bucks[0].itemc)
 			self.stats=[0,0,0,0,0]
 			self.btns[0].press()
 		if self.btns[0].pressed:
@@ -167,11 +167,12 @@ window.labels=[	Label(WIDTH2,HEIGHT,0,0,"FPS:00",6,batch=window.batch),
 				Label(WIDTH2,HEIGHT-105,0,0,"Pass:00",6,batch=window.batch)]
 window.btns=[	ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",8,pressedText="Stop",batch=window.batch),
 			 	Button(WIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Shuffle",8,batch=window.batch),
-			 	Button(WIDTH,HEIGHT-BTNHEIGHT*2,BTNWIDTH,BTNHEIGHT,"Reverse",8,batch=window.batch),
+			 	Button(WIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Reverse",8,batch=window.batch),
+			 	ButtonFlipthrough(WIDTH,HEIGHT-BTNHEIGHT*2,BTNWIDTH,BTNHEIGHT,"Randomness: %i",[3,0,1,2],8,batch=window.batch),
 			 	Button(WIDTH,0,BTNWIDTH,BTNHEIGHT,"Quit",2,pgw.key.ESCAPE,batch=window.batch)]
-window.rads=[	RadioListPaged(WIDTH,HEIGHT-BTNHEIGHT*6,BTNWIDTH,BTNHEIGHT*6,[alg.name for alg in algs],5,8,selected=0,batch=window.batch)]#radiolists
-window.edits=[	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Speed","100",8,batch=window.batch),#Edits
-			  	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"FPS/UPS","60",8,batch=window.batch)]
+window.rads=[	RadioListPaged(WIDTH,HEIGHT-BTNHEIGHT*7,BTNWIDTH,BTNHEIGHT*6,[alg.name for alg in algs],5,8,selected=0,batch=window.batch)]#radiolists
+window.edits=[	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"Speed","100",8,batch=window.batch),#Edits
+			  	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*5,BTNWIDTH,BTNHEIGHT,"FPS/UPS","60",8,batch=window.batch)]
 window.bucks=[	Bucket(0,0,WIDTH2,HEIGHT,256)]#buckets
 
 pyglet.app.run()
