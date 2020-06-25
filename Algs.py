@@ -279,7 +279,7 @@ class SelectionSort(BaseAlgorithm):
 
 class SelectionSortOOP(BaseAlgorithm):
 	name="SelectionSort OOP"
-	description="Swaps the smalles unsorted item with the first unsorted item until the list is sorted, but OOP"
+	description="Puts the smallest item in bucket 0 to the end of bucket 1 until bucket 0 is empty"
 	i=0
 	i2=0
 	i3=0
