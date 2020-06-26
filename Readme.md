@@ -25,7 +25,7 @@ Depending on the severity of the issue, and the accessibility of the OS, it will
 
 ### Videos
 - [Coding logs](https://www.youtube.com/playlist?list=PLS2fPT7ug4bX_t_mjvWyx_KoADLQWTrnq)
-- [Visualiastions](https://www.youtube.com/playlist?list=PLS2fPT7ug4bW6Bbb7uuKZ0PDuBq_AnDNn)
+- [Visualisations](https://www.youtube.com/playlist?list=PLS2fPT7ug4bW6Bbb7uuKZ0PDuBq_AnDNn)
 
 ### Screenshots
 #### TODO
