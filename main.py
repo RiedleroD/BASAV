@@ -28,7 +28,21 @@ class GameWin(pyglet.window.Window):
 		self.tc+=1
 		self.dt+=dt
 		if self.dt>=0.1:
+			#update ups counter
 			self.labels[1].setText("UPS:%02i/%02i"%(round(self.tc/self.dt),self.fps))
+			#update randomness counter
+			randomness=0
+			for buck in self.bucks:
+				previ=None
+				for i,color in buck.items:
+					if previ==None:
+						previ=i
+					else:
+						if previ>i:
+							randomness+=previ-i
+						previ=i
+			self.labels[7].setText("Randomness:%02i"%randomness)
+			#set tc and dt to 0
 			self.tc=0
 			self.dt=0
 		if not self.edits[1].pressed:
@@ -164,7 +178,8 @@ window.labels=[	Label(WIDTH2,HEIGHT,0,0,"FPS:00",6,batch=window.batch),
 				Label(WIDTH2,HEIGHT-60,0,0,"Swap:00",6,batch=window.batch),
 				Label(WIDTH2,HEIGHT-75,0,0,"Insert:00",6,batch=window.batch),
 				Label(WIDTH2,HEIGHT-90,0,0,"Bucket:00",6,batch=window.batch),
-				Label(WIDTH2,HEIGHT-105,0,0,"Pass:00",6,batch=window.batch)]
+				Label(WIDTH2,HEIGHT-105,0,0,"Pass:00",6,batch=window.batch),
+				Label(WIDTH2,HEIGHT-120,0,0,"Randomness:00",6,batch=window.batch)]
 window.btns=[	ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",8,pressedText="Stop",batch=window.batch),
 			 	Button(WIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Shuffle",8,batch=window.batch),
 			 	Button(WIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Reverse",8,batch=window.batch),
