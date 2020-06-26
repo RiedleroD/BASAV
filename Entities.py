@@ -280,9 +280,9 @@ class RadioListPaged(RadioList):
 		btnh=h/(pageic+1)
 		super().__init__(x,y,w,h,texts,anch,keys,pressedTexts,selected,size,batch)
 		onscr=self.btns[self.page*self.pageic:(self.page+1)*self.pageic]#get buttons which should be on screen
-		for i,btn in enumerate(self.btns):#correct btn position and height based on pages
-			btn.set_pos(x,y-btnh*(i%self.pageic),anch)
+		for i,btn in enumerate(self.btns):#correct btn position and height based on pages and set label text to none
 			btn.set_size(w,btnh)
+			btn.set_pos(x,y-btnh*(i%self.pageic),anch)
 			if btn not in onscr:
 				btn.label.text=""
 		self.prev=Button(x,y-btnh*pageic,w/2,btnh,"→",anch,None,size,batch=batch)
