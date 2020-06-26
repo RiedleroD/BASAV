@@ -20,12 +20,12 @@ All known bugs will be fixed until a release is issued, except for minor and ver
 Only Linux is officially supported, but other ones should work too. If they don't, please file an issue.
 Depending on the severity of the issue, and the accessibility of the OS, it will get fixed more or less quickly.
 
-###How to Install
-####TODO
+### How to Install
+#### TODO
 
-###Videos
+### Videos
 - [Coding logs](https://www.youtube.com/playlist?list=PLS2fPT7ug4bX_t_mjvWyx_KoADLQWTrnq)
 - [Visualiastions](https://www.youtube.com/playlist?list=PLS2fPT7ug4bW6Bbb7uuKZ0PDuBq_AnDNn)
 
-###Screenshots
-####TODO
+### Screenshots
+#### TODO
