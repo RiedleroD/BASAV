@@ -231,7 +231,7 @@ class InsertionSort(BaseAlgorithm):
 			return (READ,self.i2,0)
 		elif self.a==2:
 			self.v2=v
-			if self.v2>self.v1:
+			if self.v2<self.v1:
 				self.a=0
 				return (INSERT,self.i,self.i2+1,0)
 			elif self.i2==0:
