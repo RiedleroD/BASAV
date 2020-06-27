@@ -390,11 +390,12 @@ class Bucket(Entity):
 		self.wacts.add(y)
 		self.rendered=False
 	def insertitem(self,x,i):
+		#actually the fastest method I could find, see here: https://stackoverflow.com/a/62608192/10499494
 		if i>x:
-			self.items.insert(i,self.items[x])
+			self.items[i:i]=self.items[x],
 			del self.items[x]
 		else:
-			self.items.insert(i,self.items.pop(x))
+			self.items[i:i]=self.items.pop(x),
 		self.wacts.add(x)
 		self.wacts.add(i)
 		self.rendered=False
@@ -408,7 +409,7 @@ class Bucket(Entity):
 			raise Exception("Bucket: out-of-scope call to swap_from")
 	def insert_from(self,x,y,other):
 		if other.itemc>x and self.itemc>=y:
-			self.items.insert(y,other.items.pop(x))
+			self.items[y:y]=other.items.pop(x),
 			self.itemc+=1
 			other.itemc-=1
 			self.wacts.add(y)
@@ -422,10 +423,11 @@ class Bucket(Entity):
 			raise ValueError("Bucket: itemc is larger than maxic")
 		if self.itemc>0:
 			self.batch.add(2*self.itemc,pyglet.gl.GL_LINES,None,('v2f',tuple(quad for i in range(self.itemc) for quad in self.quads[i])),('c4B',tuple(cquad for item in self.items for cquad in item[1]*2)))
+			#multiplying lists is faster than multiplying tuples and much faster than a list or tuple comprehension here, fyi
 			if len(self.racts)>0:
-				self.batch.add(4*len(self.racts),pyglet.gl.GL_QUADS,None,('v2f',tuple(quad for act in self.racts for quad in self.qracts[act])),('c3B',(0,255,0,0,255,0,0,255,0,0,255,0)*len(self.racts)))
+				self.batch.add(4*len(self.racts),pyglet.gl.GL_QUADS,None,('v2f',tuple(quad for act in self.racts for quad in self.qracts[act])),('c3B',[0,255,0,0,255,0,0,255,0,0,255,0]*len(self.racts)))
 			if len(self.wacts)>0:
-				self.batch.add(4*len(self.wacts),pyglet.gl.GL_QUADS,None,('v2f',tuple(quad for act in self.wacts for quad in self.qwacts[act])),('c3B',(255,0,0,255,0,0,255,0,0,255,0,0)*len(self.wacts)))
+				self.batch.add(4*len(self.wacts),pyglet.gl.GL_QUADS,None,('v2f',tuple(quad for act in self.wacts for quad in self.qwacts[act])),('c3B',[255,0,0,255,0,0,255,0,0,255,0,0]*len(self.wacts)))
 		self.rendered=True
 	def draw(self):
 		if not self.rendered:
