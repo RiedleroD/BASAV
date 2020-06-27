@@ -349,9 +349,9 @@ class RadioListPaged(RadioList):
 			self.next.release()
 
 class Bucket(Entity):
-	def __init__(self,x,y,w,h,itemc,anch=0,scolor=(255,0,0),ecolor=(0,255,255)):
+	def __init__(self,x,y,w,h,itemc,anch=0,scolor=(255,0,0,128),ecolor=(0,255,255,128)):
 		self.colorlamb=lambda perc:tuple(int(self.scolor[x]*(perc)+self.ecolor[x]*(1-perc)) for x in range(len(self.scolor)))
-		self.getquad=lambda perc,perc2:(self.x,self.y+self.h*perc,self.x+self.w-6,self.y+self.h*perc,self.x+self.w-6,self.y+self.h*perc2,self.x,self.y+self.h*perc2)
+		self.getquad=lambda perc,perc2:(self.x,self.y+self.h*perc,self.x+self.w-6,self.y+self.h*perc)#,self.x+self.w-6,self.y+self.h*perc2,self.x,self.y+self.h*perc2)
 		self.getract=lambda perc,perc2:(self.x+self.w-6,self.y+self.h*perc,self.x+self.w-3,self.y+self.h*perc,self.x+self.w-3,self.y+self.h*perc2,self.x+self.w-6,self.y+self.h*perc2)
 		self.getwact=lambda perc,perc2:(self.x+self.w-3,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc2,self.x+self.w-3,self.y+self.h*perc2)
 		self.scolor=scolor
@@ -412,7 +412,7 @@ class Bucket(Entity):
 		if self.itemc>self.maxic:
 			self.maxic=self.itemc
 		if self.itemc>0:
-			self.batch.add(4*self.itemc,pyglet.gl.GL_QUADS,None,('v2f',tuple(quad for i in range(self.itemc) for quad in self.getquad(i/self.maxic,(i+1)/self.maxic))),('c3B',tuple(cquad for item in self.items for cquad in item[1]*4)))
+			self.batch.add(2*self.itemc,pyglet.gl.GL_LINES,None,('v2f',tuple(quad for i in range(self.itemc) for quad in self.getquad(i/self.maxic,(i+1)/self.maxic))),('c4B',tuple(cquad for item in self.items for cquad in item[1]*2)))
 			if len(self.racts)>0:
 				self.batch.add(4*len(self.racts),pyglet.gl.GL_QUADS,None,('v2f',tuple(quad for act in self.racts for quad in self.getract(act/self.maxic,(act+1)/self.maxic))),('c3B',(0,255,0,0,255,0,0,255,0,0,255,0)*len(self.racts)))
 			if len(self.wacts)>0:

@@ -117,7 +117,7 @@ class GameWin(pyglet.window.Window):
 		elif self.curalg!=None:
 			self.curalg=None
 			del self.bucks[:]
-			self.bucks.append(Bucket(0,0,WIDTH2,HEIGHT,256))
+			self.bucks.append(Bucket(0,0,WIDTH2,HEIGHT,BUCKLEN))
 		self.labels[2].setText("Read:%02i"%self.stats[0])
 		self.labels[3].setText("Swap:%02i"%self.stats[1])
 		self.labels[4].setText("Insert:%02i"%self.stats[2])
@@ -157,8 +157,8 @@ class GameWin(pyglet.window.Window):
 			ret=item.checkKey(symbol)
 			if ret:
 				return ret
-
-window=GameWin(fullscreen=False,style=GameWin.WINDOW_STYLE_BORDERLESS,caption="Riedler Sound of Sorting",vsync=True,visible=False)
+config = pyglet.gl.Config(sample_buffers=1, samples=8)#because items otherwise flicker when they're over 1000
+window=GameWin(fullscreen=False,style=GameWin.WINDOW_STYLE_BORDERLESS,caption="Riedler Sound of Sorting",config=config,vsync=True,visible=False)
 screen=window.display.get_default_screen()
 window.set_size(screen.width,screen.height)
 window.set_visible(True)
@@ -188,6 +188,6 @@ window.btns=[	ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",8,pressedText=
 window.rads=[	RadioListPaged(WIDTH,HEIGHT-BTNHEIGHT*7,BTNWIDTH,BTNHEIGHT*6,[alg.name for alg in algs],5,8,selected=0,batch=window.batch)]#radiolists
 window.edits=[	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"Speed","100",8,batch=window.batch),#Edits
 			  	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*5,BTNWIDTH,BTNHEIGHT,"FPS/UPS","60",8,batch=window.batch)]
-window.bucks=[	Bucket(0,0,WIDTH2,HEIGHT,256)]#buckets
+window.bucks=[	Bucket(0,0,WIDTH2,HEIGHT,BUCKLEN)]#buckets
 
 pyglet.app.run()

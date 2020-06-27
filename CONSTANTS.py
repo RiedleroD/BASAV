@@ -9,6 +9,7 @@ ANCHORSx=("left","center","right")
 TIME=time()
 DTIME=0
 TIMEC=0
+BUCKLEN=2048
 
 KP=pgw.key.KeyStateHandler()	#a dict with the key states inside
 MP={pgw.mouse.LEFT:False,pgw.mouse.RIGHT:False,pgw.mouse.MIDDLE:False}
