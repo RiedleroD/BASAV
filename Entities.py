@@ -351,23 +351,32 @@ class RadioListPaged(RadioList):
 class Bucket(Entity):
 	def __init__(self,x,y,w,h,itemc,anch=0,scolor=(255,0,0,128),ecolor=(0,255,255,128)):
 		self.colorlamb=lambda perc:tuple(int(self.scolor[x]*(perc)+self.ecolor[x]*(1-perc)) for x in range(len(self.scolor)))
-		self.getquad=lambda perc,perc2:(self.x,self.y+self.h*perc,self.x+self.w-6,self.y+self.h*perc)#,self.x+self.w-6,self.y+self.h*perc2,self.x,self.y+self.h*perc2)
+		self.getquad=lambda perc:(self.x,self.y+self.h*perc,self.x+self.w-6,self.y+self.h*perc)#,self.x+self.w-6,self.y+self.h*perc2,self.x,self.y+self.h*perc2)
 		self.getract=lambda perc,perc2:(self.x+self.w-6,self.y+self.h*perc,self.x+self.w-3,self.y+self.h*perc,self.x+self.w-3,self.y+self.h*perc2,self.x+self.w-6,self.y+self.h*perc2)
 		self.getwact=lambda perc,perc2:(self.x+self.w-3,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc2,self.x+self.w-3,self.y+self.h*perc2)
+		super().__init__(x,y,w,h,anch,batch=pyglet.graphics.Batch())
 		self.scolor=scolor
 		self.ecolor=ecolor
-		self.itemc=itemc
-		self.maxic=itemc
+		if itemc<0:#only sets maxic
+			self.maxic=-itemc
+			self.itemc=0
+		else:
+			self.itemc=itemc
+			self.maxic=itemc
 		self.items=[(i,self.colorlamb(i/itemc)) for i in range(itemc)]
+		self.recalc_quads()
 		self.racts=set()
 		self.wacts=set()
-		super().__init__(x,y,w,h,anch,batch=pyglet.graphics.Batch())
 	def shuffle(self):
 		shuffle(self.items)
 		self.rendered=False
 	def reverse(self):
 		self.items.reverse()
 		self.rendered=False
+	def recalc_quads(self):
+		self.quads=[self.getquad(i/self.maxic) for i in range(self.maxic)]
+		self.qracts=[self.getract(i/self.maxic,(i+1)/self.maxic) for i in range(self.maxic)]
+		self.qwacts=[self.getwact(i/self.maxic,(i+1)/self.maxic) for i in range(self.maxic)]
 	def getvalue(self,i):
 		if i>=self.itemc or i<0:
 			return None
@@ -410,13 +419,13 @@ class Bucket(Entity):
 	def render(self):
 		self.batch=pyglet.graphics.Batch()
 		if self.itemc>self.maxic:
-			self.maxic=self.itemc
+			raise ValueError("Bucket: itemc is larger than maxic")
 		if self.itemc>0:
-			self.batch.add(2*self.itemc,pyglet.gl.GL_LINES,None,('v2f',tuple(quad for i in range(self.itemc) for quad in self.getquad(i/self.maxic,(i+1)/self.maxic))),('c4B',tuple(cquad for item in self.items for cquad in item[1]*2)))
+			self.batch.add(2*self.itemc,pyglet.gl.GL_LINES,None,('v2f',tuple(quad for i in range(self.itemc) for quad in self.quads[i])),('c4B',tuple(cquad for item in self.items for cquad in item[1]*2)))
 			if len(self.racts)>0:
-				self.batch.add(4*len(self.racts),pyglet.gl.GL_QUADS,None,('v2f',tuple(quad for act in self.racts for quad in self.getract(act/self.maxic,(act+1)/self.maxic))),('c3B',(0,255,0,0,255,0,0,255,0,0,255,0)*len(self.racts)))
+				self.batch.add(4*len(self.racts),pyglet.gl.GL_QUADS,None,('v2f',tuple(quad for act in self.racts for quad in self.qracts[act])),('c3B',(0,255,0,0,255,0,0,255,0,0,255,0)*len(self.racts)))
 			if len(self.wacts)>0:
-				self.batch.add(4*len(self.wacts),pyglet.gl.GL_QUADS,None,('v2f',tuple(quad for act in self.wacts for quad in self.getwact(act/self.maxic,(act+1)/self.maxic))),('c3B',(255,0,0,255,0,0,255,0,0,255,0,0)*len(self.wacts)))
+				self.batch.add(4*len(self.wacts),pyglet.gl.GL_QUADS,None,('v2f',tuple(quad for act in self.wacts for quad in self.qwacts[act])),('c3B',(255,0,0,255,0,0,255,0,0,255,0,0)*len(self.wacts)))
 		self.rendered=True
 	def draw(self):
 		if not self.rendered:

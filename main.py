@@ -77,15 +77,16 @@ class GameWin(pyglet.window.Window):
 				elif act[0]==INSERT:#insert item to index
 					self.bucks[act[3]].insertitem(act[1],act[2])
 					self.stats[2]+=1
-				elif act[0]==NEW_BUCK:#create new bucket
-					self.bucks.append(Bucket(0,0,0,0,0))
+				elif act[0]==NEW_BUCK:#create new empty bucket
+					self.bucks.append(Bucket(0,0,0,0,-BUCKLEN))
 					chunksize=WIDTH2/len(self.bucks)
 					for i,buck in enumerate(self.bucks):
 						buck.set_size(chunksize,HEIGHT)
 						buck.set_pos(chunksize*i,0)
+						buck.recalc_quads()
 					if len(act)>1:
 						self.bucks[-1].insert_from(act[1],0,self.bucks[act[2]])
-					self.bucks[-1].maxic=self.bucks[0].maxic
+						self.stats[2]+=1
 					self.stats[3]+=1
 				elif act[0]==BUCKSWAP:#swap from bucket into another
 					#(BUCKSWAP,x_i,x_buck,y_i,y_buck)
