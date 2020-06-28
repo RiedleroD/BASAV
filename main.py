@@ -107,6 +107,8 @@ class GameWin(pyglet.window.Window):
 							buck.set_pos(chunksize*i,0)
 					else:
 						raise Exception("Unexpected call to DEL_BUCK for non-empty bucket")
+					for buck in self.bucks:
+						buck.recalc_quads()
 					self.stats[3]+=1
 				elif act[0]==FIN:#finished
 					self.btns[0].release()
@@ -138,13 +140,13 @@ class GameWin(pyglet.window.Window):
 		self.clear()
 		for item in self.labels:#003ms
 			item.draw()
-		for item in self.btns:	#306ms
+		for item in self.btns:	#280ms
 			item.draw()
-		for item in self.rads:	#227ms
+		for item in self.rads:	#250ms
 			item.draw()
-		for item in self.edits:	#074ms
+		for item in self.edits:	#070ms
 			item.draw()
-		for item in self.bucks:	#701ms
+		for item in self.bucks:	#700ms
 			item.draw()
 		self.batch.draw()
 		pyglet.clock.tick()

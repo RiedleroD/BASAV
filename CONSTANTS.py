@@ -27,7 +27,7 @@ class Timer():
 		else:
 			return self.t/self.c
 
-profs=[Timer() for i in range(5)]
+profs=[Timer() for i in range(0)]
 
 KP=pgw.key.KeyStateHandler()	#a dict with the key states inside
 MP={pgw.mouse.LEFT:False,pgw.mouse.RIGHT:False,pgw.mouse.MIDDLE:False}
