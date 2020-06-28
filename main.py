@@ -34,7 +34,7 @@ class GameWin(pyglet.window.Window):
 			randomness=0
 			for buck in self.bucks:
 				previ=None
-				for i,color in buck.items:
+				for i in buck.items:
 					if previ==None:
 						previ=i
 					else:

@@ -350,8 +350,7 @@ class RadioListPaged(RadioList):
 			self.next.release()
 
 class Bucket(Entity):
-	def __init__(self,x,y,w,h,itemc,anch=0,scolor=(255,0,0),ecolor=(0,255,255)):
-		self.colorlamb=lambda perc:[int(self.scolor[x]*(perc)+self.ecolor[x]*(1-perc)) for x in range(len(self.scolor))]*2
+	def __init__(self,x,y,w,h,itemc,anch=0):
 		self.getquad=lambda perc:[self.x,self.y+self.h*perc,self.x+self.w-6,self.y+self.h*perc]
 		self.getquad2=lambda perc,perc2:[self.x,self.y+self.h*perc,self.x+self.w-6,self.y+self.h*perc,self.x+self.w-6,self.y+self.h*perc2,self.x,self.y+self.h*perc2]
 		self.getract=lambda perc:[self.x+self.w-6,self.y+self.h*perc,self.x+self.w-3,self.y+self.h*perc]
@@ -359,15 +358,13 @@ class Bucket(Entity):
 		self.getwact=lambda perc:[self.x+self.w-3,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc]
 		self.getwact2=lambda perc,perc2:[self.x+self.w-3,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc2,self.x+self.w-3,self.y+self.h*perc2]
 		super().__init__(x,y,w,h,anch,batch=pyglet.graphics.Batch())
-		self.scolor=scolor
-		self.ecolor=ecolor
 		if itemc<0:#only sets maxic
 			self.maxic=-itemc
 			self.itemc=0
 		else:
 			self.itemc=itemc
 			self.maxic=itemc
-		self.items=[(i,self.colorlamb(i/itemc)) for i in range(itemc)]
+		self.items=[i for i in range(itemc)]
 		self.recalc_quads()
 		self.racts=set()
 		self.wacts=set()
@@ -389,7 +386,7 @@ class Bucket(Entity):
 		else:
 			self.rendered=False
 			self.racts.add(i)
-			return self.items[i][0]
+			return self.items[i]
 	def swapitems(self,x,y):
 		self.items[x],self.items[y]=self.items[y],self.items[x]
 		self.wacts.add(x)
@@ -434,10 +431,10 @@ class Bucket(Entity):
 			sindex=0
 			bindex=0
 			while len(items)>0:#group racts to not draw massive amounts of single lines, but big rects instead
-				sit=items.pop(0)[0]
+				sit=items.pop(0)
 				bit=sit+1
 				bindex=sindex+1
-				while len(items)>0 and bit==items[0][0]:
+				while len(items)>0 and bit==items[0]:
 					bit+=1
 					bindex+=1
 					items.pop(0)
@@ -447,9 +444,9 @@ class Bucket(Entity):
 					itemq.append((sindex,bindex))
 				sindex=bindex
 			if len(iteml)>0:
-				self.batch.add(2*len(iteml),pyglet.gl.GL_LINES,None,('v2f',functools.reduce(operator.iconcat,[self.quads[i] for i in iteml],[])),('c3B',[cquad for i in iteml for cquad in self.items[i][1]]))
+				self.batch.add(2*len(iteml),pyglet.gl.GL_LINES,None,('v2f',functools.reduce(operator.iconcat,[self.quads[i] for i in iteml],[])),('c3B',[cquad for i in iteml for cquad in COLORS[self.items[i]]]))
 			if len(itemq)>0:
-				self.batch.add(4*len(itemq),pyglet.gl.GL_QUADS,None,('v2f',functools.reduce(operator.iconcat,[self.getquad2(sit/self.maxic,bit/self.maxic) for sit,bit in itemq],[])),('c3B',[cquad for sit,bit in itemq for cquad in self.items[sit][1]+self.items[bit-1][1]]))
+				self.batch.add(4*len(itemq),pyglet.gl.GL_QUADS,None,('v2f',functools.reduce(operator.iconcat,[self.getquad2(sit/self.maxic,bit/self.maxic) for sit,bit in itemq],[])),('c3B',[cquad for sit,bit in itemq for cquad in COLORS[self.items[sit]]+COLORS[self.items[bit-1]]]))
 			
 			if len(self.racts)>0:
 				racts=self.racts.copy()
