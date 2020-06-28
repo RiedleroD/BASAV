@@ -213,10 +213,9 @@ class BogoSort(BaseAlgorithm):
 			raise Exception("BogoSort: Unexpected cycle after finishing")
 
 class InsertionSort(BaseAlgorithm):
-	name="Insertion Sort"
-	desc="Inserts first unsorted item into\nsorted array until no unsorted items remain"
+	name="InsertionSort"
+	desc="Inserts first unsorted item into sorted subarray\nuntil no unsorted items remain"
 	i2=0
-	i3=0
 	def cycle(self,v=None):
 		if self.a==0:
 			self.a=1
@@ -240,6 +239,40 @@ class InsertionSort(BaseAlgorithm):
 			else:
 				self.i2-=1
 				return (READ,self.i2,0)
+
+class InsertionSortOOP(BaseAlgorithm):
+	name="InsertionSort OOP"
+	desc="Inserts first unsorted item into sorted bucket\nuntil no unsorted items remain"
+	i2=0
+	def cycle(self,v=None):
+		if self.a==0:
+			self.a=1
+			return (NEW_BUCK,0,0)
+		elif self.a==1:
+			self.a=2
+			self.i+=1
+			if self.i==self.l:
+				self.a=7
+				return (DEL_BUCK,0)
+			self.i2=self.i-1
+			return (READ,0,0)
+		elif self.a==2:
+			self.a=3
+			self.v1=v
+			return (READ,self.i2,1)
+		elif self.a==3:
+			self.v2=v
+			if self.v2<self.v1:
+				self.a=1
+				return (BUCKINSERT,0,0,self.i2+1,1)
+			elif self.i2==0:
+				self.a=1
+				return (BUCKINSERT,0,0,self.i2,1)
+			else:
+				self.i2-=1
+				return (READ,self.i2,1)
+		elif self.a==7:
+			return (FIN,)
 
 class SelectionSort(BaseAlgorithm):
 	name="SelectionSort"
@@ -403,4 +436,4 @@ class ShufflerOneSideInsert(BaseAlgorithm):
 			raise Exception("Randomizer: Unexpected cycle after finishing")
 
 shufflers=[ShufflerOneSideInsert,ShufflerInsert,ShufflerOneSide,Shuffler]#shufflers from worst to best
-algs=[BubbleSort,InsertionSort,SelectionSort,SelectionSortOOP,OddEvenSort,MergeSort,BogoSort]
+algs=[BubbleSort,InsertionSort,InsertionSortOOP,SelectionSort,SelectionSortOOP,OddEvenSort,MergeSort,BogoSort]
