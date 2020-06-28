@@ -42,16 +42,17 @@ class BubbleSort(BaseAlgorithm):
 	name="Bubble Sort"
 	desc="Bubble Sort checks two adjacent items.\nIf the first is greater, swap them.\nThen do this for each index in the list, until the list is sorted"
 	def cycle(self,v=None):
-		if self.a==0:#read current item
+		a=self.a
+		if a==0:#read current item
 			self.a=1
 			self.f=True
 			return (READ,self.i,0)
-		elif self.a==1:#store current item & read next item
+		elif a==1:#store current item & read next item
 			if self.v1==None:
 				self.v1=v
 			self.a=2
 			return (READ,self.i+1,0)
-		elif self.a==2:#store next item & compare current and next item, then either swap the items or advance and read the next item
+		elif a==2:#store next item & compare current and next item, then either swap the items or advance and read the next item
 			if v==None or self.i+self.s>self.l:#if end of unsorted list is reached (previously last item is always sorted)
 				self.s+=1
 				if self.f:#if finished: finish
@@ -74,7 +75,7 @@ class BubbleSort(BaseAlgorithm):
 					self.a=1
 					self.f=False
 					return (SWAP,self.i-1,self.i,0)
-		elif self.a==7:
+		elif a==7:
 			raise Exception("BubbleSort: Unexpected cycle after finishing")
 
 #TODO: MergeSort doesn't work for numbers that aren't 2**n, though it is almost fixed
@@ -85,7 +86,8 @@ class MergeSort(BaseAlgorithm):
 	il=0#left bucket index
 	ir=0#right bucket index
 	def cycle(self,v=None):
-		if self.a==0:#new bucket with item 0
+		a=self.a
+		if a==0:#new bucket with item 0
 			if self.s>=self.l:
 				if self.i==2:
 					return (FIN,)
@@ -98,7 +100,7 @@ class MergeSort(BaseAlgorithm):
 				return (BUCKINSERT,self.i,0,0,1)
 			else:
 				return (NEW_BUCK,self.i,0)
-		elif self.a==1:#fill left bucket,then create new bucket with item 0
+		elif a==1:#fill left bucket,then create new bucket with item 0
 			if self.il==self.s:
 				self.il=0
 				self.a=2
@@ -113,7 +115,7 @@ class MergeSort(BaseAlgorithm):
 			else:
 				self.il+=1
 				return (BUCKINSERT,self.i,0,self.il-1,1)
-		elif self.a==2:#fill right bucket, then read first item of left bucket
+		elif a==2:#fill right bucket, then read first item of left bucket
 			if self.ir==self.s:
 				self.ir=0
 				self.a=3
@@ -123,7 +125,7 @@ class MergeSort(BaseAlgorithm):
 			else:
 				self.ir+=1
 				return (BUCKINSERT,self.i,0,self.ir-1,2)
-		elif self.a==3:#stores in v1, then read first item of right bucket
+		elif a==3:#stores in v1, then read first item of right bucket
 			self.v1=v
 			self.v2=None
 			self.a=5
@@ -136,7 +138,7 @@ class MergeSort(BaseAlgorithm):
 				return (READ,0,2)
 			else:
 				raise Exception("MergeSort: Unexpected call of a4 without v1 or v2 being empty")
-		elif self.a==5:#stores in empty v, then insert first left item to i if v1 is smaller than v2, else insert first right item to i
+		elif a==5:#stores in empty v, then insert first left item to i if v1 is smaller than v2, else insert first right item to i
 			if self.v2==None:
 				if v==None:
 					self.a=6
@@ -160,7 +162,7 @@ class MergeSort(BaseAlgorithm):
 				self.v2=None
 				self.ir+=1
 				return (BUCKINSERT,0,2,self.i-1,0)
-		elif self.a==6:#dumps second bucket to i, then delete it
+		elif a==6:#dumps second bucket to i, then delete it
 			if self.il==self.s:
 				self.a=0
 				if self.i>=self.l:
@@ -173,22 +175,23 @@ class MergeSort(BaseAlgorithm):
 				self.il+=1
 				self.i+=1
 				return (BUCKINSERT,0,self.ir,self.i-1,0)
-		elif self.a==7:
+		elif a==7:
 			raise Exception("MergeSort: Unexpected cycle after finishing")
 
 class BogoSort(BaseAlgorithm):
 	name="Bogo Sort"
 	desc="Randomizes the whole set, then checks if it's sorted"
 	def cycle(self,v=None):
-		if self.a==0:#read item
+		a=self.a
+		if a==0:#read item
 			self.a=1
 			return (READ,self.i,0)
-		elif self.a==1:#store v1 and read item
+		elif a==1:#store v1 and read item
 			self.v1=v
 			self.a=2
 			self.i+=1
 			return (READ,self.i,0)
-		elif self.a==2:#store v2 and see below
+		elif a==2:#store v2 and see below
 			self.v2=v
 			self.i+=1
 			if self.v1>self.v2:#if not sorted
@@ -201,7 +204,7 @@ class BogoSort(BaseAlgorithm):
 			else:
 				self.v1=self.v2
 				return (READ,self.i,0)
-		elif self.a==3:#randomize list, then read item and goto a1
+		elif a==3:#randomize list, then read item and goto a1
 			self.i+=1
 			if self.i==self.l:
 				self.a=1
@@ -209,7 +212,7 @@ class BogoSort(BaseAlgorithm):
 				return (READ,self.i,0)
 			else:
 				return (SWAP,self.i,random.randrange(self.l),0)
-		elif self.a==7:
+		elif a==7:
 			raise Exception("BogoSort: Unexpected cycle after finishing")
 
 class InsertionSort(BaseAlgorithm):
@@ -217,18 +220,19 @@ class InsertionSort(BaseAlgorithm):
 	desc="Inserts first unsorted item into sorted subarray\nuntil no unsorted items remain"
 	i2=0
 	def cycle(self,v=None):
-		if self.a==0:
+		a=self.a
+		if a==0:
 			self.a=1
 			self.i+=1
 			if self.i==self.l:
 				return (FIN,)
 			self.i2=self.i-1
 			return (READ,self.i,0)
-		elif self.a==1:
+		elif a==1:
 			self.a=2
 			self.v1=v
 			return (READ,self.i2,0)
-		elif self.a==2:
+		elif a==2:
 			self.v2=v
 			if self.v2<self.v1:
 				self.a=0
@@ -245,10 +249,11 @@ class InsertionSortOOP(BaseAlgorithm):
 	desc="Inserts first unsorted item into sorted bucket\nuntil no unsorted items remain"
 	i2=0
 	def cycle(self,v=None):
-		if self.a==0:
+		a=self.a
+		if a==0:
 			self.a=1
 			return (NEW_BUCK,0,0)
-		elif self.a==1:
+		elif a==1:
 			self.a=2
 			self.i+=1
 			if self.i==self.l:
@@ -256,11 +261,11 @@ class InsertionSortOOP(BaseAlgorithm):
 				return (DEL_BUCK,0)
 			self.i2=self.i-1
 			return (READ,0,0)
-		elif self.a==2:
+		elif a==2:
 			self.a=3
 			self.v1=v
 			return (READ,self.i2,1)
-		elif self.a==3:
+		elif a==3:
 			self.v2=v
 			if self.v2<self.v1:
 				self.a=1
@@ -271,7 +276,7 @@ class InsertionSortOOP(BaseAlgorithm):
 			else:
 				self.i2-=1
 				return (READ,self.i2,1)
-		elif self.a==7:
+		elif a==7:
 			return (FIN,)
 
 class SelectionSort(BaseAlgorithm):
@@ -281,12 +286,13 @@ class SelectionSort(BaseAlgorithm):
 	i2=0
 	i3=0
 	def cycle(self,v=None):
-		if self.a==0:
+		a=self.a
+		if a==0:
 			self.i2=self.i
 			self.v1=None
 			self.a=1
 			return (READ,self.i2,0)
-		elif self.a==1:
+		elif a==1:
 			if self.i+2==self.l:
 				self.a=7
 				return (FIN,)
@@ -308,15 +314,16 @@ class SelectionSortOOP(BaseAlgorithm):
 	i2=0
 	i3=0
 	def cycle(self,v=None):
-		if self.a==0:
+		a=self.a
+		if a==0:
 			self.a=1
 			return (NEW_BUCK,)
-		elif self.a==1:
+		elif a==1:
 			self.i2=0
 			self.v1=None
 			self.a=2
 			return (READ,self.i2,0)
-		elif self.a==2:
+		elif a==2:
 			if self.i==self.l:
 				self.a=7
 				return (DEL_BUCK,0)
@@ -330,7 +337,7 @@ class SelectionSortOOP(BaseAlgorithm):
 			else:
 				self.i2+=1
 				return (READ,self.i2,0)
-		elif self.a==7:
+		elif a==7:
 			return (FIN,)
 
 class OddEvenSort(BaseAlgorithm):
@@ -339,7 +346,8 @@ class OddEvenSort(BaseAlgorithm):
 	odd=False
 	f=None
 	def cycle(self,v=None):
-		if self.a==0:
+		a=self.a
+		if a==0:
 			if self.i+1>=self.l:
 				if self.f==True:
 					return (7,)
@@ -354,11 +362,11 @@ class OddEvenSort(BaseAlgorithm):
 					self.i=0
 			self.a=1
 			return (READ,self.i,0)
-		elif self.a==1:
+		elif a==1:
 			self.v1=v
 			self.a=2
 			return (READ,self.i+1,0)
-		elif self.a==2:
+		elif a==2:
 			self.v2=v
 			self.a=0
 			self.i+=2
@@ -372,68 +380,55 @@ class Reverser(BaseAlgorithm):
 	name="Reverser"
 	desc="reverses the set"
 	def cycle(self,v=None):
-		if self.a==0:
-			self.i+=1
-			if self.i*2>=self.l:
-				return (7,)
-			else:
-				return (SWAP,self.i-1,self.l-self.i,0)
+		self.i+=1
+		if self.i*2>=self.l:
+			return (7,)
+		else:
+			return (SWAP,self.i-1,self.l-self.i,0)
 
 class Shuffler(BaseAlgorithm):
 	name="Shuffler"
 	desc="Shuffles the list"
 	def cycle(self,v=None):
-		if self.a==0:#randomize list, then finish
-			self.i+=1
-			if self.i+1==self.l:
-				self.a=7
-				return (FIN,)
-			else:
-				return (SWAP,self.i-1,random.randrange(self.l),0)
-		elif self.a==7:
-			raise Exception("Randomizer: Unexpected cycle after finishing")
+		self.i+=1
+		if self.i+1==self.l:
+			self.a=7
+			return (FIN,)
+		else:
+			return (SWAP,self.i-1,random.randrange(self.l),0)
 
 class ShufflerOneSide(BaseAlgorithm):
 	name="One-Sided Shuffler"
 	desc="Shuffles the list one-sided\n(not 100% random)"
 	def cycle(self,v=None):
-		if self.a==0:#randomize list, then finish
-			self.i+=1
-			if self.i+1==self.l:
-				self.a=7
-				return (FIN,)
-			else:
-				return (SWAP,self.i-1,random.randrange(self.i,self.l),0)
-		elif self.a==7:
-			raise Exception("Randomizer: Unexpected cycle after finishing")
+		self.i+=1
+		if self.i+1==self.l:
+			self.a=7
+			return (FIN,)
+		else:
+			return (SWAP,self.i-1,random.randrange(self.i,self.l),0)
 
 class ShufflerInsert(BaseAlgorithm):
 	name="Shuffler"
 	desc="Shuffles the list by inserting\n(pretty bad)"
 	def cycle(self,v=None):
-		if self.a==0:#randomize list, then finish
-			self.i+=1
-			if self.i==self.l:
-				self.a=7
-				return (FIN,)
-			else:
-				return (INSERT,self.i-1,random.randrange(self.l),0)
-		elif self.a==7:
-			raise Exception("Randomizer: Unexpected cycle after finishing")
+		self.i+=1
+		if self.i==self.l:
+			self.a=7
+			return (FIN,)
+		else:
+			return (INSERT,self.i-1,random.randrange(self.l),0)
 
 class ShufflerOneSideInsert(BaseAlgorithm):
 	name="Shuffler"
 	desc="Shuffles the list one-sided by inserting\n(very,very bad)"
 	def cycle(self,v=None):
-		if self.a==0:#randomize list, then finish
-			self.i+=1
-			if self.i+1==self.l:
-				self.a=7
-				return (FIN,)
-			else:
-				return (INSERT,self.i-1,random.randrange(self.i+1,self.l),0)
-		elif self.a==7:
-			raise Exception("Randomizer: Unexpected cycle after finishing")
+		self.i+=1
+		if self.i+1==self.l:
+			self.a=7
+			return (FIN,)
+		else:
+			return (INSERT,self.i-1,random.randrange(self.i+1,self.l),0)
 
 shufflers=[ShufflerOneSideInsert,ShufflerInsert,ShufflerOneSide,Shuffler]#shufflers from worst to best
 algs=[BubbleSort,InsertionSort,InsertionSortOOP,SelectionSort,SelectionSortOOP,OddEvenSort,MergeSort,BogoSort]
