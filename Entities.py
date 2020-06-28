@@ -352,9 +352,12 @@ class RadioListPaged(RadioList):
 class Bucket(Entity):
 	def __init__(self,x,y,w,h,itemc,anch=0,scolor=(255,0,0),ecolor=(0,255,255)):
 		self.colorlamb=lambda perc:[int(self.scolor[x]*(perc)+self.ecolor[x]*(1-perc)) for x in range(len(self.scolor))]*2
-		self.getquad=lambda perc:[self.x,self.y+self.h*perc,self.x+self.w-6,self.y+self.h*perc]#,self.x+self.w-6,self.y+self.h*perc2,self.x,self.y+self.h*perc2]
-		self.getract=lambda perc:[self.x+self.w-6,self.y+self.h*perc,self.x+self.w-3,self.y+self.h*perc]#,self.x+self.w-3,self.y+self.h*perc2,self.x+self.w-6,self.y+self.h*perc2]
-		self.getwact=lambda perc:[self.x+self.w-3,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc]#,self.x+self.w,self.y+self.h*perc2,self.x+self.w-3,self.y+self.h*perc2]
+		self.getquad=lambda perc:[self.x,self.y+self.h*perc,self.x+self.w-6,self.y+self.h*perc]
+		self.getquad2=lambda perc,perc2:[self.x,self.y+self.h*perc,self.x+self.w-6,self.y+self.h*perc,self.x+self.w-6,self.y+self.h*perc2,self.x,self.y+self.h*perc2]
+		self.getract=lambda perc:[self.x+self.w-6,self.y+self.h*perc,self.x+self.w-3,self.y+self.h*perc]
+		self.getract2=lambda perc,perc2:[self.x+self.w-6,self.y+self.h*perc,self.x+self.w-3,self.y+self.h*perc,self.x+self.w-3,self.y+self.h*perc2,self.x+self.w-6,self.y+self.h*perc2]
+		self.getwact=lambda perc:[self.x+self.w-3,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc]
+		self.getwact2=lambda perc,perc2:[self.x+self.w-3,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc2,self.x+self.w-3,self.y+self.h*perc2]
 		super().__init__(x,y,w,h,anch,batch=pyglet.graphics.Batch())
 		self.scolor=scolor
 		self.ecolor=ecolor
@@ -368,8 +371,8 @@ class Bucket(Entity):
 		self.recalc_quads()
 		self.racts=set()
 		self.wacts=set()
-		self.grcl=[0,255,0,0,255,0]*self.maxic
-		self.rdcl=[255,0,0,255,0,0]*self.maxic
+		self.grcl=[0,255,0,0,255,0,0,255,0,0,255,0]*self.maxic
+		self.rdcl=[255,0,0,255,0,0,255,0,0,255,0,0]*self.maxic
 	def shuffle(self):
 		shuffle(self.items)
 		self.rendered=False
@@ -378,8 +381,8 @@ class Bucket(Entity):
 		self.rendered=False
 	def recalc_quads(self):
 		self.quads=[self.getquad(i/self.maxic) for i in range(self.maxic)]
-		self.qracts=[self.getract(i/self.maxic) for i in range(self.maxic)]
 		self.qwacts=[self.getwact(i/self.maxic) for i in range(self.maxic)]
+		self.qracts=[self.getract(i/self.maxic) for i in range(self.maxic)]
 	def getvalue(self,i):
 		if i>=self.itemc or i<0:
 			return None
@@ -426,11 +429,48 @@ class Bucket(Entity):
 			raise ValueError("Bucket: itemc is larger than maxic")
 		if self.itemc>0:
 			self.batch.add(2*self.itemc,pyglet.gl.GL_LINES,None,('v2f',functools.reduce(operator.iconcat,self.quads[:self.itemc],[])),('c3B',[cquad for item in self.items for cquad in item[1]]))
-			#multiplying lists is faster than multiplying tuples and much faster than a list or tuple comprehension here, fyi
 			if len(self.racts)>0:
-				self.batch.add(2*len(self.racts),pyglet.gl.GL_LINES,None,('v2f',functools.reduce(operator.iconcat,[self.qracts[act] for act in self.racts],[])),('c3B',self.grcl[:len(self.racts)*6]))
+				racts=self.racts.copy()
+				ractl=[]
+				ractq=[]
+				while len(racts)>0:#group racts to not draw massive amounts of single lines, but big rects instead
+					sact=racts.pop()
+					bact=sact+1
+					while sact-1 in racts:
+						sact-=1
+						racts.remove(sact)
+					while bact in racts:
+						racts.remove(bact)
+						bact+=1
+					if sact+1==bact:
+						ractl.append(sact)
+					else:
+						ractq.append((sact,bact))
+				if len(ractl)>0:
+					self.batch.add(2*len(ractl),pyglet.gl.GL_LINES,None,('v2f',functools.reduce(operator.iconcat,[self.qracts[act] for act in ractl],[])),('c3B',self.grcl[:len(ractl)*6]))
+				if len(ractq)>0:
+					self.batch.add(4*len(ractq),pyglet.gl.GL_QUADS,None,('v2f',functools.reduce(operator.iconcat,[self.getract2(act1/self.maxic,act2/self.maxic) for act1,act2 in ractq],[])),('c3B',self.grcl[:len(ractq)*12]))
 			if len(self.wacts)>0:
-				self.batch.add(2*len(self.wacts),pyglet.gl.GL_LINES,None,('v2f',functools.reduce(operator.iconcat,[self.qwacts[act] for act in self.wacts],[])),('c3B',self.rdcl[:len(self.wacts)*6]))
+				wacts=self.wacts.copy()
+				wactl=[]
+				wactq=[]
+				while len(wacts)>0:#group racts to not draw massive amounts of single lines, but big rects instead
+					sact=wacts.pop()
+					bact=sact+1
+					while sact-1 in wacts:
+						sact-=1
+						wacts.remove(sact)
+					while bact in wacts:
+						wacts.remove(bact)
+						bact+=1
+					if sact+1==bact:
+						wactl.append(sact)
+					else:
+						wactq.append((sact,bact))
+				if len(wactl)>0:
+					self.batch.add(2*len(wactl),pyglet.gl.GL_LINES,None,('v2f',functools.reduce(operator.iconcat,[self.qwacts[act] for act in wactl],[])),('c3B',self.rdcl[:len(wactl)*6]))
+				if len(wactq)>0:
+					self.batch.add(4*len(wactq),pyglet.gl.GL_QUADS,None,('v2f',functools.reduce(operator.iconcat,[self.getwact2(act1/self.maxic,act2/self.maxic) for act1,act2 in wactq],[])),('c3B',self.rdcl[:len(wactq)*12]))
 		self.rendered=True
 	def draw(self):
 		if not self.rendered:
