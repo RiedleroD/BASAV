@@ -136,7 +136,15 @@ class GameWin(pyglet.window.Window):
 		TIME=t
 		del t
 		self.clear()
-		for item in self.labels+self.btns+self.rads+self.edits+self.bucks:
+		for item in self.labels:#003ms
+			item.draw()
+		for item in self.btns:	#306ms
+			item.draw()
+		for item in self.rads:	#227ms
+			item.draw()
+		for item in self.edits:	#074ms
+			item.draw()
+		for item in self.bucks:	#701ms
 			item.draw()
 		self.batch.draw()
 		pyglet.clock.tick()
@@ -190,5 +198,7 @@ window.rads=[	RadioListPaged(WIDTH,HEIGHT-BTNHEIGHT*7,BTNWIDTH,BTNHEIGHT*6,[alg.
 window.edits=[	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"Speed","100",8,batch=window.batch),#Edits
 			  	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*5,BTNWIDTH,BTNHEIGHT,"FPS/UPS","60",8,batch=window.batch)]
 window.bucks=[	Bucket(0,0,WIDTH2,HEIGHT,BUCKLEN)]#buckets
-
-pyglet.app.run()
+try:
+	pyglet.app.run()
+finally:
+	print(*tuple(t.get() for t in profs))

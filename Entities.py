@@ -349,8 +349,8 @@ class RadioListPaged(RadioList):
 			self.next.release()
 
 class Bucket(Entity):
-	def __init__(self,x,y,w,h,itemc,anch=0,scolor=(255,0,0,128),ecolor=(0,255,255,128)):
-		self.colorlamb=lambda perc:tuple(int(self.scolor[x]*(perc)+self.ecolor[x]*(1-perc)) for x in range(len(self.scolor)))
+	def __init__(self,x,y,w,h,itemc,anch=0,scolor=(255,0,0),ecolor=(0,255,255)):
+		self.colorlamb=lambda perc:tuple(int(self.scolor[x]*(perc)+self.ecolor[x]*(1-perc)) for x in range(len(self.scolor)))*2
 		self.getquad=lambda perc:(self.x,self.y+self.h*perc,self.x+self.w-6,self.y+self.h*perc)#,self.x+self.w-6,self.y+self.h*perc2,self.x,self.y+self.h*perc2)
 		self.getract=lambda perc,perc2:(self.x+self.w-6,self.y+self.h*perc,self.x+self.w-3,self.y+self.h*perc,self.x+self.w-3,self.y+self.h*perc2,self.x+self.w-6,self.y+self.h*perc2)
 		self.getwact=lambda perc,perc2:(self.x+self.w-3,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc2,self.x+self.w-3,self.y+self.h*perc2)
@@ -367,6 +367,8 @@ class Bucket(Entity):
 		self.recalc_quads()
 		self.racts=set()
 		self.wacts=set()
+		self.grcl=[0,255,0,0,255,0,0,255,0,0,255,0]*self.maxic
+		self.rdcl=[255,0,0,255,0,0,255,0,0,255,0,0]*self.maxic
 	def shuffle(self):
 		shuffle(self.items)
 		self.rendered=False
@@ -422,12 +424,12 @@ class Bucket(Entity):
 		if self.itemc>self.maxic:
 			raise ValueError("Bucket: itemc is larger than maxic")
 		if self.itemc>0:
-			self.batch.add(2*self.itemc,pyglet.gl.GL_LINES,None,('v2f',tuple(quad for i in range(self.itemc) for quad in self.quads[i])),('c4B',tuple(cquad for item in self.items for cquad in item[1]*2)))
+			self.batch.add(2*self.itemc,pyglet.gl.GL_LINES,None,('v2f',tuple(quad for i in range(self.itemc) for quad in self.quads[i])),('c3B',tuple(cquad for item in self.items for cquad in item[1])))
 			#multiplying lists is faster than multiplying tuples and much faster than a list or tuple comprehension here, fyi
 			if len(self.racts)>0:
-				self.batch.add(4*len(self.racts),pyglet.gl.GL_QUADS,None,('v2f',tuple(quad for act in self.racts for quad in self.qracts[act])),('c3B',[0,255,0,0,255,0,0,255,0,0,255,0]*len(self.racts)))
+				self.batch.add(4*len(self.racts),pyglet.gl.GL_QUADS,None,('v2f',tuple(quad for act in self.racts for quad in self.qracts[act])),('c3B',self.grcl[:len(self.racts)*12]))
 			if len(self.wacts)>0:
-				self.batch.add(4*len(self.wacts),pyglet.gl.GL_QUADS,None,('v2f',tuple(quad for act in self.wacts for quad in self.qwacts[act])),('c3B',[255,0,0,255,0,0,255,0,0,255,0,0]*len(self.wacts)))
+				self.batch.add(4*len(self.wacts),pyglet.gl.GL_QUADS,None,('v2f',tuple(quad for act in self.wacts for quad in self.qwacts[act])),('c3B',self.rdcl[:len(self.wacts)*12]))
 		self.rendered=True
 	def draw(self):
 		if not self.rendered:
