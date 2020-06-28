@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 from CONSTANTS import *
 from random import shuffle
+import functools,operator
 class Entity:
 	def __init__(self,x,y,w,h,anch=0,batch=None):
 		self.w=w
@@ -350,10 +351,10 @@ class RadioListPaged(RadioList):
 
 class Bucket(Entity):
 	def __init__(self,x,y,w,h,itemc,anch=0,scolor=(255,0,0),ecolor=(0,255,255)):
-		self.colorlamb=lambda perc:tuple(int(self.scolor[x]*(perc)+self.ecolor[x]*(1-perc)) for x in range(len(self.scolor)))*2
-		self.getquad=lambda perc:(self.x,self.y+self.h*perc,self.x+self.w-6,self.y+self.h*perc)#,self.x+self.w-6,self.y+self.h*perc2,self.x,self.y+self.h*perc2)
-		self.getract=lambda perc:(self.x+self.w-6,self.y+self.h*perc,self.x+self.w-3,self.y+self.h*perc)#,self.x+self.w-3,self.y+self.h*perc2,self.x+self.w-6,self.y+self.h*perc2)
-		self.getwact=lambda perc:(self.x+self.w-3,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc)#,self.x+self.w,self.y+self.h*perc2,self.x+self.w-3,self.y+self.h*perc2)
+		self.colorlamb=lambda perc:[int(self.scolor[x]*(perc)+self.ecolor[x]*(1-perc)) for x in range(len(self.scolor))]*2
+		self.getquad=lambda perc:[self.x,self.y+self.h*perc,self.x+self.w-6,self.y+self.h*perc]#,self.x+self.w-6,self.y+self.h*perc2,self.x,self.y+self.h*perc2]
+		self.getract=lambda perc:[self.x+self.w-6,self.y+self.h*perc,self.x+self.w-3,self.y+self.h*perc]#,self.x+self.w-3,self.y+self.h*perc2,self.x+self.w-6,self.y+self.h*perc2]
+		self.getwact=lambda perc:[self.x+self.w-3,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc]#,self.x+self.w,self.y+self.h*perc2,self.x+self.w-3,self.y+self.h*perc2]
 		super().__init__(x,y,w,h,anch,batch=pyglet.graphics.Batch())
 		self.scolor=scolor
 		self.ecolor=ecolor
@@ -424,12 +425,12 @@ class Bucket(Entity):
 		if self.itemc>self.maxic:
 			raise ValueError("Bucket: itemc is larger than maxic")
 		if self.itemc>0:
-			self.batch.add(2*self.itemc,pyglet.gl.GL_LINES,None,('v2f',[quad for i in range(self.itemc) for quad in self.quads[i]]),('c3B',[cquad for item in self.items for cquad in item[1]]))
+			self.batch.add(2*self.itemc,pyglet.gl.GL_LINES,None,('v2f',functools.reduce(operator.iconcat,self.quads[:self.itemc],[])),('c3B',[cquad for item in self.items for cquad in item[1]]))
 			#multiplying lists is faster than multiplying tuples and much faster than a list or tuple comprehension here, fyi
 			if len(self.racts)>0:
-				self.batch.add(2*len(self.racts),pyglet.gl.GL_LINES,None,('v2f',[quad for act in self.racts for quad in self.qracts[act]]),('c3B',self.grcl[:len(self.racts)*6]))
+				self.batch.add(2*len(self.racts),pyglet.gl.GL_LINES,None,('v2f',functools.reduce(operator.iconcat,[self.qracts[act] for act in self.racts],[])),('c3B',self.grcl[:len(self.racts)*6]))
 			if len(self.wacts)>0:
-				self.batch.add(2*len(self.wacts),pyglet.gl.GL_LINES,None,('v2f',[quad for act in self.wacts for quad in self.qwacts[act]]),('c3B',self.rdcl[:len(self.wacts)*6]))
+				self.batch.add(2*len(self.wacts),pyglet.gl.GL_LINES,None,('v2f',functools.reduce(operator.iconcat,[self.qwacts[act] for act in self.wacts],[])),('c3B',self.rdcl[:len(self.wacts)*6]))
 		self.rendered=True
 	def draw(self):
 		if not self.rendered:
