@@ -75,7 +75,7 @@ class Entity:
 
 class Label(Entity):
 	def __init__(self,x,y,w,h,text,anch=0,color=(255,255,255,255),bgcolor=(0,0,0,0),size=12,batch=None):
-		self.label=pyglet.text.Label(text,x=0,y=0,color=color,font_size=size,batch=batch)
+		self.label=pyglet.text.Label(text,x=0,y=-size,color=color,font_size=size,batch=batch)
 		self.setText(text)
 		self.setColor(color)
 		self.setBgColor(bgcolor)
@@ -110,6 +110,50 @@ class Label(Entity):
 			pyglet.graphics.draw(4,pyglet.gl.GL_QUADS,self.quad,self.cquad)
 		if self.batch==None:
 			self.label.draw()
+
+class LabelMultiline(Label):
+	def __init__(self,x,y,w,h,text,anch=0,color=(255,255,255,255),bgcolor=(0,0,0,0),size=12,batch=None):
+		self.labels=[pyglet.text.Label(text,x=0,y=-size*1.5,color=color,font_size=size,batch=batch) for line in text.split("\n")]
+		super().__init__(x,y,w,h,text,anch,color,bgcolor,size,batch)
+		del self.label
+	def setColor(self,color):
+		self.color=color
+		for label in self.labels:
+			label.color=self.color
+	def setText(self,text):
+		self.text=text
+		text=text.split("\n")
+		while len(self.labels)<len(text):
+			self.labels.append(pyglet.text.Label("",x=0,y=-self.size*1.5,color=self.color,font_size=self.size,batch=self.batch))
+		self.rendered=False
+		for label in reversed(self.labels):
+			try:
+				label.text=text.pop()
+			except IndexError:
+				label.text=""
+	def render(self):
+		if self.w>0 and self.h>0:
+			self.quad=('v2f',(self.x,self.y,self._x,self.y,self._x,self._y,self.x,self._y))
+			for i,label in enumerate(self.labels):
+				label.x=self.cx
+				label.y=self.cy+self.size*(len(self.labels)-i-1)*1.5
+				label.anchor_x=ANCHORSx[1]
+				label.anchor_y=ANCHORSy[1]
+		else:
+			for i,label in enumerate(self.labels):
+				label.x=self.x
+				label.y=self.y+self.size*(len(self.labels)-i-1)*1.5
+				label.anchor_x=ANCHORSx[self.anch%3]
+				label.anchor_y=ANCHORSy[self.anch//3]
+		self.rendered=True
+	def draw(self):
+		if not self.rendered:
+			self.render()
+		if self.w>0 and self.h>0:
+			pyglet.graphics.draw(4,pyglet.gl.GL_QUADS,self.quad,self.cquad)
+		if self.batch==None:
+			for label in self.labels:
+				label.draw()
 
 class Button(Label):
 	def __init__(self,x,y,w,h,text,anch=0,key=None,size=12,pressedText=None,batch=None):

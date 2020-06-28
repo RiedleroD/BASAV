@@ -142,8 +142,10 @@ class GameWin(pyglet.window.Window):
 			item.draw()
 		for item in self.btns:	#280ms
 			item.draw()
-		for item in self.rads:	#250ms
+		for i,item in enumerate(self.rads):#250ms
 			item.draw()
+			if i==0:
+				self.labels[-1].setText(algs[item.getSelected()].desc)
 		for item in self.edits:	#070ms
 			item.draw()
 		for item in self.bucks:	#700ms
@@ -190,7 +192,8 @@ window.labels=[	Label(WIDTH2,HEIGHT,0,0,"FPS:00",6,batch=window.batch),
 				Label(WIDTH2,HEIGHT-75,0,0,"Insert:00",6,batch=window.batch),
 				Label(WIDTH2,HEIGHT-90,0,0,"Bucket:00",6,batch=window.batch),
 				Label(WIDTH2,HEIGHT-105,0,0,"Pass:00",6,batch=window.batch),
-				Label(WIDTH2,HEIGHT-120,0,0,"Randomness:00",6,batch=window.batch)]
+				Label(WIDTH2,HEIGHT-120,0,0,"Randomness:00",6,batch=window.batch),
+				LabelMultiline(WIDTH2,0,0,0,"Sorting\nalgorithm\nDescription",0,batch=window.batch)]
 window.btns=[	ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",8,pressedText="Stop",batch=window.batch),
 			 	Button(WIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Shuffle",8,batch=window.batch),
 			 	Button(WIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Reverse",8,batch=window.batch),

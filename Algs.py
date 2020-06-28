@@ -14,7 +14,7 @@ FIN=7
 
 class BaseAlgorithm():
 	name="Base Algorithm"
-	desc="This is the Base algorithm, it doesn't sort, but lays the foundation for other algorithms."
+	desc="This is the Base algorithm,\nit doesn't sort, but lays the foundation\nfor other algorithms."
 	s=0#step counter; optional
 	a=0#current action; optional
 	b=0#current bucket; optional
@@ -40,7 +40,7 @@ class BaseAlgorithm():
 
 class BubbleSort(BaseAlgorithm):
 	name="Bubble Sort"
-	desc="Bubble Sort, checks two adjacent items, if the first is greater, swap them.\nThen do this for each index in the list, until the list is sorted"
+	desc="Bubble Sort checks two adjacent items.\nIf the first is greater, swap them.\nThen do this for each index in the list, until the list is sorted"
 	def cycle(self,v=None):
 		if self.a==0:#read current item
 			self.a=1
@@ -80,7 +80,7 @@ class BubbleSort(BaseAlgorithm):
 #TODO: MergeSort doesn't work for numbers that aren't 2**n, though it is almost fixed
 class MergeSort(BaseAlgorithm):
 	name="Merge Sort"
-	description="Merges buckets until sorted"
+	desc="Merges buckets until sorted"
 	s=1#merge block size
 	il=0#left bucket index
 	ir=0#right bucket index
@@ -178,7 +178,7 @@ class MergeSort(BaseAlgorithm):
 
 class BogoSort(BaseAlgorithm):
 	name="Bogo Sort"
-	description="Randomizes the whole set, then checks if it's sorted"
+	desc="Randomizes the whole set, then checks if it's sorted"
 	def cycle(self,v=None):
 		if self.a==0:#read item
 			self.a=1
@@ -214,7 +214,7 @@ class BogoSort(BaseAlgorithm):
 
 class InsertionSort(BaseAlgorithm):
 	name="Insertion Sort"
-	description="Inserts first unsorted item into sorted array until no unsorted items remain"
+	desc="Inserts first unsorted item into\nsorted array until no unsorted items remain"
 	i2=0
 	i3=0
 	def cycle(self,v=None):
@@ -243,7 +243,7 @@ class InsertionSort(BaseAlgorithm):
 
 class SelectionSort(BaseAlgorithm):
 	name="SelectionSort"
-	description="Swaps the smalles unsorted item with the first unsorted item until the list is sorted"
+	desc="Swaps the smalles unsorted item with the first unsorted item\nuntil the list is sorted."
 	i=0
 	i2=0
 	i3=0
@@ -270,7 +270,7 @@ class SelectionSort(BaseAlgorithm):
 
 class SelectionSortOOP(BaseAlgorithm):
 	name="SelectionSort OOP"
-	description="Puts the smallest item in bucket 0 to the end of bucket 1 until bucket 0 is empty"
+	desc="Puts the smallest item in bucket 0 to the end of bucket 1\nuntil bucket 0 is empty."
 	i=0
 	i2=0
 	i3=0
@@ -302,7 +302,7 @@ class SelectionSortOOP(BaseAlgorithm):
 
 class OddEvenSort(BaseAlgorithm):
 	name="Odd-Even Sort"
-	desc="Like bubble sort, but parallelalizable. Too bad that's not possible here."
+	desc="Like bubble sort, but parallelalizable.\nToo bad that's not possible here."
 	odd=False
 	f=None
 	def cycle(self,v=None):
@@ -337,7 +337,7 @@ class OddEvenSort(BaseAlgorithm):
 
 class Reverser(BaseAlgorithm):
 	name="Reverser"
-	description="reverses the set"
+	desc="reverses the set"
 	def cycle(self,v=None):
 		if self.a==0:
 			self.i+=1
@@ -348,7 +348,7 @@ class Reverser(BaseAlgorithm):
 
 class Shuffler(BaseAlgorithm):
 	name="Shuffler"
-	description="Shuffles the list"
+	desc="Shuffles the list"
 	def cycle(self,v=None):
 		if self.a==0:#randomize list, then finish
 			self.i+=1
@@ -362,7 +362,7 @@ class Shuffler(BaseAlgorithm):
 
 class ShufflerOneSide(BaseAlgorithm):
 	name="One-Sided Shuffler"
-	description="Shuffles the list one-sided (not 100% random)"
+	desc="Shuffles the list one-sided\n(not 100% random)"
 	def cycle(self,v=None):
 		if self.a==0:#randomize list, then finish
 			self.i+=1
@@ -376,7 +376,7 @@ class ShufflerOneSide(BaseAlgorithm):
 
 class ShufflerInsert(BaseAlgorithm):
 	name="Shuffler"
-	description="Shuffles the list by inserting (pretty bad)"
+	desc="Shuffles the list by inserting\n(pretty bad)"
 	def cycle(self,v=None):
 		if self.a==0:#randomize list, then finish
 			self.i+=1
@@ -390,7 +390,7 @@ class ShufflerInsert(BaseAlgorithm):
 
 class ShufflerOneSideInsert(BaseAlgorithm):
 	name="Shuffler"
-	description="Shuffles the list one-sided by inserting (very,very bad)"
+	desc="Shuffles the list one-sided by inserting\n(very,very bad)"
 	def cycle(self,v=None):
 		if self.a==0:#randomize list, then finish
 			self.i+=1
