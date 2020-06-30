@@ -466,10 +466,11 @@ class Bucket(Entity):
 			raise Exception("Bucket: out-of-scope call to insert_from")
 	def render(self):
 		self.batch=pyglet.graphics.Batch()
-		if self.itemc>self.maxic:
+		maxic=self.maxic
+		if self.itemc>maxic:
 			raise ValueError("Bucket: itemc is larger than maxic")
 		if self.itemc>0:
-			iteml,itemq=helper.getrenderbuck(self.items.copy())
+			iteml,itemq=helper.getrenderbuck(self.items)
 			if len(iteml)>0:
 				self.batch.add(2*len(iteml),pyglet.gl.GL_LINES,None,('v2f',functools.reduce(operator.iconcat,[self.quads[i] for i in iteml],[])),('c3B',[cquad for i in iteml for cquad in COLORS[self.items[i]]]))
 			if len(itemq)>0:
