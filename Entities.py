@@ -470,7 +470,7 @@ class Bucket(Entity):
 		if self.itemc>maxic:
 			raise ValueError("Bucket: itemc is larger than maxic")
 		if self.itemc>0:
-			iteml,itemq=helper.getrenderbuck(self.items)
+			iteml,itemq=helper.getrenderbuck(self.items,0)
 			if len(iteml)>0:
 				self.batch.add(2*len(iteml),pyglet.gl.GL_LINES,None,('v2f',functools.reduce(operator.iconcat,[self.quads[i] for i in iteml],[])),('c3B',[cquad for i in iteml for cquad in COLORS[self.items[i]]]))
 			if len(itemq)>0:
@@ -478,21 +478,7 @@ class Bucket(Entity):
 			
 			if len(self.racts)>0:
 				racts=self.racts.copy()
-				ractl=[]
-				ractq=[]
-				while len(racts)>0:#group racts to not draw massive amounts of single lines, but big rects instead
-					sact=racts.pop()
-					bact=sact+1
-					while sact-1 in racts:
-						sact-=1
-						racts.remove(sact)
-					while bact in racts:
-						racts.remove(bact)
-						bact+=1
-					if sact+1==bact:
-						ractl.append(sact)
-					else:
-						ractq.append((sact,bact))
+				ractl,ractq=helper.getrenderbuck(self.racts,1)
 				if len(ractl)>0:
 					self.batch.add(2*len(ractl),pyglet.gl.GL_LINES,None,('v2f',functools.reduce(operator.iconcat,[self.qracts[act] for act in ractl],[])),('c3B',self.grcl[:len(ractl)*6]))
 				if len(ractq)>0:

@@ -162,51 +162,140 @@ struct ullint_vector__ullint_pair_vector__pair get_render_buck(unsigned long lon
 
 static PyObject* getrenderbuck(PyObject* self, PyObject* args) {
 	PyObject* pytems;
-	if(!PyArg_ParseTuple(args, "O", &pytems)) return NULL;
+	long mode;
+	if(!PyArg_ParseTuple(args, "Oi", &pytems, &mode)) return NULL;
 
-	const Py_ssize_t len = PyList_Size(pytems);
-	unsigned long long items[len];
-
-	for(Py_ssize_t i = 0; i < len; ++i) {
-		items[i] = PyLong_AsUnsignedLongLong(PyList_GetItem(pytems, i));
+	Py_ssize_t len;
+	uint8_t type;
+	if(PySet_Check(pytems)){
+		type=1;
+	}else if(PyList_Check(pytems)){
+		type=2;
+	}else if(PyTuple_Check(pytems)){
+		type=3;
+	}else{
+		type=0;
 	}
+	switch(type){
+		case 0:
+			printf("getrenderbuck only accepts sets, tuples and lists");
+			exit(1);
+		case 1:
+			len=PySet_Size(pytems);
+			pytems=PyObject_CallMethod(pytems,"copy",NULL);//copy set so original set is unaffected by pops
+			break;
+		case 2:
+			len=PyList_Size(pytems);
+			break;
+		case 3:
+			len=PyTuple_Size(pytems);
+			break;
+	}
+	if(mode==0){
+		unsigned long long items[len];
+		switch(type){
+			case 1:
+				for(Py_ssize_t i = 0; i < len; ++i) {
+					items[i] = PyLong_AsUnsignedLongLong(PySet_Pop(pytems));
+				}
+				break;
+			case 2:
+				for(Py_ssize_t i = 0; i < len; ++i) {
+					items[i] = PyLong_AsUnsignedLongLong(PyList_GetItem(pytems, i));
+				}
+				break;
+			case 3:
+				for(Py_ssize_t i = 0; i < len; ++i) {
+					items[i] = PyLong_AsUnsignedLongLong(PyTuple_GetItem(pytems, i));
+				}
+				break;
+		}
 
-	const struct ullint_vector__ullint_pair_vector__pair result = get_render_buck(items, items + len);
+		const struct ullint_vector__ullint_pair_vector__pair result = get_render_buck(items, items + len);
 
-	if(result.first_begin == NULL) {
-		PyErr_NoMemory();
+		if(result.first_begin == NULL) {
+			PyErr_NoMemory();
+			return NULL;
+		}
+
+		unsigned long long* iteml = result.first_begin;
+		const size_t lsize = result.first_end - iteml;
+		struct ullint_pair* itemq = result.second_begin;
+		const size_t qsize = result.second_end - itemq;
+
+		PyObject* const pyteml = PyTuple_New(lsize);
+		PyObject* const pytemq = PyTuple_New(qsize);
+		size_t i;
+		for(i = 0; i < lsize; ++i){
+			PyTuple_SetItem(pyteml, i, PyLong_FromUnsignedLongLong(iteml[i]));
+		}
+
+		PyObject* tup;
+		for(i = 0; i < qsize; ++i){
+			tup = PyTuple_New(2);
+			PyTuple_SetItem(tup, 0, PyLong_FromLongLong(itemq[i].first));
+			PyTuple_SetItem(tup, 1, PyLong_FromLongLong(itemq[i].second));
+			PyTuple_SetItem(pytemq, i, tup);
+		}
+
+		tup = PyTuple_New(2);
+		PyTuple_SetItem(tup, 0, pyteml);
+		PyTuple_SetItem(tup, 1, pytemq);
+
+		free(iteml);
+		free(itemq);
+
+		return tup;
+	}else if(mode==1){//not converting the set to a c array and back to a tuple is faster here
+		if(type!=1){
+			return NULL;
+		}
+		unsigned long long sact, bact, actl[len];
+		struct ullint_pair actq[len];
+		Py_ssize_t i,il=0,iq=0;
+		for(i=0;i<len;i++){
+			sact=PyLong_AsLongLong(PySet_Pop(pytems));
+			bact=sact+1;
+			while(PySet_Discard(pytems,PyLong_FromLongLong(sact-1))) sact--;
+			while(PySet_Discard(pytems,PyLong_FromLongLong(bact))) bact++;
+			if(sact+1==bact){
+				actl[il]=sact;
+				il++;
+			}else{
+				actq[iq]=(struct ullint_pair){
+					.first=sact,
+					.second=bact
+					};
+				iq++;
+			}
+		}
+		PyObject* tup;
+		Py_ssize_t qsize=sizeof(actq)/sizeof(struct ullint_pair);
+		Py_ssize_t lsize=sizeof(actl)/sizeof(long long);
+		PyObject* pactq=PyTuple_New(qsize);
+		for(i = 0; i < qsize; ++i){
+			tup = PyTuple_New(2);
+			PyTuple_SetItem(tup, 0, PyLong_FromLongLong(actq[i].first));
+			PyTuple_SetItem(tup, 1, PyLong_FromLongLong(actq[i].second));
+			PyTuple_SetItem(pactq, i, tup);
+		}
+		PyObject* pactl=PyTuple_New(lsize);
+		for(i = 0; i < lsize; ++i){
+			PyTuple_SetItem(pactl, i, PyLong_FromUnsignedLongLong(actl[i]));
+		}
+		tup = PyTuple_New(2);
+		PyTuple_SetItem(tup, 0, pactl);
+		PyTuple_SetItem(tup, 1, pactq);
+
+		free(actl);
+		free(actq);
+
+		return tup;
+	}else{
 		return NULL;
 	}
-
-	unsigned long long* iteml = result.first_begin;
-	const size_t lsize = result.first_end - iteml;
-	struct ullint_pair* itemq = result.second_begin;
-	const size_t qsize = result.second_end - itemq;
-
-	PyObject* const pyteml = PyTuple_New(lsize);
-	PyObject* const pytemq = PyTuple_New(qsize);
-	size_t i;
-	for(i = 0; i < lsize; ++i){
-		PyTuple_SetItem(pyteml, i, PyLong_FromUnsignedLongLong(iteml[i]));
-	}
-
-	PyObject* tup;
-	for(i = 0; i < qsize; ++i){
-		tup = PyTuple_New(2);
-		PyTuple_SetItem(tup, 0, PyLong_FromLongLong(itemq[i].first));
-		PyTuple_SetItem(tup, 1, PyLong_FromLongLong(itemq[i].second));
-		PyTuple_SetItem(pytemq, i, tup);
-	}
-
-	tup = PyTuple_New(2);
-	PyTuple_SetItem(tup, 0, pyteml);
-	PyTuple_SetItem(tup, 1, pytemq);
-
-	free(iteml);
-	free(itemq);
-
-	return tup;
 }
+
 
 static PyMethodDef HelperMethods[] = {
 	{"getrenderbuck", getrenderbuck, METH_VARARGS, "Calculate stuff"},
