@@ -163,7 +163,7 @@ struct ullint_vector__ullint_pair_vector__pair get_render_buck(unsigned long lon
 static PyObject* getrenderbuck(PyObject* self, PyObject* args) {
 	PyObject* pytems;
 	long mode;
-	if(!PyArg_ParseTuple(args, "Oi", &pytems, &mode)) return NULL;
+	if(!PyArg_ParseTuple(args, "Ol", &pytems, &mode)) return NULL;
 
 	Py_ssize_t len;
 	uint8_t type;
@@ -233,8 +233,8 @@ static PyObject* getrenderbuck(PyObject* self, PyObject* args) {
 		PyObject* tup;
 		for(i = 0; i < qsize; ++i){
 			tup = PyTuple_New(2);
-			PyTuple_SetItem(tup, 0, PyLong_FromLongLong(itemq[i].first));
-			PyTuple_SetItem(tup, 1, PyLong_FromLongLong(itemq[i].second));
+			PyTuple_SetItem(tup, 0, PyLong_FromUnsignedLongLong(itemq[i].first));
+			PyTuple_SetItem(tup, 1, PyLong_FromUnsignedLongLong(itemq[i].second));
 			PyTuple_SetItem(pytemq, i, tup);
 		}
 
@@ -248,16 +248,23 @@ static PyObject* getrenderbuck(PyObject* self, PyObject* args) {
 		return tup;
 	}else if(mode==1){//not converting the set to a c array and back to a tuple is faster here
 		if(type!=1){
+			printf("input has to be set in mode 1");
 			return NULL;
 		}
 		unsigned long long sact, bact, actl[len];
 		struct ullint_pair actq[len];
 		Py_ssize_t i,il=0,iq=0;
 		for(i=0;i<len;i++){
-			sact=PyLong_AsLongLong(PySet_Pop(pytems));
+			sact=PyLong_AsUnsignedLongLong(PySet_Pop(pytems));
 			bact=sact+1;
-			while(PySet_Discard(pytems,PyLong_FromLongLong(sact-1))) sact--;
-			while(PySet_Discard(pytems,PyLong_FromLongLong(bact))) bact++;
+			while(PySet_Discard(pytems,PyLong_FromUnsignedLongLong(sact-1))==1){
+				sact--;
+				i++;
+			}
+			while(PySet_Discard(pytems,PyLong_FromUnsignedLongLong(bact))){
+				bact++;
+				i++;
+			}
 			if(sact+1==bact){
 				actl[il]=sact;
 				il++;
@@ -270,28 +277,29 @@ static PyObject* getrenderbuck(PyObject* self, PyObject* args) {
 			}
 		}
 		PyObject* tup;
+		
 		Py_ssize_t qsize=sizeof(actq)/sizeof(struct ullint_pair);
-		Py_ssize_t lsize=sizeof(actl)/sizeof(long long);
+		Py_ssize_t lsize=sizeof(actl)/sizeof(unsigned long long);
 		PyObject* pactq=PyTuple_New(qsize);
 		for(i = 0; i < qsize; ++i){
 			tup = PyTuple_New(2);
-			PyTuple_SetItem(tup, 0, PyLong_FromLongLong(actq[i].first));
-			PyTuple_SetItem(tup, 1, PyLong_FromLongLong(actq[i].second));
+			PyTuple_SetItem(tup, 0, PyLong_FromUnsignedLongLong(actq[i].first));
+			PyTuple_SetItem(tup, 1, PyLong_FromUnsignedLongLong(actq[i].second));
 			PyTuple_SetItem(pactq, i, tup);
 		}
+		
 		PyObject* pactl=PyTuple_New(lsize);
 		for(i = 0; i < lsize; ++i){
 			PyTuple_SetItem(pactl, i, PyLong_FromUnsignedLongLong(actl[i]));
 		}
+		
 		tup = PyTuple_New(2);
 		PyTuple_SetItem(tup, 0, pactl);
 		PyTuple_SetItem(tup, 1, pactq);
-
-		free(actl);
-		free(actq);
-
+		
 		return tup;
 	}else{
+		printf("Non-valid mode");
 		return NULL;
 	}
 }
