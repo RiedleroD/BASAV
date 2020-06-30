@@ -150,6 +150,8 @@ struct ullint_vector__ullint_pair_vector__pair get_render_buck(unsigned long lon
 	// shrinking the vector capacity to the size; removing unused storage
 
 	if(iteml_begin == iteml_end) {
+		// empty case
+
 		unsigned long long* const tmp = realloc(iteml_begin, sizeof(unsigned long long) * 1);
 		if(tmp == NULL) {
 			int tmperrno = errno;
@@ -159,8 +161,7 @@ struct ullint_vector__ullint_pair_vector__pair get_render_buck(unsigned long lon
 			_return_err;
 		}
 
-		iteml_begin = tmp;
-		iteml_end = iteml_begin + 1;
+		iteml_end = (iteml_begin = tmp);
 	} else if(iteml_end != iteml_cap_end) {
 		const size_t new_cap = (iteml_end - iteml_begin);
 
@@ -178,6 +179,8 @@ struct ullint_vector__ullint_pair_vector__pair get_render_buck(unsigned long lon
 	}
 
 	if(itemq_begin == itemq_end) {
+		// empty case
+
 		struct ullint_pair* const tmp = realloc(itemq_begin, sizeof(unsigned long long) * 1);
 		if(tmp == NULL) {
 			int tmperrno = errno;
@@ -187,8 +190,7 @@ struct ullint_vector__ullint_pair_vector__pair get_render_buck(unsigned long lon
 			_return_err;
 		}
 
-		itemq_begin = tmp;
-		itemq_end = itemq_begin + 1;
+		itemq_end = (itemq_begin = tmp);
 	} if(itemq_end != itemq_cap_end) {
 		const size_t new_cap = (itemq_end - itemq_begin);
 
