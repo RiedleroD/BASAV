@@ -2,7 +2,7 @@
 from distutils.core import setup, Extension
 
 #run the command below in this directory to compile the helper module
-#python3 setup.py build_ext --inplace
+#python3 init.py build_ext --inplace
 
 def main():
 	setup(name="helper",
