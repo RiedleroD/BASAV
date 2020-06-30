@@ -477,29 +477,13 @@ class Bucket(Entity):
 				self.batch.add(4*len(itemq),pyglet.gl.GL_QUADS,None,('v2f',functools.reduce(operator.iconcat,[self.getquad2(sit/maxic,bit/maxic) for sit,bit in itemq],[])),('c3B',[cquad for sit,bit in itemq for cquad in COLORS[self.items[sit]]+COLORS[self.items[bit-1]]]))
 			
 			if len(self.racts)>0:
-				racts=self.racts.copy()
 				ractl,ractq=helper.getrenderbuck(self.racts,1)
 				if len(ractl)>0:
 					self.batch.add(2*len(ractl),pyglet.gl.GL_LINES,None,('v2f',functools.reduce(operator.iconcat,[self.qracts[act] for act in ractl],[])),('c3B',self.grcl[:len(ractl)*6]))
 				if len(ractq)>0:
 					self.batch.add(4*len(ractq),pyglet.gl.GL_QUADS,None,('v2f',functools.reduce(operator.iconcat,[self.getract2(sact/maxic,bact/maxic) for sact,bact in ractq],[])),('c3B',self.grcl[:len(ractq)*12]))
 			if len(self.wacts)>0:
-				wacts=self.wacts.copy()
-				wactl=[]
-				wactq=[]
-				while len(wacts)>0:#group wacts to not draw massive amounts of single lines, but big rects instead
-					sact=wacts.pop()
-					bact=sact+1
-					while sact-1 in wacts:
-						sact-=1
-						wacts.remove(sact)
-					while bact in wacts:
-						wacts.remove(bact)
-						bact+=1
-					if sact+1==bact:
-						wactl.append(sact)
-					else:
-						wactq.append((sact,bact))
+				wactl,wactq=helper.getrenderbuck(self.wacts,1)
 				if len(wactl)>0:
 					self.batch.add(2*len(wactl),pyglet.gl.GL_LINES,None,('v2f',functools.reduce(operator.iconcat,[self.qwacts[act] for act in wactl],[])),('c3B',self.rdcl[:len(wactl)*6]))
 				if len(wactq)>0:

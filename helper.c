@@ -276,20 +276,18 @@ static PyObject* getrenderbuck(PyObject* self, PyObject* args) {
 				iq++;
 			}
 		}
-		PyObject* tup;
 		
-		Py_ssize_t qsize=sizeof(actq)/sizeof(struct ullint_pair);
-		Py_ssize_t lsize=sizeof(actl)/sizeof(unsigned long long);
-		PyObject* pactq=PyTuple_New(qsize);
-		for(i = 0; i < qsize; ++i){
+		PyObject* tup;
+		PyObject* pactq=PyTuple_New(iq);
+		for(i = 0; i < iq; ++i){
 			tup = PyTuple_New(2);
 			PyTuple_SetItem(tup, 0, PyLong_FromUnsignedLongLong(actq[i].first));
 			PyTuple_SetItem(tup, 1, PyLong_FromUnsignedLongLong(actq[i].second));
 			PyTuple_SetItem(pactq, i, tup);
 		}
 		
-		PyObject* pactl=PyTuple_New(lsize);
-		for(i = 0; i < lsize; ++i){
+		PyObject* pactl=PyTuple_New(il);
+		for(i = 0; i < il; ++i){
 			PyTuple_SetItem(pactl, i, PyLong_FromUnsignedLongLong(actl[i]));
 		}
 		
