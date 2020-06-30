@@ -2,6 +2,7 @@
 import os,sys,pyglet
 from pyglet import window as pgw
 from time import time
+import helper
 
 ANCHORSy=("bottom","center","top")
 ANCHORSx=("left","center","right")

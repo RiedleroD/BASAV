@@ -469,25 +469,7 @@ class Bucket(Entity):
 		if self.itemc>self.maxic:
 			raise ValueError("Bucket: itemc is larger than maxic")
 		if self.itemc>0:
-			maxic=self.maxic
-			items=self.items.copy()
-			iteml=[]
-			itemq=[]
-			sindex=0
-			bindex=0
-			while len(items)>0:#group racts to not draw massive amounts of single lines, but big rects instead
-				sit=items.pop(0)
-				bit=sit+1
-				bindex=sindex+1
-				while len(items)>0 and bit==items[0]:
-					bit+=1
-					bindex+=1
-					items.pop(0)
-				if sit+1==bit:
-					iteml.append(sindex)
-				else:
-					itemq.append((sindex,bindex))
-				sindex=bindex
+			iteml,itemq=helper.getrenderbuck(self.items.copy())
 			if len(iteml)>0:
 				self.batch.add(2*len(iteml),pyglet.gl.GL_LINES,None,('v2f',functools.reduce(operator.iconcat,[self.quads[i] for i in iteml],[])),('c3B',[cquad for i in iteml for cquad in COLORS[self.items[i]]]))
 			if len(itemq)>0:
