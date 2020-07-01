@@ -577,6 +577,81 @@ class RadixLSDB4OOP(BaseAlgorithm):
 				self.a=0
 				return self.cycle()
 
+class RadixLSDB10(BaseAlgorithm):
+	name="Radix LSD 10"
+	desc="Sorts by least significant digit in base 10."
+	maxb=10
+	curb=1
+	i=None
+	def cycle(self,v=None):
+		a=self.a
+		if a==0:
+			if self.i==None:
+				self.i=[0 for x in range(10)]
+			if self.i[0]==self.l:
+				self.i=[0 for i in range(10)]
+				self.curb*=10
+			if self.curb>=self.maxb:
+				return (FIN,)
+			self.a=1
+			return (READ,self.i[0],0)
+		elif a==1:
+			while v>self.maxb:
+				self.maxb*=10
+			self.a=0
+			digit=9-(v//self.curb)%10#actually the inverse of the digit, but it would reverse the list otherwise
+			for i in range(digit+1):
+				self.i[i]+=1
+			if digit==0:
+				return self.cycle()
+			else:
+				return (INSERT,self.i[0]-1,self.i[digit]-1,0)
+
+class RadixLSDB10OOP(BaseAlgorithm):
+	name="Radix LSD 10 OOP"
+	desc="Sorts by least significant digit in base 10 out-of-place."
+	maxb=0
+	curb=1
+	i=None
+	def cycle(self,v=None):
+		a=self.a
+		if a==0:
+			if self.maxb<10:
+				self.maxb+=1
+				return (NEW_BUCK,)
+			if self.i==None:
+				self.i=[0 for x in range(10)]
+			if sum(self.i)==self.l:
+				self.curb*=10
+				self.a=2
+				return self.cycle()
+			if self.curb>=self.maxb:
+				self.maxb=0
+				self.a=3
+				return self.cycle()
+			self.a=1
+			return (READ,0,0)
+		elif a==1:
+			while v>self.maxb:
+				self.maxb*=10
+			self.a=0
+			digit=9-(v//self.curb)%10#actually the inverse of the digit, but it would reverse the list otherwise
+			self.i[digit]+=1
+			return (BUCKINSERT,0,0,self.i[digit]-1,digit+1)
+		elif a==2:
+			for i in range(10):
+				if self.i[i]>0:
+					self.i[i]-=1
+					return (BUCKINSERT,0,i+1,self.l-sum(self.i)-1,0)
+			self.a=0
+			return self.cycle()
+		elif a==3:
+			if self.maxb<10:
+				self.maxb+=1
+				return (DEL_BUCK,1)
+			else:
+				return (FIN,)
+
 class Reverser(BaseAlgorithm):
 	name="Reverser"
 	desc="reverses the set"
@@ -632,4 +707,13 @@ class ShufflerOneSideInsert(BaseAlgorithm):
 			return (INSERT,self.i-1,random.randrange(self.i+1,self.l),0)
 
 shufflers=[ShufflerOneSideInsert,ShufflerInsert,ShufflerOneSide,Shuffler]#shufflers from worst to best
-algs=[BubbleSort,InsertionSort,InsertionSortOOP,SelectionSort,SelectionSortOOP,OddEvenSort,RadixLSDB2,RadixLSDB2OOP,RadixLSDB4,RadixLSDB4OOP,MergeSort,BogoSort]
+algs=[
+	BubbleSort,
+	InsertionSort,InsertionSortOOP,
+	SelectionSort,SelectionSortOOP,
+	OddEvenSort,
+	RadixLSDB2,RadixLSDB2OOP,
+	RadixLSDB4,RadixLSDB4OOP,
+	RadixLSDB10,RadixLSDB10OOP,
+	MergeSort,
+	BogoSort]
