@@ -376,6 +376,66 @@ class OddEvenSort(BaseAlgorithm):
 			else:
 				return self.cycle()
 
+class RadixLSDB2OOP(BaseAlgorithm):
+	name="Radix LSD 2 OOP"
+	desc="Sorts by least significant digit in base 2 out of place."
+	maxb=2
+	curb=1
+	i1=0
+	i2=0
+	def cycle(self,v=None):
+		a=self.a
+		if a==0:
+			self.a=1
+			return (NEW_BUCK,)
+		elif a==1:
+			self.a=2
+			return (NEW_BUCK,)
+		elif a==2:
+			if self.i==self.l:
+				self.i+=1
+				self.a=4
+				return self.cycle()
+			if self.curb>self.maxb:
+				self.a=6
+				return (DEL_BUCK,1)
+			self.a=3
+			return (READ,0,0)
+		elif a==3:
+			self.a=2
+			self.i+=1
+			while v>self.maxb:
+				self.maxb*=2
+			if v & self.curb:
+				self.i1+=1
+				return (BUCKINSERT,0,0,self.i1-1,1)
+			else:
+				self.i2+=1
+				return (BUCKINSERT,0,0,self.i2-1,2)
+		elif a==4:
+			self.i-=1
+			if self.i2>0:
+				self.i2-=1
+				return (BUCKINSERT,0,2,self.l-self.i,0)
+			else:
+				self.a=5
+				self.i+=1
+				return self.cycle()
+		elif a==5:
+			self.i-=1
+			if self.i1>0:
+				self.i1-=1
+				return (BUCKINSERT,0,1,self.l-self.i,0)
+			else:
+				self.curb*=2
+				self.a=2
+				return self.cycle()
+		elif a==6:
+			self.a=7
+			return (DEL_BUCK,1)
+		elif a==7:
+			return (FIN,)
+
 class Reverser(BaseAlgorithm):
 	name="Reverser"
 	desc="reverses the set"
@@ -431,4 +491,4 @@ class ShufflerOneSideInsert(BaseAlgorithm):
 			return (INSERT,self.i-1,random.randrange(self.i+1,self.l),0)
 
 shufflers=[ShufflerOneSideInsert,ShufflerInsert,ShufflerOneSide,Shuffler]#shufflers from worst to best
-algs=[BubbleSort,InsertionSort,InsertionSortOOP,SelectionSort,SelectionSortOOP,OddEvenSort,MergeSort,BogoSort]
+algs=[BubbleSort,InsertionSort,InsertionSortOOP,SelectionSort,SelectionSortOOP,OddEvenSort,RadixLSDB2OOP,MergeSort,BogoSort]
