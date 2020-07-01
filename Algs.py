@@ -376,230 +376,31 @@ class OddEvenSort(BaseAlgorithm):
 			else:
 				return self.cycle()
 
-class RadixLSDB2(BaseAlgorithm):
-	name="Radix LSD 2"
-	desc="Sorts by least significant digit in base 2."
-	maxb=2
-	curb=1
-	i1=0
-	def cycle(self,v=None):
-		a=self.a
-		if a==0:
-			if self.i==self.l:
-				self.i=0
-				self.i1=0
-				self.curb*=2
-			if self.curb>=self.maxb:
-				return (FIN,)
-			self.a=1
-			return (READ,self.i,0)
-		elif a==1:
-			self.a=0
-			self.i+=1
-			while v>self.maxb:
-				self.maxb*=2
-			if v & self.curb:
-				return self.cycle()
-			else:
-				self.i1+=1
-				if self.i1==self.i:
-					return self.cycle()
-				else:
-					return (INSERT,self.i-1,self.i1-1,0)
-
-class RadixLSDB2OOP(BaseAlgorithm):
-	name="Radix LSD 2 OOP"
-	desc="Sorts by least significant digit in base 2 out of place."
-	maxb=2
-	curb=1
-	i1=0
-	i2=0
-	def cycle(self,v=None):
-		a=self.a
-		if a==0:
-			self.a=1
-			return (NEW_BUCK,)
-		elif a==1:
-			self.a=2
-			return (NEW_BUCK,)
-		elif a==2:
-			if self.i==self.l:
-				self.i+=1
-				self.a=4
-				return self.cycle()
-			if self.curb>=self.maxb:
-				self.a=6
-				return (DEL_BUCK,1)
-			self.a=3
-			return (READ,0,0)
-		elif a==3:
-			self.a=2
-			self.i+=1
-			while v>self.maxb:
-				self.maxb*=2
-			if v & self.curb:
-				self.i1+=1
-				return (BUCKINSERT,0,0,self.i1-1,1)
-			else:
-				self.i2+=1
-				return (BUCKINSERT,0,0,self.i2-1,2)
-		elif a==4:
-			self.i-=1
-			if self.i2>0:
-				self.i2-=1
-				return (BUCKINSERT,0,2,self.l-self.i,0)
-			else:
-				self.a=5
-				self.i+=1
-				return self.cycle()
-		elif a==5:
-			self.i-=1
-			if self.i1>0:
-				self.i1-=1
-				return (BUCKINSERT,0,1,self.l-self.i,0)
-			else:
-				self.curb*=2
-				self.a=2
-				return self.cycle()
-		elif a==6:
-			self.a=7
-			return (DEL_BUCK,1)
-		elif a==7:
-			return (FIN,)
-
-class RadixLSDB4(BaseAlgorithm):
-	name="Radix LSD 4"
-	desc="Sorts by least significant digit in base 4."
-	maxb=4
-	curb=1
-	i1=0
-	i2=0
-	i3=0
-	def cycle(self,v=None):
-		a=self.a
-		if a==0:
-			if self.i==self.l:
-				self.i=0
-				self.i1=0
-				self.i2=0
-				self.i3=0
-				self.curb*=4
-			if self.curb>=self.maxb:
-				return (FIN,)
-			self.a=1
-			return (READ,self.i,0)
-		elif a==1:
-			while v>self.maxb:
-				self.maxb*=4
-			self.a=0
-			self.i+=1
-			if v & self.curb*2:
-				if v & self.curb:
-					return self.cycle()
-				else:
-					self.i1+=1
-					return (INSERT,self.i-1,self.i1-1,0)	
-			else:
-				self.i1+=1
-				self.i2+=1
-				if v & self.curb:
-					return (INSERT,self.i-1,self.i2-1,0)
-				else:
-					self.i3+=1
-					return (INSERT,self.i-1,self.i3-1,0)
-
-class RadixLSDB4OOP(BaseAlgorithm):
-	name="Radix LSD 4 OOP"
-	desc="Sorts by least significant digit in base 4 out-of-place."
-	maxb=0
-	curb=1
-	i1=0
-	i2=0
-	i3=0
-	i4=0
-	def cycle(self,v=None):
-		a=self.a
-		if a==0:
-			if self.maxb<4:#@start→create 4 buckets & set maxb to 4
-				self.maxb+=1
-				return (NEW_BUCK,)
-			if self.i==self.l:
-				self.i+=1
-				self.curb*=4
-				self.a=3
-				return self.cycle()
-			if self.curb>=self.maxb:
-				self.a=2
-				self.maxb=0
-				return self.cycle()
-			self.a=1
-			return (READ,0,0)
-		elif a==1:
-			while v>self.maxb:
-				self.maxb*=4
-			self.a=0
-			self.i+=1
-			if v & self.curb*2:
-				if v & self.curb:
-					self.i1+=1
-					return (BUCKINSERT,0,0,self.i1-1,1)
-				else:
-					self.i2+=1
-					return (BUCKINSERT,0,0,self.i2-1,2)
-			else:
-				if v & self.curb:
-					self.i3+=1
-					return (BUCKINSERT,0,0,self.i3-1,3)
-				else:
-					self.i4+=1
-					return (BUCKINSERT,0,0,self.i4-1,4)
-		elif a==2:
-			if self.maxb<4:
-				self.maxb+=1
-				return (DEL_BUCK,1)
-			else:
-				return (FIN,)
-		elif a==3:
-			self.i-=1
-			if self.i4>0:
-				self.i4-=1
-				return (BUCKINSERT,0,4,self.l-self.i,0)
-			elif self.i3>0:
-				self.i3-=1
-				return (BUCKINSERT,0,3,self.l-self.i,0)
-			elif self.i2>0:
-				self.i2-=1
-				return (BUCKINSERT,0,2,self.l-self.i,0)
-			elif self.i1>0:
-				self.i1-=1
-				return (BUCKINSERT,0,1,self.l-self.i,0)
-			else:
-				self.a=0
-				return self.cycle()
-
-class RadixLSDB10(BaseAlgorithm):
-	name="Radix LSD 10"
-	desc="Sorts by least significant digit in base 10."
-	maxb=10
+class RadixLSDBASE(BaseAlgorithm):
+	name="Radix LSD BASE"
+	desc="Base for all Radix LSD non-OOP Sorts."
+	maxb=None
 	curb=1
 	i=None
 	def cycle(self,v=None):
 		a=self.a
 		if a==0:
+			if self.maxb==None:
+				self.maxb=self.b
 			if self.i==None:
-				self.i=[0 for x in range(10)]
+				self.i=[0 for x in range(self.b)]
 			if self.i[0]==self.l:
-				self.i=[0 for i in range(10)]
-				self.curb*=10
+				self.i=[0 for i in range(self.b)]
+				self.curb*=self.b
 			if self.curb>=self.maxb:
 				return (FIN,)
 			self.a=1
 			return (READ,self.i[0],0)
 		elif a==1:
 			while v>self.maxb:
-				self.maxb*=10
+				self.maxb*=self.b
 			self.a=0
-			digit=9-(v//self.curb)%10#actually the inverse of the digit, but it would reverse the list otherwise
+			digit=(self.b-1)-(v//self.curb)%self.b#actually the inverse of the digit, it would reverse the list otherwise
 			for i in range(digit+1):
 				self.i[i]+=1
 			if digit==0:
@@ -607,22 +408,22 @@ class RadixLSDB10(BaseAlgorithm):
 			else:
 				return (INSERT,self.i[0]-1,self.i[digit]-1,0)
 
-class RadixLSDB10OOP(BaseAlgorithm):
-	name="Radix LSD 10 OOP"
-	desc="Sorts by least significant digit in base 10 out-of-place."
+class RadixLSDBASEOOP(BaseAlgorithm):
+	name="Radix LSD BASE OOP"
+	desc="Base for all Radix LSD OOP Sorts."
 	maxb=0
 	curb=1
 	i=None
 	def cycle(self,v=None):
 		a=self.a
 		if a==0:
-			if self.maxb<10:
+			if self.maxb<self.b:
 				self.maxb+=1
 				return (NEW_BUCK,)
 			if self.i==None:
-				self.i=[0 for x in range(10)]
+				self.i=[0 for x in range(self.b)]
 			if sum(self.i)==self.l:
-				self.curb*=10
+				self.curb*=self.b
 				self.a=2
 				return self.cycle()
 			if self.curb>=self.maxb:
@@ -633,24 +434,54 @@ class RadixLSDB10OOP(BaseAlgorithm):
 			return (READ,0,0)
 		elif a==1:
 			while v>self.maxb:
-				self.maxb*=10
+				self.maxb*=self.b
 			self.a=0
-			digit=9-(v//self.curb)%10#actually the inverse of the digit, but it would reverse the list otherwise
+			digit=(v//self.curb)%self.b
 			self.i[digit]+=1
 			return (BUCKINSERT,0,0,self.i[digit]-1,digit+1)
 		elif a==2:
-			for i in range(10):
+			for i in range(self.b):
 				if self.i[i]>0:
 					self.i[i]-=1
 					return (BUCKINSERT,0,i+1,self.l-sum(self.i)-1,0)
 			self.a=0
 			return self.cycle()
 		elif a==3:
-			if self.maxb<10:
+			if self.maxb<self.b:
 				self.maxb+=1
 				return (DEL_BUCK,1)
 			else:
 				return (FIN,)
+
+class RadixLSDB2(RadixLSDBASE):
+	name="Radix LSD 2"
+	desc="Sorts by least significant digit in base 2."
+	b=2
+
+class RadixLSDB2OOP(RadixLSDBASEOOP):
+	name="Radix LSD 2 OOP"
+	desc="Sorts by least significant digit in base 2 out of place."
+	b=2
+
+class RadixLSDB4(RadixLSDBASE):
+	name="Radix LSD 4"
+	desc="Sorts by least significant digit in base 4."
+	b=4
+
+class RadixLSDB4OOP(RadixLSDBASEOOP):
+	name="Radix LSD 4 OOP"
+	desc="Sorts by least significant digit in base 4 out-of-place."
+	b=4
+
+class RadixLSDB10(RadixLSDBASE):
+	name="Radix LSD 10"
+	desc="Sorts by least significant digit in base 10."
+	b=10
+
+class RadixLSDB10OOP(RadixLSDBASEOOP):
+	name="Radix LSD 10 OOP"
+	desc="Sorts by least significant digit in base 10 out-of-place."
+	b=10
 
 class Reverser(BaseAlgorithm):
 	name="Reverser"
