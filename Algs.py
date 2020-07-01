@@ -376,6 +376,37 @@ class OddEvenSort(BaseAlgorithm):
 			else:
 				return self.cycle()
 
+class RadixLSDB2(BaseAlgorithm):
+	name="Radix LSD 2"
+	desc="Sorts by least significant digit in base 2."
+	maxb=2
+	curb=1
+	i1=0
+	def cycle(self,v=None):
+		a=self.a
+		if a==0:
+			if self.i==self.l:
+				self.i=0
+				self.i1=0
+				self.curb*=2
+			if self.curb>=self.maxb:
+				return (FIN,)
+			self.a=1
+			return (READ,self.i,0)
+		elif a==1:
+			self.a=0
+			self.i+=1
+			while v>self.maxb:
+				self.maxb*=2
+			if v & self.curb:
+				return self.cycle()
+			else:
+				self.i1+=1
+				if self.i1==self.i:
+					return self.cycle()
+				else:
+					return (INSERT,self.i-1,self.i1-1,0)
+
 class RadixLSDB2OOP(BaseAlgorithm):
 	name="Radix LSD 2 OOP"
 	desc="Sorts by least significant digit in base 2 out of place."
@@ -396,7 +427,7 @@ class RadixLSDB2OOP(BaseAlgorithm):
 				self.i+=1
 				self.a=4
 				return self.cycle()
-			if self.curb>self.maxb:
+			if self.curb>=self.maxb:
 				self.a=6
 				return (DEL_BUCK,1)
 			self.a=3
@@ -491,4 +522,4 @@ class ShufflerOneSideInsert(BaseAlgorithm):
 			return (INSERT,self.i-1,random.randrange(self.i+1,self.l),0)
 
 shufflers=[ShufflerOneSideInsert,ShufflerInsert,ShufflerOneSide,Shuffler]#shufflers from worst to best
-algs=[BubbleSort,InsertionSort,InsertionSortOOP,SelectionSort,SelectionSortOOP,OddEvenSort,RadixLSDB2OOP,MergeSort,BogoSort]
+algs=[BubbleSort,InsertionSort,InsertionSortOOP,SelectionSort,SelectionSortOOP,OddEvenSort,RadixLSDB2,RadixLSDB2OOP,MergeSort,BogoSort]
