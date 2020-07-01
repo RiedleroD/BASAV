@@ -494,19 +494,88 @@ class RadixLSDB4(BaseAlgorithm):
 			self.a=0
 			self.i+=1
 			if v & self.curb*2:
+				if v & self.curb:
+					return self.cycle()
+				else:
+					self.i1+=1
+					return (INSERT,self.i-1,self.i1-1,0)	
+			else:
 				self.i1+=1
 				self.i2+=1
 				if v & self.curb:
+					return (INSERT,self.i-1,self.i2-1,0)
+				else:
 					self.i3+=1
 					return (INSERT,self.i-1,self.i3-1,0)
-				else:
-					return (INSERT,self.i-1,self.i2-1,0)
-			else:
+
+class RadixLSDB4OOP(BaseAlgorithm):
+	name="Radix LSD 4 OOP"
+	desc="Sorts by least significant digit in base 4 out-of-place."
+	maxb=0
+	curb=1
+	i1=0
+	i2=0
+	i3=0
+	i4=0
+	def cycle(self,v=None):
+		a=self.a
+		if a==0:
+			if self.maxb<4:#@start→create 4 buckets & set maxb to 4
+				self.maxb+=1
+				return (NEW_BUCK,)
+			if self.i==self.l:
+				self.i+=1
+				self.curb*=4
+				self.a=3
+				return self.cycle()
+			if self.curb>=self.maxb:
+				self.a=2
+				self.maxb=0
+				return self.cycle()
+			self.a=1
+			return (READ,0,0)
+		elif a==1:
+			while v>self.maxb:
+				self.maxb*=4
+			self.a=0
+			self.i+=1
+			if v & self.curb*2:
 				if v & self.curb:
 					self.i1+=1
-					return (INSERT,self.i-1,self.i1-1,0)
+					return (BUCKINSERT,0,0,self.i1-1,1)
 				else:
-					return self.cycle()
+					self.i2+=1
+					return (BUCKINSERT,0,0,self.i2-1,2)
+			else:
+				if v & self.curb:
+					self.i3+=1
+					return (BUCKINSERT,0,0,self.i3-1,3)
+				else:
+					self.i4+=1
+					return (BUCKINSERT,0,0,self.i4-1,4)
+		elif a==2:
+			if self.maxb<4:
+				self.maxb+=1
+				return (DEL_BUCK,1)
+			else:
+				return (FIN,)
+		elif a==3:
+			self.i-=1
+			if self.i4>0:
+				self.i4-=1
+				return (BUCKINSERT,0,4,self.l-self.i,0)
+			elif self.i3>0:
+				self.i3-=1
+				return (BUCKINSERT,0,3,self.l-self.i,0)
+			elif self.i2>0:
+				self.i2-=1
+				return (BUCKINSERT,0,2,self.l-self.i,0)
+			elif self.i1>0:
+				self.i1-=1
+				return (BUCKINSERT,0,1,self.l-self.i,0)
+			else:
+				self.a=0
+				return self.cycle()
 
 class Reverser(BaseAlgorithm):
 	name="Reverser"
@@ -563,4 +632,4 @@ class ShufflerOneSideInsert(BaseAlgorithm):
 			return (INSERT,self.i-1,random.randrange(self.i+1,self.l),0)
 
 shufflers=[ShufflerOneSideInsert,ShufflerInsert,ShufflerOneSide,Shuffler]#shufflers from worst to best
-algs=[BubbleSort,InsertionSort,InsertionSortOOP,SelectionSort,SelectionSortOOP,OddEvenSort,RadixLSDB2,RadixLSDB2OOP,RadixLSDB4,MergeSort,BogoSort]
+algs=[BubbleSort,InsertionSort,InsertionSortOOP,SelectionSort,SelectionSortOOP,OddEvenSort,RadixLSDB2,RadixLSDB2OOP,RadixLSDB4,RadixLSDB4OOP,MergeSort,BogoSort]
