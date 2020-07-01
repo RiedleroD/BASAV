@@ -18,6 +18,7 @@ class GameWin(pyglet.window.Window):
 		self.edits=[]
 		self.bucks=[]
 		self.batch=pyglet.graphics.Batch()
+		self.tossbatch=pyglet.graphics.Batch()#batch that gets cleared on draw
 		super().__init__(*args,**kwargs)
 	def set_fps(self,fps):
 		if fps!=self.fps and fps>0:
@@ -156,8 +157,10 @@ class GameWin(pyglet.window.Window):
 		for item in self.edits:	#070ms
 			item.draw()
 		for item in self.bucks:	#700ms
-			item.draw()
+			item.draw(self.tossbatch)
 		self.batch.draw()
+		self.tossbatch.draw()
+		self.tossbatch=pyglet.graphics.Batch()
 		pyglet.clock.tick()
 	def on_mouse_press(self,x,y,button,modifiers):
 		MP[button]=True

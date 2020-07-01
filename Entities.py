@@ -408,6 +408,8 @@ class Bucket(Entity):
 		self.getwact=lambda perc:[self.x+self.w-3,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc]
 		self.getwact2=lambda perc,perc2:[self.x+self.w-3,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc2,self.x+self.w-3,self.y+self.h*perc2]
 		self.qrendered=False
+		self.ls=None
+		self.qs=None
 		super().__init__(x,y,w,h,anch,batch=pyglet.graphics.Batch())
 		if itemc<0:#only sets maxic
 			self.maxic=-itemc
@@ -472,34 +474,55 @@ class Bucket(Entity):
 			self.qwacts=[self.getwact(i/self.maxic) for i in range(self.maxic)]
 			self.qracts=[self.getract(i/self.maxic) for i in range(self.maxic)]
 			self.qrendered=True
-		self.batch=pyglet.graphics.Batch()
 		maxic=self.maxic
 		if self.itemc>maxic:
 			raise ValueError("Bucket: itemc is larger than maxic")
+		self.ls=[]
+		self.lc=[]
+		self.qs=[]
+		self.qc=[]
 		if self.itemc>0:
 			iteml,itemq=helper.getrenderbuck(self.items,0)
 			if len(iteml)>0:
-				self.batch.add(2*len(iteml),pyglet.gl.GL_LINES,None,('v2f',functools.reduce(operator.iconcat,[self.quads[i] for i in iteml],[])),('c3B',[cquad for i in iteml for cquad in COLORS[self.items[i]]]))
+				self.ls+=functools.reduce(operator.iconcat,[self.quads[i] for i in iteml],[])
+				self.lc+=[cquad for i in iteml for cquad in COLORS[self.items[i]]]
 			if len(itemq)>0:
-				self.batch.add(4*len(itemq),pyglet.gl.GL_QUADS,None,('v2f',functools.reduce(operator.iconcat,[self.getquad2(sit/maxic,bit/maxic) for sit,bit in itemq],[])),('c3B',[cquad for sit,bit in itemq for cquad in COLORS[self.items[sit]]+COLORS[self.items[bit-1]]]))
-			
+				self.qs+=functools.reduce(operator.iconcat,[self.getquad2(sit/maxic,bit/maxic) for sit,bit in itemq],[])
+				self.qc+=[cquad for sit,bit in itemq for cquad in COLORS[self.items[sit]]+COLORS[self.items[bit-1]]]
 			if len(self.racts)>0:
 				ractl,ractq=helper.getrenderbuck(self.racts,1)
 				if len(ractl)>0:
-					self.batch.add(2*len(ractl),pyglet.gl.GL_LINES,None,('v2f',functools.reduce(operator.iconcat,[self.qracts[act] for act in ractl],[])),('c3B',self.grcl[:len(ractl)*6]))
+					self.ls+=functools.reduce(operator.iconcat,[self.qracts[act] for act in ractl],[])
+					self.lc+=self.grcl[:len(ractl)*6]
 				if len(ractq)>0:
-					self.batch.add(4*len(ractq),pyglet.gl.GL_QUADS,None,('v2f',functools.reduce(operator.iconcat,[self.getract2(sact/maxic,bact/maxic) for sact,bact in ractq],[])),('c3B',self.grcl[:len(ractq)*12]))
+					self.qs+=functools.reduce(operator.iconcat,[self.getract2(sact/maxic,bact/maxic) for sact,bact in ractq],[])
+					self.qc+=self.grcl[:len(ractq)*12]
 			if len(self.wacts)>0:
 				wactl,wactq=helper.getrenderbuck(self.wacts,1)
 				if len(wactl)>0:
-					self.batch.add(2*len(wactl),pyglet.gl.GL_LINES,None,('v2f',functools.reduce(operator.iconcat,[self.qwacts[act] for act in wactl],[])),('c3B',self.rdcl[:len(wactl)*6]))
+					self.ls+=functools.reduce(operator.iconcat,[self.qwacts[act] for act in wactl],[])
+					self.lc+=self.rdcl[:len(wactl)*6]
 				if len(wactq)>0:
-					self.batch.add(4*len(wactq),pyglet.gl.GL_QUADS,None,('v2f',functools.reduce(operator.iconcat,[self.getwact2(sact/maxic,bact/maxic) for sact,bact in wactq],[])),('c3B',self.rdcl[:len(wactq)*12]))
+					self.qs+=functools.reduce(operator.iconcat,[self.getwact2(sact/maxic,bact/maxic) for sact,bact in wactq],[])
+					self.qc+=self.rdcl[:len(wactq)*12]
+			self.ls=tuple(self.ls)
+			self.lc=tuple(self.lc)
+			self.qs=tuple(self.qs)
+			self.qc=tuple(self.qc)
 		self.rendered=True
-	def draw(self):
+	def draw(self,batch=None):
 		if not self.rendered:
 			self.render()
-		self.batch.draw()
+			self.batch=None
+		if batch!=None:
+			batch.add(len(self.ls)//2,GL_LINES,None,('v2f',self.ls),('c3B',self.lc))
+			batch.add(len(self.qs)//2,GL_QUADS,None,('v2f',self.qs),('c3B',self.qc))
+		else:
+			if self.batch==None:
+				self.batch=pyglet.graphics.Batch()
+				self.batch.add(len(self.ls)//2,GL_LINES,None,('v2f',self.ls),('c3B',self.lc))
+				self.batch.add(len(self.qs)//2,GL_QUADS,None,('v2f',self.qs),('c3B',self.qc))
+			self.batch.draw()
 		if len(self.racts)>0:
 			self.racts.clear()
 			self.rendered=False

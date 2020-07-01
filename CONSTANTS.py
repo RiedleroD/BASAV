@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import os,sys,pyglet
 from pyglet import window as pgw
+from pyglet.gl import GL_LINES, GL_QUADS
 from time import time
 import helper
 
