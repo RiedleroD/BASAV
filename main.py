@@ -119,8 +119,15 @@ class GameWin(pyglet.window.Window):
 					break
 		elif self.curalg!=None:
 			self.curalg=None
-			del self.bucks[:]
-			self.bucks.append(Bucket(0,0,WIDTH2,HEIGHT,BUCKLEN))
+			if len(self.bucks)>1:
+				newbuck=Bucket(0,0,WIDTH2,HEIGHT,-BUCKLEN)
+				for buck in self.bucks[:]:
+					l=len(newbuck.items)
+					newbuck.items[l:l]=buck.items
+				del self.bucks[:]
+				newbuck.itemc=len(newbuck.items)
+				newbuck.rendered=False
+				self.bucks.append(newbuck)
 		self.labels[2].setText("Read:%02i"%self.stats[0])
 		self.labels[3].setText("Swap:%02i"%self.stats[1])
 		self.labels[4].setText("Insert:%02i"%self.stats[2])
