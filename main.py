@@ -83,7 +83,7 @@ class GameWin(pyglet.window.Window):
 					for i,buck in enumerate(self.bucks):
 						buck.set_size(chunksize,HEIGHT)
 						buck.set_pos(chunksize*i,0)
-						buck.recalc_quads()
+						buck.qrendered=False
 					if len(act)>1:
 						self.bucks[-1].insert_from(act[1],0,self.bucks[act[2]])
 						self.stats[2]+=1
@@ -108,7 +108,7 @@ class GameWin(pyglet.window.Window):
 					else:
 						raise Exception("Unexpected call to DEL_BUCK for non-empty bucket")
 					for buck in self.bucks:
-						buck.recalc_quads()
+						buck.qrendered=False
 					self.stats[3]+=1
 				elif act[0]==FIN:#finished
 					self.btns[0].release()

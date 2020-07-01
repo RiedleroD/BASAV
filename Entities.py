@@ -407,6 +407,7 @@ class Bucket(Entity):
 		self.getract2=lambda perc,perc2:[self.x+self.w-6,self.y+self.h*perc,self.x+self.w-3,self.y+self.h*perc,self.x+self.w-3,self.y+self.h*perc2,self.x+self.w-6,self.y+self.h*perc2]
 		self.getwact=lambda perc:[self.x+self.w-3,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc]
 		self.getwact2=lambda perc,perc2:[self.x+self.w-3,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc2,self.x+self.w-3,self.y+self.h*perc2]
+		self.qrendered=False
 		super().__init__(x,y,w,h,anch,batch=pyglet.graphics.Batch())
 		if itemc<0:#only sets maxic
 			self.maxic=-itemc
@@ -415,7 +416,6 @@ class Bucket(Entity):
 			self.itemc=itemc
 			self.maxic=itemc
 		self.items=[i for i in range(itemc)]
-		self.recalc_quads()
 		self.racts=set()
 		self.wacts=set()
 		self.grcl=[0,255,0,0,255,0,0,255,0,0,255,0]*self.maxic
@@ -426,10 +426,6 @@ class Bucket(Entity):
 	def reverse(self):
 		self.items.reverse()
 		self.rendered=False
-	def recalc_quads(self):
-		self.quads=[self.getquad(i/self.maxic) for i in range(self.maxic)]
-		self.qwacts=[self.getwact(i/self.maxic) for i in range(self.maxic)]
-		self.qracts=[self.getract(i/self.maxic) for i in range(self.maxic)]
 	def getvalue(self,i):
 		if i>=self.itemc or i<0:
 			return None
@@ -471,6 +467,11 @@ class Bucket(Entity):
 		else:
 			raise Exception("Bucket: out-of-scope call to insert_from")
 	def render(self):
+		if not self.qrendered:
+			self.quads=[self.getquad(i/self.maxic) for i in range(self.maxic)]
+			self.qwacts=[self.getwact(i/self.maxic) for i in range(self.maxic)]
+			self.qracts=[self.getract(i/self.maxic) for i in range(self.maxic)]
+			self.qrendered=True
 		self.batch=pyglet.graphics.Batch()
 		maxic=self.maxic
 		if self.itemc>maxic:
