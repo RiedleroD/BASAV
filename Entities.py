@@ -246,6 +246,7 @@ class TextEdit(Button):#also unused
 
 class IntEdit(TextEdit):
 	nums=("0","1","2","3","4","5","6","7","8","9")
+	preval=None
 	def checkKey(self,key):
 		if self.pressed:
 			if key==pgw.key.BACKSPACE:
@@ -256,7 +257,10 @@ class IntEdit(TextEdit):
 					self.value="0"
 				self.release()
 			else:
-				char=chr(key)
+				try:
+					char=chr(key)
+				except OverflowError:#if a weird utf-8 symbol comes rolling in. Most apparent on non-english keyboards that have ß ö ä ü ect.
+					return None
 				if char in self.nums:
 					self.value+=chr(key)
 					self.setText("[%s]"%(self.value))
@@ -264,7 +268,9 @@ class IntEdit(TextEdit):
 		elif self.key!=None and key==self.key:
 			return self.press()
 	def getNum(self):
-		return int(self.value)
+		if not self.pressed:
+			self.preval=int(self.value)
+		return self.preval
 
 class RadioList(Entity):
 	def __init__(self,x,y,w,h,texts,anch=0,keys=None,pressedTexts=None,selected=None,size=12,batch=None):
