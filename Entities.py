@@ -448,7 +448,7 @@ class Bucket(Entity):
 		else:
 			self.items[i:i]=self.items.pop(x),
 		self.wacts.add(x)
-		self.wacts.add(i)
+		self.wacts.add(i-1)
 		self.rendered=False
 	def swap_from(self,x,y,other):
 		if other.itemc>x and self.itemc>y:
