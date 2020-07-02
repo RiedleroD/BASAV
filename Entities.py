@@ -336,8 +336,8 @@ class RadioListPaged(RadioList):
 			btn.set_pos(x,y-btnh*(i%self.pageic),anch)
 			if btn not in onscr:
 				btn.label.text=""
-		self.prev=Button(x,y-btnh*pageic,w/2,btnh,"→",anch,None,size,batch=batch)
-		self.next=Button(x-w/2,y-btnh*pageic,w/2,btnh,"←",anch,None,size,batch=batch)
+		self.next=Button(x,y-btnh*pageic,w/2,btnh,"→",anch,None,size,batch=batch)
+		self.prev=Button(x-w/2,y-btnh*pageic,w/2,btnh,"←",anch,None,size,batch=batch)
 	def checkpress(self,x,y):
 		if self.prev.checkpress(x,y):
 			prsd=-1
