@@ -336,7 +336,7 @@ class DoubleSelectionSort(BaseAlgorithm):
 			self.i2+=1
 			if self.i2+1==self.l-self.i:
 				self.a=2
-				if self.i4==self.i-1:
+				if self.i4==self.i:
 					self.i4=self.i3
 				self.i+=1
 				return (SWAP,self.i-1,self.i3,0)
