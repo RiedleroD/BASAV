@@ -307,6 +307,45 @@ class SelectionSort(BaseAlgorithm):
 				self.i2+=1
 				return (READ,self.i2,0)
 
+#TODO: the two indexes sometimes still collide
+class DoubleSelectionSort(BaseAlgorithm):
+	name="DoubleSelectionSort"
+	desc="Swaps the smalles unsorted item with the first unsorted item\nand the biggest unsorted item with the last unsorted item\nuntil the list is sorted."
+	i=0
+	i2=0
+	i3=0
+	i4=0
+	def cycle(self,v=None):
+		a=self.a
+		if a==0:
+			self.i2=self.i
+			self.v1=None
+			self.v2=None
+			self.a=1
+			return (READ,self.i2,0)
+		elif a==1:
+			if self.i*2+1>=self.l:
+				self.a=7
+				return (FIN,)
+			if self.v1==None or v<self.v1:
+				self.v1=v
+				self.i3=self.i2
+			if self.v2==None or v>self.v2:
+				self.v2=v
+				self.i4=self.i2
+			self.i2+=1
+			if self.i2+1==self.l-self.i:
+				self.a=2
+				if self.i4==self.i-1:
+					self.i4=self.i3
+				self.i+=1
+				return (SWAP,self.i-1,self.i3,0)
+			else:
+				return (READ,self.i2,0)
+		elif a==2:
+			self.a=0
+			return (SWAP,self.l-self.i,self.i4,0)
+
 class SelectionSortOOP(BaseAlgorithm):
 	name="SelectionSort OOP"
 	desc="Puts the smallest item in bucket 0 to the end of bucket 1\nuntil bucket 0 is empty."
@@ -486,7 +525,7 @@ class RadixLSDB10OOP(RadixLSDBASEOOP):
 #implementation of https://en.wikipedia.org/wiki/Quicksort#Lomuto_partition_scheme with pseudo-recursion.
 class Quicksort(BaseAlgorithm):
 	name="Quicksort"
-	desc="Recursively picks a pivot and partitions all items around it\nuntil list is sorted"
+	desc="Recursively picks a pivot and partitions all items around it\nuntil list is sorted.\nHilariously bad at sorted and reversed lists."
 	lv=None#recursion simulation list
 	def cycle(self,v=None):
 		if self.lv==None:
@@ -608,6 +647,7 @@ algs=[
 	BubbleSort,
 	InsertionSort,InsertionSortOOP,
 	SelectionSort,SelectionSortOOP,
+	DoubleSelectionSort,
 	OddEvenSort,Quicksort,
 	RadixLSDB2,RadixLSDB2OOP,
 	RadixLSDB4,RadixLSDB4OOP,
