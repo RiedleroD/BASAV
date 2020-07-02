@@ -66,7 +66,11 @@ class GameWin(pyglet.window.Window):
 				self.curalg=algs[self.rads[0].getSelected()](self.bucks[0].itemc)
 				self.stats=[0,0,0,0,0]
 			for x in range(self.edits[0].getNum()):
-				act=self.curalg.cycle(self.curval)
+				try:
+					act=self.curalg.cycle(self.curval)
+				except Exception as e:
+					print("%s, act %02i: %s"%(self.curalg.name,self.curalg.a,e))
+					act=None
 				if act==PASS:#pass
 					self.stats[4]+=1
 				elif act[0]==READ:#read value
