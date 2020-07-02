@@ -483,6 +483,72 @@ class RadixLSDB10OOP(RadixLSDBASEOOP):
 	desc="Sorts by least significant digit in base 10 out-of-place."
 	b=10
 
+#implementation of https://en.wikipedia.org/wiki/Quicksort#Lomuto_partition_scheme with pseudo-recursion.
+class Quicksort(BaseAlgorithm):
+	name="Quicksort"
+	desc="Recursively picks a pivot and partitions all items around it\nuntil list is sorted"
+	lv=None#recursion simulation list
+	def cycle(self,v=None):
+		if self.lv==None:
+			self.lv=[[0,self.l-1,0]]
+			#		 lo,hi      ,a
+		a=self.lv[-1][2]
+		self.a=a
+		lv=self.lv[-1]
+		if a==0:
+			if lv[0]<lv[1]:#if lo<hi:
+				lv[2]=1
+				self.lv.append([lv[0],lv[1],4])
+				return self.cycle()
+			else:
+				del self.lv[-1],lv
+				if len(self.lv)==0:
+					return (FIN,)
+				else:
+					return self.cycle()
+		elif a==1:
+			lv[2]=2
+			self.lv.append([lv[0],lv[3]-1,0])
+			return self.cycle()
+		elif a==2:
+			lv[2]=3
+			self.lv.append([lv[3]+1,lv[1],0])
+			return self.cycle()
+		elif a==3:
+			del self.lv[-1],lv
+			if len(self.lv)==0:
+				return (FIN,)
+			else:
+				return self.cycle()
+		elif a==4:
+			lv[2]=5
+			return (READ,lv[1],0)
+		elif a==5:
+			lv.append(v)#3 - pivot
+			lv.append(lv[0])#4 - i
+			lv.append(lv[0])#5 - j
+			lv[2]=6#a=6
+			return self.cycle()
+		elif a==6:
+			if lv[5]>lv[1]:#if j>hi
+				lv[2]=8	#a=8
+				return (SWAP,lv[4],lv[1],0)#SWAP i,hi,0
+			else:
+				lv[2]=7#a=7
+				return (READ,lv[5],0)#READ j,0
+		elif a==7:
+			lv[5]+=1#j++
+			lv[2]=6
+			if v<lv[3]:	#if A[j]<pivot:
+				lv[4]+=1	#i++
+				return (SWAP,lv[4]-1,lv[5]-1,0)#SWAP i,j,0
+			else:
+				return self.cycle()
+		elif a==8:
+			self.lv[-2].append(lv[4])#return i
+			del self.lv[-1],lv
+			return self.cycle()
+
 class Reverser(BaseAlgorithm):
 	name="Reverser"
 	desc="reverses the set"
@@ -542,7 +608,7 @@ algs=[
 	BubbleSort,
 	InsertionSort,InsertionSortOOP,
 	SelectionSort,SelectionSortOOP,
-	OddEvenSort,
+	OddEvenSort,Quicksort,
 	RadixLSDB2,RadixLSDB2OOP,
 	RadixLSDB4,RadixLSDB4OOP,
 	RadixLSDB10,RadixLSDB10OOP,
