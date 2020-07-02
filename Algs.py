@@ -307,7 +307,6 @@ class SelectionSort(BaseAlgorithm):
 				self.i2+=1
 				return (READ,self.i2,0)
 
-#TODO: the two indexes sometimes still collide
 class DoubleSelectionSort(BaseAlgorithm):
 	name="DoubleSelectionSort"
 	desc="Swaps the smalles unsorted item with the first unsorted item\nand the biggest unsorted item with the last unsorted item\nuntil the list is sorted."
@@ -334,7 +333,7 @@ class DoubleSelectionSort(BaseAlgorithm):
 				self.v2=v
 				self.i4=self.i2
 			self.i2+=1
-			if self.i2+1==self.l-self.i:
+			if self.i2==self.l-self.i:
 				self.a=2
 				if self.i4==self.i:
 					self.i4=self.i3
