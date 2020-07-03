@@ -78,6 +78,59 @@ class BubbleSort(BaseAlgorithm):
 		elif a==7:
 			raise Exception("BubbleSort: Unexpected cycle after finishing")
 
+class CocktailShaker(BaseAlgorithm):
+	name="Cocktail Shaker"
+	desc="Like Bubble Sort, but changes directions every cycle"
+	m=2
+	f=False
+	def cycle(self,v=None):
+		a=self.a
+		if a==0:
+			self.a=1
+			return (READ,self.i,0)
+		elif a==1:
+			if self.i+1==self.l:
+				self.m=3
+			elif self.i==0:
+				self.m=2
+			if self.m==2:
+				self.i+=1
+			else:
+				self.i-=1
+			self.a=self.m
+			if self.v1==None:
+				self.v1=v
+			return (READ,self.i,0)
+		elif a==2:
+			if v<self.v1:
+				self.a=1
+				self.f=False
+				return (SWAP,self.i,self.i-1,0)
+			else:
+				self.v1=v
+				if self.i+1>=self.l-self.s:
+					self.a=self.m=3
+				else:
+					self.i+=1
+				return (READ,self.i,0)
+		elif a==3:
+			if v>self.v1:
+				self.a=1
+				self.f=False
+				return (SWAP,self.i,self.i+1,0)
+			else:
+				self.v1=v
+				if self.i<=self.s:
+					self.a=self.m=2
+					self.s+=1
+					if self.f:
+						return (FIN,)
+					else:
+						self.f=True
+				else:
+					self.i-=1
+				return (READ,self.i,0)
+
 #TODO: MergeSort doesn't work for numbers that aren't 2**n, though it is almost fixed
 class MergeSort(BaseAlgorithm):
 	name="Merge Sort"
@@ -644,10 +697,12 @@ class ShufflerOneSideInsert(BaseAlgorithm):
 shufflers=[ShufflerOneSideInsert,ShufflerInsert,ShufflerOneSide,Shuffler]#shufflers from worst to best
 algs=[
 	BubbleSort,
+	CocktailShaker,
+	OddEvenSort,
 	InsertionSort,InsertionSortOOP,
 	SelectionSort,SelectionSortOOP,
 	DoubleSelectionSort,
-	OddEvenSort,Quicksort,
+	Quicksort,
 	RadixLSDB2,RadixLSDB2OOP,
 	RadixLSDB4,RadixLSDB4OOP,
 	RadixLSDB10,RadixLSDB10OOP,

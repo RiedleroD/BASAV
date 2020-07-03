@@ -70,7 +70,7 @@ class GameWin(pyglet.window.Window):
 					act=self.curalg.cycle(self.curval)
 				except Exception as e:
 					print("%s, act %02i: %s"%(self.curalg.name,self.curalg.a,e))
-					act=None
+					act=(FIN,)
 				if act==PASS:#pass
 					self.stats[4]+=1
 				elif act[0]==READ:#read value
