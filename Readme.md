@@ -9,6 +9,7 @@ All Algorithms work via a sort-of-API that consists of 8 different statements. O
 - BUCKINSERT inserts an item from one bucket to an index in another bucket
 - DEL_BUCK deletes a bucket. If the bucket is not empty, nothing happens.
 - FIN ends the sorting
+
 The Algorithms only have access to unlimited variable space, the length of the initial array and these statements.
 There may exist some sort of pseudo-multithreading support in the future, where an algorithm can return multiple statements that will get processed in random order, but count as one cycle.
 4 different shufflers and a reverser are implemented with this 'API' and can be accessed through the 'Reverse' and 'Shuffle' buttons. The Randomness can be determined with the 'Randomness' Button.
