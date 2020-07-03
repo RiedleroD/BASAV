@@ -1,6 +1,7 @@
 This project is aimed to provide the user with as much information about Sorting algorithms as possible.I always value amount and quality of information over how pretty it is to look at.
 This being said, this project is a visualizer of sorting algorithms. You can see when new buckets are created, reads are displayed in green, writes in red. Stats are displayed for reads, swaps, inserts, bucket creation/deletion, and passing cycles.
 All Algorithms work via a sort-of-API that consists of 8 different statements. One statement per cycle can be returned.
+
 - READ can read an item in a bucket
 - SWAP swaps two items in the same bucket
 - INSERT inserts an items at a index in the same bucket
@@ -22,7 +23,19 @@ Only Linux is officially supported, but other ones should work too. If they don'
 Depending on the severity of the issue, and the accessibility of the OS, it will get fixed more or less quickly.
 
 ### How to Install
-#### TODO
+Currently, no installation packages exist, so you have to run it from source. This will be changed before 1.0 and maybe even before 0.1.
+
+#### Dependencies
+Of course, python 3 ist required. The project is aimed at Python 3.8, but it should work for older versions too. Please file an issue if it doesn't.
+Dependencies installable through pip include:
+
+- pyglet
+
+#### Compiling
+The code uses a helper module written in C that needs to be compiled first. You only have to edit the second and third line of helper.c to use the correct python version, run the init.py script with the instructions inside it and you should be good2go. You may also need to install the development packages for your python version, although they are usually preinstalled on linux. I don't know about windows though.
+
+#### running
+In order to start the program, you have to run main.py with python. This opens the game in borderless window mode. You can close the program by pressing ESC.
 
 ### Videos
 - [Coding logs](https://www.youtube.com/playlist?list=PLS2fPT7ug4bX_t_mjvWyx_KoADLQWTrnq)
