@@ -66,10 +66,11 @@ class GameWin(pyglet.window.Window):
 				self.curalg=algs[self.rads[0].getSelected()](self.bucks[0].itemc)
 				self.stats=[0,0,0,0,0]
 			for x in range(self.edits[0].getNum()):
+				cura=self.curalg.a
 				try:
 					act=self.curalg.cycle(self.curval)
 				except Exception as e:
-					print("%s, act %02i: %s"%(self.curalg.name,self.curalg.a,e))
+					print("%s, act %02i: %s"%(self.curalg.name,cura,e))
 					act=(FIN,)
 				if act==PASS:#pass
 					self.stats[4]+=1
@@ -111,7 +112,9 @@ class GameWin(pyglet.window.Window):
 							buck.set_size(chunksize,HEIGHT)
 							buck.set_pos(chunksize*i,0)
 					else:
-						raise Exception("Unexpected call to DEL_BUCK for non-empty bucket")
+						print("%s, act %02i: DEL_BUCK on non-empty bucket %02i with %03i items"%(self.curalg.name,cura,act[1],self.bucks[act[1]].itemc))
+						self.btns[0].release()
+						break
 					for buck in self.bucks:
 						buck.qrendered=False
 					self.stats[3]+=1
@@ -194,7 +197,7 @@ WIDTH,HEIGHT=window.get_size()
 WIDTH2=WIDTH/2
 HEIGHT2=HEIGHT/2
 SIZE=(WIDTH+HEIGHT)/2#only for scaling stuff
-BTNWIDTH=WIDTH/9
+BTNWIDTH=WIDTH/10
 BTNWIDTH2=BTNWIDTH/2
 BTNHEIGHT=HEIGHT/20
 BTNHEIGHT2=BTNHEIGHT/2
@@ -210,12 +213,12 @@ window.labels=[	Label(WIDTH2,HEIGHT,0,0,"FPS:00",6,batch=window.batch),
 				LabelMultiline(WIDTH2,0,0,0,"Sorting\nalgorithm\nDescription",0,batch=window.batch)]
 window.btns=[	ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",8,pressedText="Stop",batch=window.batch),
 			 	Button(WIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Shuffle",8,batch=window.batch),
-			 	Button(WIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Reverse",8,batch=window.batch),
+			 	Button(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Reverse",8,batch=window.batch),
 			 	ButtonFlipthrough(WIDTH,HEIGHT-BTNHEIGHT*2,BTNWIDTH,BTNHEIGHT,"Randomness: %i",[3,0,1,2],8,batch=window.batch),
 			 	Button(WIDTH,0,BTNWIDTH,BTNHEIGHT,"Quit",2,pgw.key.ESCAPE,batch=window.batch)]
-window.rads=[	RadioListPaged(WIDTH,HEIGHT-BTNHEIGHT*7,BTNWIDTH,BTNHEIGHT*6,[alg.name for alg in algs],5,8,selected=0,batch=window.batch)]#radiolists
-window.edits=[	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"Speed","100",8,batch=window.batch),#Edits
-			  	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*5,BTNWIDTH,BTNHEIGHT,"FPS/UPS","60",8,batch=window.batch)]
+window.rads=[	RadioListPaged(WIDTH,HEIGHT-BTNHEIGHT*5,BTNWIDTH*2,BTNHEIGHT*13,[alg.name for alg in algs],12,8,selected=0,batch=window.batch)]#radiolists
+window.edits=[	IntEdit(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Speed","100",8,batch=window.batch),#Edits
+			  	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"FPS/UPS","60",8,batch=window.batch)]
 window.bucks=[	Bucket(0,0,WIDTH2,HEIGHT,BUCKLEN)]#buckets
 try:
 	pyglet.app.run()
