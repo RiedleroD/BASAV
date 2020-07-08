@@ -12,6 +12,7 @@ BUCKINSERT=5
 DEL_BUCK=6
 FIN=7
 
+#TODO: reimplement all algorithms to use gen(), strip BaseAlgorithm of all cycle-only variables and remove cycle Support from main.py
 class BaseAlgorithm():
 	name="Base Algorithm"
 	desc="This is the Base algorithm,\nit doesn't sort, but lays the foundation\nfor other algorithms."
@@ -19,12 +20,14 @@ class BaseAlgorithm():
 	a=0#current action; optional
 	b=0#current bucket; optional
 	i=0#current index;optional
+	v=None#current value; gets set when using gen
 	v1=None#current value;optional
 	v2=None#current value;optional
 	f=False#var to store if finished
 	def __init__(self,l):
 		self.l=l#array length
-	#cycle returns a tuple that tells the main program what to do - it doesn't have access to the list.
+	#cycle returns a tuple that tells the main program what to do - it doesn't have access to the list. (DEPRECATED, USE GEN)
+	#gen is the same as cycle, but uses the yield instruction to sort-of process array accesses in parallel. Read values get stored in self.v
 	#None		→ does nothing
 	#(0,x,i)	→ reads value of item x in bucket i and puts it into the value param next cycle; None means there is no item at this index
 	#(1,x,y,i)	→ swaps item x with item y in bucket i
@@ -34,9 +37,8 @@ class BaseAlgorithm():
 	#(5,x,i,y,j)→inserts item x in bucket i at index y in bucket j
 	#(6,i)		→ destroys bucket i (only empty buckets can be destroyed)
 	#(7)		→ finish
-	def cycle(self,v=None):
-		self.s+=1
-		return None
+	cycle=None
+	gen=None
 
 class BubbleSort(BaseAlgorithm):
 	name="Bubble Sort"
@@ -131,105 +133,60 @@ class CocktailShaker(BaseAlgorithm):
 					self.i-=1
 				return (READ,self.i,0)
 
-#TODO: MergeSort doesn't work for numbers that aren't 2**n, though it is almost fixed
 class MergeSort(BaseAlgorithm):
 	name="Merge Sort"
 	desc="Merges buckets until sorted"
-	s=1#merge block size
-	il=0#left bucket index
-	ir=0#right bucket index
-	def cycle(self,v=None):
-		a=self.a
-		if a==0:#new bucket with item 0
-			if self.s>=self.l:
-				if self.i==2:
-					return (FIN,)
-				else:
-					self.i+=1
-					return (DEL_BUCK,1)
-			self.a=1
-			self.il=1
-			if self.f:
-				return (BUCKINSERT,self.i,0,0,1)
-			else:
-				return (NEW_BUCK,self.i,0)
-		elif a==1:#fill left bucket,then create new bucket with item 0
-			if self.il==self.s:
-				self.il=0
-				self.a=2
-				self.ir=1
-				if self.f:
-					return (BUCKINSERT,self.i,0,0,2)
-				else:
-					self.f=True
-					return (NEW_BUCK,self.i,0)
-			elif self.il>self.s:
-				raise Exception("MergeSort: il unexpectedly bigger than s in s1")
-			else:
-				self.il+=1
-				return (BUCKINSERT,self.i,0,self.il-1,1)
-		elif a==2:#fill right bucket, then read first item of left bucket
-			if self.ir==self.s:
-				self.ir=0
-				self.a=3
-				return (READ,0,1)
-			elif self.ir>self.s:
-				raise Exception("MergeSort: ir unexpectedly bigger than s in a2")
-			else:
-				self.ir+=1
-				return (BUCKINSERT,self.i,0,self.ir-1,2)
-		elif a==3:#stores in v1, then read first item of right bucket
-			self.v1=v
-			self.v2=None
-			self.a=5
-			return (READ,0,2)
-		elif self.a==4:#reads ir if v2 is None, or il if v1 is none
-			self.a=5
-			if self.v1==None:
-				return (READ,0,1)
-			elif self.v2==None:
-				return (READ,0,2)
-			else:
-				raise Exception("MergeSort: Unexpected call of a4 without v1 or v2 being empty")
-		elif a==5:#stores in empty v, then insert first left item to i if v1 is smaller than v2, else insert first right item to i
-			if self.v2==None:
-				if v==None:
-					self.a=6
-					self.ir=1
-					return self.cycle()
-				self.v2=v
-			elif self.v1==None:
-				if v==None:
-					self.a=6
-					self.il=self.ir
-					self.ir=2
-					return self.cycle()
-				self.v1=v
-			self.a=4
-			self.i+=1
-			if self.v1<self.v2:
-				self.v1=None
-				self.il+=1
-				return (BUCKINSERT,0,1,self.i-1,0)
-			else:
-				self.v2=None
-				self.ir+=1
-				return (BUCKINSERT,0,2,self.i-1,0)
-		elif a==6:#dumps second bucket to i, then delete it
-			if self.il==self.s:
-				self.a=0
-				if self.i>=self.l:
-					self.s*=2
-					self.i=0
-				return self.cycle()
-			elif self.il>self.s:
-				raise Exception("Mergesort: il is unexpectedly bigger than s in a6")
-			else:
-				self.il+=1
-				self.i+=1
-				return (BUCKINSERT,0,self.ir,self.i-1,0)
-		elif a==7:
-			raise Exception("MergeSort: Unexpected cycle after finishing")
+	def gen(self):
+		yield (NEW_BUCK,)
+		yield (NEW_BUCK,)
+		s=1#merge block size
+		i=0#main bucket index
+		i1=0#left bucket index
+		i2=0#right bucket index
+		l=self.l
+		while s+1<l:
+			while i+s<l:
+				for i1 in range(s):
+					yield (BUCKINSERT,i,0,i1,1)
+				for i2 in range(s):
+					if i+i1+i2+1==l:
+						i2-=1
+						break
+					yield (BUCKINSERT,i,0,i2,2)
+				self.a=1.6
+				i1+=1
+				i2+=1
+				v1=None
+				v2=None
+				while i1>0 and i2>0:
+					if v1==None:
+						yield (READ,0,1)
+						v1=self.v
+					if v2==None:
+						yield (READ,0,2)
+						v2=self.v
+					if v2<v1:#this implementation ensures stable mergesort, v1<v2 and reversed actions wouldn't be stable.
+						i2-=1
+						v2=None
+						yield (BUCKINSERT,0,2,i,0)
+					else:
+						i1-=1
+						v1=None
+						yield (BUCKINSERT,0,1,i,0)
+					i+=1
+				while i1>0:
+					i1-=1
+					yield (BUCKINSERT,0,1,i,0)
+					i+=1
+				while i2>0:
+					i2-=1
+					yield (BUCKINSERT,0,2,i,0)
+					i+=1
+			i=0
+			s*=2
+		yield (DEL_BUCK,1)
+		yield (DEL_BUCK,1)
+		yield (FIN,)
 
 class BogoSort(BaseAlgorithm):
 	name="Bogo Sort"

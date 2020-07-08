@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 from Entities import *
 from Algs import *
+import traceback as tbe
 
 class GameWin(pyglet.window.Window):
 	def __init__(self,*args,**kwargs):
@@ -11,6 +12,7 @@ class GameWin(pyglet.window.Window):
 		self.set_fps(60)#set_fps needs self.fps to exist & sets more than that, so I have to do both here.
 		self.curalg=None
 		self.curval=None
+		self.gen=None
 		self.stats=[0,0,0,0,0]
 		self.labels=[]
 		self.btns=[]
@@ -54,29 +56,46 @@ class GameWin(pyglet.window.Window):
 		if self.btns[2].pressed:
 			self.btns[2].release()
 			self.curalg=Reverser(self.bucks[0].itemc)
+			if self.curalg.gen:
+				self.gen=self.curalg.gen()
 			self.stats=[0,0,0,0,0]
 			self.btns[0].press()
 		if self.btns[1].pressed:
 			self.btns[1].release()
 			self.curalg=shufflers[self.btns[3].getCurval()](self.bucks[0].itemc)
+			if self.curalg.gen:
+				self.gen=self.curalg.gen()
 			self.stats=[0,0,0,0,0]
 			self.btns[0].press()
 		if self.btns[0].pressed:
 			if self.curalg==None:
 				self.curalg=algs[self.rads[0].getSelected()](self.bucks[0].itemc)
+				if self.curalg.gen:
+					self.gen=self.curalg.gen()
 				self.stats=[0,0,0,0,0]
 			for x in range(self.edits[0].getNum()):
+				#TODO: clean this mess up when cycle support is removed
 				cura=self.curalg.a
 				try:
-					act=self.curalg.cycle(self.curval)
+					if self.gen:
+						act=next(self.gen)
+					else:
+						act=self.curalg.cycle(self.curval)
+				except StopIteration:
+					act=(FIN,)
 				except Exception as e:
-					print("%s, act %02i: %s"%(self.curalg.name,cura,e))
+					if self.gen:
+						cura=self.curalg.a
+					tbe.print_tb(e.__traceback__)
+					print("%s: %s"%(self.curalg.name,e))
 					act=(FIN,)
 				if act==PASS:#pass
 					self.stats[4]+=1
 				elif act[0]==READ:#read value
 					self.curval=self.bucks[act[2]].getvalue(act[1])
 					self.stats[0]+=1
+					if self.curalg.gen:
+						self.curalg.v=self.curval
 				elif act[0]==SWAP:#swap items
 					self.bucks[act[3]].swapitems(act[1],act[2])
 					self.stats[1]+=1
@@ -127,6 +146,7 @@ class GameWin(pyglet.window.Window):
 					break
 		elif self.curalg!=None:
 			self.curalg=None
+			self.gen=None
 			if len(self.bucks)>1:
 				newbuck=Bucket(0,0,WIDTH2,HEIGHT,-BUCKLEN)
 				for buck in self.bucks[:]:
