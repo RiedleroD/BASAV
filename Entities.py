@@ -458,7 +458,7 @@ class Bucket(Entity):
 			other.wacts.add(x)
 			self.rendered=other.rendered=False
 		else:
-			raise Exception("Bucket: out-of-scope call to swap_from")
+			raise Exception(f"Bucket: out-of-scope call to swap_from: swap {x} at buck[{other.itemc}] and {y} at buck[{self.itemc}]")
 	def insert_from(self,x,y,other):
 		if other.itemc>x and self.itemc>=y:
 			self.items[y:y]=other.items.pop(x),
@@ -468,7 +468,7 @@ class Bucket(Entity):
 			other.wacts.add(x)
 			self.rendered=other.rendered=False
 		else:
-			raise Exception("Bucket: out-of-scope call to insert_from")
+			raise Exception(f"Bucket: out-of-scope call to insert_from: from {x} at buck[{other.itemc}] to {y} at buck[{self.itemc}]")
 	def render(self):
 		if not self.qrendered:
 			self.quads=[self.getquad(i/self.maxic) for i in range(self.maxic)]
