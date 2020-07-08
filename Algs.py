@@ -481,34 +481,28 @@ class OddEvenSort(BaseAlgorithm):
 class RadixLSDBASE(BaseAlgorithm):
 	name="Radix LSD BASE"
 	desc="Base for all Radix LSD non-OOP Sorts."
-	maxb=None
-	curb=1
-	i=None
-	def cycle(self,v=None):
-		a=self.a
-		if a==0:
-			if self.maxb==None:
-				self.maxb=self.b
-			if self.i==None:
-				self.i=[0 for x in range(self.b)]
-			if self.i[0]==self.l:
-				self.i=[0 for i in range(self.b)]
-				self.curb*=self.b
-			if self.curb>=self.maxb:
-				return (FIN,)
-			self.a=1
-			return (READ,self.i[0],0)
-		elif a==1:
-			while v>self.maxb:
-				self.maxb*=self.b
-			self.a=0
-			digit=(self.b-1)-(v//self.curb)%self.b#actually the inverse of the digit, it would reverse the list otherwise
-			for i in range(digit+1):
-				self.i[i]+=1
+	def gen(self):
+		b=self.b
+		l=self.l
+		maxb=b
+		curb=1
+		i=[0 for x in range(b)]
+		while True:
+			if i[0]==l:
+				i=[0 for i in range(b)]
+				curb*=b
+			if curb>=maxb:
+				break
+			yield (READ,i[0],0)
+			while self.v>maxb:
+				maxb*=b
+			digit=(b-1)-(self.v//curb)%b#actually the inverse of the digit, it would reverse the list otherwise
+			for j in range(digit+1):
+				i[j]+=1
 			if digit==0:
-				return self.cycle()
+				continue
 			else:
-				return (INSERT,self.i[0]-1,self.i[digit]-1,0)
+				yield (INSERT,i[0]-1,i[digit]-1,0)
 
 class RadixLSDBASEOOP(BaseAlgorithm):
 	name="Radix LSD BASE OOP"
