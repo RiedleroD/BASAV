@@ -11,7 +11,7 @@ ANCHORSx=("left","center","right")
 TIME=time()
 DTIME=0
 TIMEC=0
-BUCKLEN=200
+BUCKLEN=2000
 SCOLOR=(255,0,0)
 ECOLOR=(0,255,255)
 

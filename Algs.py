@@ -654,56 +654,42 @@ class Quicksort(BaseAlgorithm):
 class Reverser(BaseAlgorithm):
 	name="Reverser"
 	desc="reverses the set"
-	def cycle(self,v=None):
-		self.i+=1
-		if self.i*2>=self.l:
-			return (7,)
-		else:
-			return (SWAP,self.i-1,self.l-self.i,0)
+	def gen(self):
+		for i in range(self.l//2):
+			yield (SWAP,i,self.l-i-1,0)
+		yield (FIN,)
 
 class Shuffler(BaseAlgorithm):
 	name="Shuffler"
 	desc="Shuffles the list"
-	def cycle(self,v=None):
-		self.i+=1
-		if self.i+1==self.l:
-			self.a=7
-			return (FIN,)
-		else:
-			return (SWAP,self.i-1,random.randrange(self.l),0)
+	def gen(self):
+		for i in range(self.l):
+			yield (SWAP,i,random.randrange(self.l),0)
+		yield (FIN,)
 
 class ShufflerOneSide(BaseAlgorithm):
 	name="One-Sided Shuffler"
 	desc="Shuffles the list one-sided\n(not 100% random)"
-	def cycle(self,v=None):
-		self.i+=1
-		if self.i+1==self.l:
-			self.a=7
-			return (FIN,)
-		else:
-			return (SWAP,self.i-1,random.randrange(self.i,self.l),0)
+	def gen(self):
+		for i in range(self.l):
+			yield (SWAP,i,random.randrange(i+1,self.l),0)
+		yield (FIN,)
 
 class ShufflerInsert(BaseAlgorithm):
 	name="Shuffler"
 	desc="Shuffles the list by inserting\n(pretty bad)"
-	def cycle(self,v=None):
-		self.i+=1
-		if self.i==self.l:
-			self.a=7
-			return (FIN,)
-		else:
-			return (INSERT,self.i-1,random.randrange(self.l),0)
+	def gen(self):
+		for i in range(self.l):
+			yield (INSERT,i,random.randrange(self.l),0)
+		yield (FIN,)
 
 class ShufflerOneSideInsert(BaseAlgorithm):
 	name="Shuffler"
 	desc="Shuffles the list one-sided by inserting\n(very,very bad)"
-	def cycle(self,v=None):
-		self.i+=1
-		if self.i+1==self.l:
-			self.a=7
-			return (FIN,)
-		else:
-			return (INSERT,self.i-1,random.randrange(self.i+1,self.l),0)
+	def gen(self):
+		for i in range(self.l):
+			yield (INSERT,i-1,random.randrange(i+1,self.l),0)
+		yield (FIN,)
 
 shufflers=[ShufflerOneSideInsert,ShufflerInsert,ShufflerOneSide,Shuffler]#shufflers from worst to best
 algs=[

@@ -77,17 +77,15 @@ class GameWin(pyglet.window.Window):
 				#TODO: clean this mess up when cycle support is removed
 				cura=self.curalg.a
 				try:
-					if self.gen:
+					if self.curalg.gen:
 						act=next(self.gen)
 					else:
 						act=self.curalg.cycle(self.curval)
 				except StopIteration:
 					act=(FIN,)
 				except Exception as e:
-					if self.gen:
-						cura=self.curalg.a
 					tbe.print_tb(e.__traceback__)
-					print("%s: %s"%(self.curalg.name,e))
+					print(f"{self.curalg.name}: {e}")
 					act=(FIN,)
 				if act==PASS:#pass
 					self.stats[4]+=1
