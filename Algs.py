@@ -391,56 +391,37 @@ class SelectionSortOOP(BaseAlgorithm):
 class DoubleSelectionSortOOP(BaseAlgorithm):
 	name="Double Selectionsort OOP"
 	desc="Puts the smalles unsorted item in the first bucket\nand the biggest unsorted item in the second bucket,\nthen dumps the buckets in the main one."
-	i=0#how many items got transferred
-	i2=0#main cycler
-	i3=0#pointer to smallest item
-	i4=0#pointer to biggest  item
-	def cycle(self,v=None):
-		a=self.a
-		if a==0:
-			self.a=1
-			return (NEW_BUCK,)
-		elif a==1:
-			self.a=2
-			return (NEW_BUCK,)
-		elif a==2:
-			self.i2=0
-			self.v1=None
-			self.v2=None
-			self.a=3
-			return (READ,self.i2,0)
-		elif a==3:
-			if self.i*2>=self.l:
-				self.a=5
-				self.i2=self.i
-				return (DEL_BUCK,0)
-			if self.v1==None or v<self.v1:
-				self.v1=v
-				self.i3=self.i2
-			if self.v2==None or v>self.v2:
-				self.v2=v
-				self.i4=self.i2
-			self.i2+=1
-			if self.i2==self.l-self.i*2:
-				self.a=4
-				if self.i3<self.i4:
-					self.i4-=1
-				self.i+=1
-				return (BUCKINSERT,self.i3,0,self.i-1,1)
-			else:
-				return (READ,self.i2,0)
-		elif a==4:
-			self.a=2
-			return (BUCKINSERT,self.i4,0,self.i-1,2)
-		elif a==5:
-			if self.i2>0:
-				self.i2-=1
-				return (BUCKINSERT,0,1,self.i,0)
-			else:
-				self.a=7
-				return (DEL_BUCK,1)
-		elif a==7:
-			return (FIN,)
+	def gen(self):
+		l=self.l
+		yield (NEW_BUCK,)
+		yield (NEW_BUCK,)
+		i=0
+		for z in range(l//2):
+			bn=0
+			bi=None
+			sn=None
+			si=None
+			for j in range(l-i*2):
+				yield (READ,j,0)
+				v=self.v
+				if v>=bn:# >= makes the sort stable
+					bn=v
+					bi=j
+				if sn==None or sn>v:
+					sn=v
+					si=j
+			if si<bi:
+				bi-=1
+			yield (BUCKINSERT,si,0,i,1)
+			yield (BUCKINSERT,bi,0,0,2)
+			i+=1
+		if l%2==1:#if odd → one item left in bucket 0
+			yield (BUCKINSERT,0,0,i,1)#put on top of buck 1 since it's the median
+			i+=1
+		yield (DEL_BUCK,0)
+		for j in range(i,l):
+			yield (BUCKINSERT,0,1,j,0)
+		yield (DEL_BUCK,1)
 
 class OddEvenSort(BaseAlgorithm):
 	name="Odd-Even Sort"
