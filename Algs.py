@@ -358,35 +358,20 @@ class DoubleSelectionSort(BaseAlgorithm):
 class SelectionSortOOP(BaseAlgorithm):
 	name="Selectionsort OOP"
 	desc="Puts the smallest item in bucket 0 to the end of bucket 1\nuntil bucket 0 is empty."
-	i=0
-	i2=0
-	i3=0
-	def cycle(self,v=None):
-		a=self.a
-		if a==0:
-			self.a=1
-			return (NEW_BUCK,)
-		elif a==1:
-			self.i2=0
-			self.v1=None
-			self.a=2
-			return (READ,self.i2,0)
-		elif a==2:
-			if self.i==self.l:
-				self.a=7
-				return (DEL_BUCK,0)
-			if self.v1==None or v<self.v1:
-				self.v1=v
-				self.i3=self.i2
-			if self.i2+self.i+1==self.l:
-				self.a=1
-				self.i+=1
-				return (BUCKINSERT,self.i3,0,self.i-1,1)
-			else:
-				self.i2+=1
-				return (READ,self.i2,0)
-		elif a==7:
-			return (FIN,)
+	def gen(self):
+		l=self.l
+		yield (NEW_BUCK,)
+		for i in range(l):
+			sn=None
+			si=None
+			for j in range(l-i):
+				yield (READ,j,0)
+				v=self.v
+				if sn==None or sn>v:
+					sn=v
+					si=j
+			yield (BUCKINSERT,si,0,i,1)
+		yield (DEL_BUCK,0)
 
 class DoubleSelectionSortOOP(BaseAlgorithm):
 	name="Double Selectionsort OOP"
@@ -395,8 +380,7 @@ class DoubleSelectionSortOOP(BaseAlgorithm):
 		l=self.l
 		yield (NEW_BUCK,)
 		yield (NEW_BUCK,)
-		i=0
-		for z in range(l//2):
+		for i in range(l//2):
 			bn=0
 			bi=None
 			sn=None
@@ -414,10 +398,11 @@ class DoubleSelectionSortOOP(BaseAlgorithm):
 				bi-=1
 			yield (BUCKINSERT,si,0,i,1)
 			yield (BUCKINSERT,bi,0,0,2)
-			i+=1
 		if l%2==1:#if odd → one item left in bucket 0
 			yield (BUCKINSERT,0,0,i,1)#put on top of buck 1 since it's the median
-			i+=1
+			i=1+l//2
+		else:
+			i=l//2
 		yield (DEL_BUCK,0)
 		for j in range(i,l):
 			yield (BUCKINSERT,0,1,j,0)
