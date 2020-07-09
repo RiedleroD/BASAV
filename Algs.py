@@ -507,47 +507,29 @@ class RadixLSDBASE(BaseAlgorithm):
 class RadixLSDBASEOOP(BaseAlgorithm):
 	name="Radix LSD BASE OOP"
 	desc="Base for all Radix LSD OOP Sorts."
-	maxb=0
-	curb=1
-	i=None
-	def cycle(self,v=None):
-		a=self.a
-		if a==0:
-			if self.maxb<self.b:
-				self.maxb+=1
-				return (NEW_BUCK,)
-			if self.i==None:
-				self.i=[0 for x in range(self.b)]
-			if sum(self.i)==self.l:
-				self.curb*=self.b
-				self.a=2
-				return self.cycle()
-			if self.curb>=self.maxb:
-				self.maxb=0
-				self.a=3
-				return self.cycle()
-			self.a=1
-			return (READ,0,0)
-		elif a==1:
-			while v>self.maxb:
-				self.maxb*=self.b
-			self.a=0
-			digit=(v//self.curb)%self.b
-			self.i[digit]+=1
-			return (BUCKINSERT,0,0,self.i[digit]-1,digit+1)
-		elif a==2:
-			for i in range(self.b):
-				if self.i[i]>0:
-					self.i[i]-=1
-					return (BUCKINSERT,0,i+1,self.l-sum(self.i)-1,0)
-			self.a=0
-			return self.cycle()
-		elif a==3:
-			if self.maxb<self.b:
-				self.maxb+=1
-				return (DEL_BUCK,1)
-			else:
-				return (FIN,)
+	def gen(self):
+		b=self.b
+		l=self.l
+		maxb=b
+		curb=1
+		for x in range(b):
+			yield (NEW_BUCK,)
+		while curb<maxb:
+			i=[0 for x in range(b)]
+			for j in range(l):
+				yield (READ,0,0)
+				v=self.v
+				while v>maxb:
+					maxb*=b
+				digit=b-(v//curb)%b
+				i[digit-1]+=1
+				yield (BUCKINSERT,0,0,0,digit)
+			for j,x in enumerate(i):
+				for y in range(x):
+					yield (BUCKINSERT,0,j+1,0,0)
+			curb*=b
+		for x in range(b):
+			yield (DEL_BUCK,1)
 
 class RadixLSDB2(RadixLSDBASE):
 	name="Radix LSD 2"
