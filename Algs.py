@@ -12,34 +12,24 @@ BUCKINSERT=5
 DEL_BUCK=6
 FIN=7
 
-#TODO: reimplement all algorithms to use gen(), strip BaseAlgorithm of all cycle-only variables and remove cycle Support from main.py
 class BaseAlgorithm():
 	name="Base Algorithm"
 	desc="This is the Base algorithm,\nit doesn't sort, but lays the foundation\nfor other algorithms."
-	s=0#step counter; optional
-	a=0#current action; optional
-	b=0#current bucket; optional
-	i=0#current index;optional
 	v=None#current value; gets set when using gen
-	v1=None#current value;optional
-	v2=None#current value;optional
-	f=False#var to store if finished
 	def __init__(self,l):
 		self.l=l#array length
 	#TODO: deprecate optional insert after new_buck, it was created to reduce the number of different actions by joining the creation and initialisation of a bucket
 	#TODO: this is obsolete now since there are no actions with the new yield gen API
-	#cycle returns a tuple that tells the main program what to do - it doesn't have access to the list. (DEPRECATED, USE GEN)
-	#gen is the same as cycle, but uses the yield instruction to sort-of process array accesses in parallel. Read values get stored in self.v
+	#gen yields a tuple that tells the main program what to do each iteration - it doesn't have access to the list. Read values get stored in self.v.
 	#None		→ does nothing
-	#(0,x,i)	→ reads value of item x in bucket i and puts it into the value param next cycle; None means there is no item at this index
-	#(1,x,y,i)	→ swaps item x with item y in bucket i
-	#(2,x,y,i)	→ inserts item x at index y and pushes all items between one index to the old index
-	#(3,x,i)	→ creates a new bucket and optionally transfers item x from bucket i to it (if only one argument is passed, bucket is empty)
-	#(4,x,i,y,j)→ swaps item x in bucket i to index y in bucket j
-	#(5,x,i,y,j)→inserts item x in bucket i at index y in bucket j
-	#(6,i)		→ destroys bucket i (only empty buckets can be destroyed)
-	#(7)		→ finish
-	cycle=None
+	#(READ,x,i)	→ reads value of item x in bucket i and puts it into the value param next cycle; None means there is no item at this index
+	#(SWAP,x,y,i)	→ swaps item x with item y in bucket i
+	#(INSERT,x,y,i)	→ inserts item x at index y and pushes all items between one index to the old index
+	#(NEW_BUCK,x,i)	→ creates a new bucket and optionally transfers item x from bucket i to it (if only one argument is passed, bucket is empty)
+	#(BUCKSWAP,x,i,y,j)→ swaps item x in bucket i to index y in bucket j
+	#(BUCKINSERT,x,i,y,j)→inserts item x in bucket i at index y in bucket j
+	#(DEL_BUCK,i)		→ destroys bucket i (only empty buckets can be destroyed)
+	#(FIN,)		→ finish (not necessary anymore, StopIteration finishes too)
 	gen=None
 
 class BubbleSort(BaseAlgorithm):

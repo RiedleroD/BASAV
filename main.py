@@ -56,31 +56,23 @@ class GameWin(pyglet.window.Window):
 		if self.btns[2].pressed:
 			self.btns[2].release()
 			self.curalg=Reverser(self.bucks[0].itemc)
-			if self.curalg.gen:
-				self.gen=self.curalg.gen()
+			self.gen=self.curalg.gen()
 			self.stats=[0,0,0,0,0]
 			self.btns[0].press()
 		if self.btns[1].pressed:
 			self.btns[1].release()
 			self.curalg=shufflers[self.btns[3].getCurval()](self.bucks[0].itemc)
-			if self.curalg.gen:
-				self.gen=self.curalg.gen()
+			self.gen=self.curalg.gen()
 			self.stats=[0,0,0,0,0]
 			self.btns[0].press()
 		if self.btns[0].pressed:
 			if self.curalg==None:
 				self.curalg=algs[self.rads[0].getSelected()](self.bucks[0].itemc)
-				if self.curalg.gen:
-					self.gen=self.curalg.gen()
+				self.gen=self.curalg.gen()
 				self.stats=[0,0,0,0,0]
 			for x in range(self.edits[0].getNum()):
-				#TODO: clean this mess up when cycle support is removed
-				cura=self.curalg.a
 				try:
-					if self.curalg.gen:
-						act=next(self.gen)
-					else:
-						act=self.curalg.cycle(self.curval)
+					act=next(self.gen)
 				except StopIteration:
 					act=(FIN,)
 				except Exception as e:
@@ -90,6 +82,7 @@ class GameWin(pyglet.window.Window):
 				if not self.procact(act):
 					self.btns[0].release()
 					self.curalg=None
+					self.gen=None
 					self.bucks[0].racts.clear()
 					self.bucks[0].wacts.clear()
 					self.bucks[0].rendered=False
