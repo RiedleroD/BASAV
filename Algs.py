@@ -320,40 +320,27 @@ class SelectionSort(BaseAlgorithm):
 class DoubleSelectionSort(BaseAlgorithm):
 	name="Double Selection Sort"
 	desc="Swaps the smalles unsorted item with the first unsorted item\nand the biggest unsorted item with the last unsorted item\nuntil the list is sorted."
-	i=0
-	i2=0
-	i3=0
-	i4=0
-	def cycle(self,v=None):
-		a=self.a
-		if a==0:
-			self.i2=self.i
-			self.v1=None
-			self.v2=None
-			self.a=1
-			return (READ,self.i2,0)
-		elif a==1:
-			if self.i*2+1>=self.l:
-				self.a=7
-				return (FIN,)
-			if self.v1==None or v<self.v1:
-				self.v1=v
-				self.i3=self.i2
-			if self.v2==None or v>self.v2:
-				self.v2=v
-				self.i4=self.i2
-			self.i2+=1
-			if self.i2==self.l-self.i:
-				self.a=2
-				if self.i4==self.i:
-					self.i4=self.i3
-				self.i+=1
-				return (SWAP,self.i-1,self.i3,0)
-			else:
-				return (READ,self.i2,0)
-		elif a==2:
-			self.a=0
-			return (SWAP,self.l-self.i,self.i4,0)
+	def gen(self):
+		l=self.l
+		l1=l-1
+		for i in range(l//2):
+			bn=0
+			bi=None
+			sn=None
+			si=None
+			for j in range(i,l-i):
+				yield (READ,j,0)
+				v=self.v
+				if v>=bn:# >= makes the sort stable
+					bn=v
+					bi=j
+				if sn==None or sn>v:
+					sn=v
+					si=j
+			if si==l1-i:
+				si=bi
+			yield (SWAP,bi,l1-i,0)
+			yield (SWAP,si,i,0)
 
 class SelectionSortOOP(BaseAlgorithm):
 	name="Selectionsort OOP"
