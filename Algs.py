@@ -174,31 +174,19 @@ class BogoSort(BaseAlgorithm):
 class InsertionSort(BaseAlgorithm):
 	name="InsertionSort"
 	desc="Inserts first unsorted item into sorted subarray\nuntil no unsorted items remain"
-	i2=0
-	def cycle(self,v=None):
-		a=self.a
-		if a==0:
-			self.a=1
-			self.i+=1
-			if self.i==self.l:
-				return (FIN,)
-			self.i2=self.i-1
-			return (READ,self.i,0)
-		elif a==1:
-			self.a=2
-			self.v1=v
-			return (READ,self.i2,0)
-		elif a==2:
-			self.v2=v
-			if self.v2<self.v1:
-				self.a=0
-				return (INSERT,self.i,self.i2+1,0)
-			elif self.i2==0:
-				self.a=0
-				return (INSERT,self.i,self.i2,0)
-			else:
-				self.i2-=1
-				return (READ,self.i2,0)
+	def gen(self):
+		l=self.l
+		for z in range(1,l):
+			yield (READ,z,0)
+			v=self.v
+			i=z
+			for j in range(z-1,-1,-1):
+				yield (READ,j,0)
+				if v>self.v:
+					break
+				i=j
+			if i!=z:
+				yield (INSERT,z,i,0)
 
 class InsertionSortOOP(BaseAlgorithm):
 	name="InsertionSort OOP"
