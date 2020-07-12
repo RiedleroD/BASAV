@@ -66,55 +66,33 @@ class BubbleSort(BaseAlgorithm):
 class CocktailShaker(BaseAlgorithm):
 	name="Cocktail Shaker"
 	desc="Like Bubble Sort, but changes directions every cycle"
-	m=2
-	f=False
-	def cycle(self,v=None):
-		a=self.a
-		if a==0:
-			self.a=1
-			return (READ,self.i,0)
-		elif a==1:
-			if self.i+1==self.l:
-				self.m=3
-			elif self.i==0:
-				self.m=2
-			if self.m==2:
-				self.i+=1
-			else:
-				self.i-=1
-			self.a=self.m
-			if self.v1==None:
-				self.v1=v
-			return (READ,self.i,0)
-		elif a==2:
-			if v<self.v1:
-				self.a=1
-				self.f=False
-				return (SWAP,self.i,self.i-1,0)
-			else:
-				self.v1=v
-				if self.i+1>=self.l-self.s:
-					self.a=self.m=3
+	def gen(self):
+		l=self.l
+		l2=l//2
+		i=l
+		rn=True
+		yield (READ,0,0)
+		v1=self.v
+		while rn and i>l2:
+			rn=False
+			for j in range(l-i,i):
+				yield (READ,j,0)
+				v2=self.v
+				if v1>v2:
+					rn=True
+					yield (SWAP,j-1,j,0)
 				else:
-					self.i+=1
-				return (READ,self.i,0)
-		elif a==3:
-			if v>self.v1:
-				self.a=1
-				self.f=False
-				return (SWAP,self.i,self.i+1,0)
-			else:
-				self.v1=v
-				if self.i<=self.s:
-					self.a=self.m=2
-					self.s+=1
-					if self.f:
-						return (FIN,)
-					else:
-						self.f=True
+					v1=v2
+			v1=v2
+			for j in range(i-3,l-1-i,-1):
+				yield (READ,j,0)
+				v2=self.v
+				if v1<v2:
+					rn=True
+					yield (SWAP,j+1,j,0)
 				else:
-					self.i-=1
-				return (READ,self.i,0)
+					v1=v2
+			i-=1
 
 class MergeSort(BaseAlgorithm):
 	name="Merge Sort"
