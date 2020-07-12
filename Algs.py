@@ -25,7 +25,7 @@ class BaseAlgorithm():
 	#(READ,x,i)	→ reads value of item x in bucket i and puts it into the value param next cycle; None means there is no item at this index
 	#(SWAP,x,y,i)	→ swaps item x with item y in bucket i
 	#(INSERT,x,y,i)	→ inserts item x at index y and pushes all items between one index to the old index
-	#(NEW_BUCK,x,i)	→ creates a new bucket and optionally transfers item x from bucket i to it (if only one argument is passed, bucket is empty)
+	#(NEW_BUCK,)	→ creates a new bucket
 	#(BUCKSWAP,x,i,y,j)→ swaps item x in bucket i to index y in bucket j
 	#(BUCKINSERT,x,i,y,j)→inserts item x in bucket i at index y in bucket j
 	#(DEL_BUCK,i)		→ destroys bucket i (only empty buckets can be destroyed)

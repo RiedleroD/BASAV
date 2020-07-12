@@ -141,16 +141,14 @@ class GameWin(pyglet.window.Window):
 		if len(act) not in (1,3):
 			print(f"{self.curalg.name}: NEW_BUCK: incorrect act length {len(act)}: only length of 1 or 3 is allowed")
 			return False
-		self.bucks.append(Bucket(0,0,0,0,-BUCKLEN))
-		chunksize=WIDTH2/len(self.bucks)
-		for i,buck in enumerate(self.bucks):
-			buck.set_size(chunksize,HEIGHT)
-			buck.set_pos(chunksize*i,0)
-			buck.qrendered=False
-		self.stats[3]+=1
-		if len(act)==3:#TODO: deprecate this
-			return self.act_buckinsert((BUCKINSERT,act[1],act[2],len(self.bucks)-1,0))
 		else:
+			self.bucks.append(Bucket(0,0,0,0,-BUCKLEN))
+			chunksize=WIDTH2/len(self.bucks)
+			for i,buck in enumerate(self.bucks):
+				buck.set_size(chunksize,HEIGHT)
+				buck.set_pos(chunksize*i,0)
+				buck.qrendered=False
+			self.stats[3]+=1
 			return True
 	def act_buckswap(self,act):
 		if len(act)!=5:
