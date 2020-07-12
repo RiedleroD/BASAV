@@ -135,7 +135,6 @@ class MergeSort(BaseAlgorithm):
 			s*=2
 		yield (DEL_BUCK,1)
 		yield (DEL_BUCK,1)
-		yield (FIN,)
 
 class BogoSort(BaseAlgorithm):
 	name="Bogo Sort"
@@ -453,7 +452,6 @@ class Reverser(BaseAlgorithm):
 	def gen(self):
 		for i in range(self.l//2):
 			yield (SWAP,i,self.l-i-1,0)
-		yield (FIN,)
 
 class Shuffler(BaseAlgorithm):
 	name="Shuffler"
@@ -461,7 +459,6 @@ class Shuffler(BaseAlgorithm):
 	def gen(self):
 		for i in range(self.l):
 			yield (SWAP,i,random.randrange(self.l),0)
-		yield (FIN,)
 
 class ShufflerOneSide(BaseAlgorithm):
 	name="One-Sided Shuffler"
@@ -469,7 +466,6 @@ class ShufflerOneSide(BaseAlgorithm):
 	def gen(self):
 		for i in range(self.l):
 			yield (SWAP,i,random.randrange(i+1,self.l),0)
-		yield (FIN,)
 
 class ShufflerInsert(BaseAlgorithm):
 	name="Shuffler"
@@ -477,7 +473,6 @@ class ShufflerInsert(BaseAlgorithm):
 	def gen(self):
 		for i in range(self.l):
 			yield (INSERT,i,random.randrange(self.l),0)
-		yield (FIN,)
 
 class ShufflerOneSideInsert(BaseAlgorithm):
 	name="Shuffler"
@@ -485,7 +480,6 @@ class ShufflerOneSideInsert(BaseAlgorithm):
 	def gen(self):
 		for i in range(self.l):
 			yield (INSERT,i-1,random.randrange(i+1,self.l),0)
-		yield (FIN,)
 
 shufflers=[ShufflerOneSideInsert,ShufflerInsert,ShufflerOneSide,Shuffler]#shufflers from worst to best
 algs=[
