@@ -152,39 +152,24 @@ class MergeSort(BaseAlgorithm):
 class BogoSort(BaseAlgorithm):
 	name="Bogo Sort"
 	desc="Randomizes the whole set, then checks if it's sorted"
-	def cycle(self,v=None):
-		a=self.a
-		if a==0:#read item
-			self.a=1
-			return (READ,self.i,0)
-		elif a==1:#store v1 and read item
-			self.v1=v
-			self.a=2
-			self.i+=1
-			return (READ,self.i,0)
-		elif a==2:#store v2 and see below
-			self.v2=v
-			self.i+=1
-			if self.v1>self.v2:#if not sorted
-				self.a=3
-				self.i=0
-				return (SWAP,self.i,random.randrange(self.l),0)
-			elif self.i==self.l:#if end of list is reached
-				self.a=7
-				return (FIN,)
-			else:
-				self.v1=self.v2
-				return (READ,self.i,0)
-		elif a==3:#randomize list, then read item and goto a1
-			self.i+=1
-			if self.i==self.l:
-				self.a=1
-				self.i=0
-				return (READ,self.i,0)
-			else:
-				return (SWAP,self.i,random.randrange(self.l),0)
-		elif a==7:
-			raise Exception("BogoSort: Unexpected cycle after finishing")
+	def gen(self):
+		l=self.l
+		while True:
+			yield (READ,0,0)
+			v1=self.v
+			fin=True
+			for i in range(1,l):
+				yield (READ,i,0)
+				v2=self.v
+				if v1>v2:
+					fin=False
+					break
+				else:
+					v1=v2
+			if fin:
+				break
+			for i in range(l):
+				yield (SWAP,i,random.randrange(l),0)
 
 class InsertionSort(BaseAlgorithm):
 	name="InsertionSort"
