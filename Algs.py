@@ -410,67 +410,54 @@ class RadixLSDB10OOP(RadixLSDBASEOOP):
 class Quicksort(BaseAlgorithm):
 	name="Quicksort"
 	desc="Recursively picks a pivot and partitions all items around it\nuntil list is sorted.\nHilariously bad at sorted and reversed lists."
-	lv=None#recursion simulation list
-	def cycle(self,v=None):
-		if self.lv==None:
-			self.lv=[[0,self.l-1,0]]
-			#		 lo,hi      ,a
-		a=self.lv[-1][2]
-		self.a=a
-		lv=self.lv[-1]
-		if a==0:
-			if lv[0]<lv[1]:#if lo<hi:
-				lv[2]=1
-				self.lv.append([lv[0],lv[1],4])
-				return self.cycle()
-			else:
-				del self.lv[-1],lv
-				if len(self.lv)==0:
-					return (FIN,)
+	def gen(self):#TODO: this is badly transitioned from the days of the cycle API, rewrite needed
+		lv=[[0,self.l-1,0]]
+		while True:
+			cv=lv[-1]
+			a=cv[2]
+			v=self.v
+			if a==0:
+				if cv[0]<cv[1]:#if lo<hi:
+					cv[2]=1
+					lv.append([cv[0],cv[1],4])
 				else:
-					return self.cycle()
-		elif a==1:
-			lv[2]=2
-			self.lv.append([lv[0],lv[3]-1,0])
-			return self.cycle()
-		elif a==2:
-			lv[2]=3
-			self.lv.append([lv[3]+1,lv[1],0])
-			return self.cycle()
-		elif a==3:
-			del self.lv[-1],lv
-			if len(self.lv)==0:
-				return (FIN,)
-			else:
-				return self.cycle()
-		elif a==4:
-			lv[2]=5
-			return (READ,lv[1],0)
-		elif a==5:
-			lv.append(v)#3 - pivot
-			lv.append(lv[0])#4 - i
-			lv.append(lv[0])#5 - j
-			lv[2]=6#a=6
-			return self.cycle()
-		elif a==6:
-			if lv[5]>lv[1]:#if j>hi
-				lv[2]=8	#a=8
-				return (SWAP,lv[4],lv[1],0)#SWAP i,hi,0
-			else:
-				lv[2]=7#a=7
-				return (READ,lv[5],0)#READ j,0
-		elif a==7:
-			lv[5]+=1#j++
-			lv[2]=6
-			if v<lv[3]:	#if A[j]<pivot:
-				lv[4]+=1	#i++
-				return (SWAP,lv[4]-1,lv[5]-1,0)#SWAP i,j,0
-			else:
-				return self.cycle()
-		elif a==8:
-			self.lv[-2].append(lv[4])#return i
-			del self.lv[-1],lv
-			return self.cycle()
+					del lv[-1],cv
+					if len(lv)==0:
+						break
+			elif a==1:
+				cv[2]=2
+				lv.append([cv[0],cv[3]-1,0])
+			elif a==2:
+				cv[2]=3
+				lv.append([cv[3]+1,cv[1],0])
+			elif a==3:
+				del lv[-1],cv
+				if len(lv)==0:
+					break
+			elif a==4:
+				cv[2]=5
+				yield (READ,cv[1],0)
+			elif a==5:
+				cv.append(v)#3 - pivot
+				cv.append(cv[0])#4 - i
+				cv.append(cv[0])#5 - j
+				cv[2]=6#a=6
+			elif a==6:
+				if cv[5]>cv[1]:#if j>hi
+					cv[2]=8	#a=8
+					yield (SWAP,cv[4],cv[1],0)#SWAP i,hi,0
+				else:
+					cv[2]=7#a=7
+					yield (READ,cv[5],0)#READ j,0
+			elif a==7:
+				cv[5]+=1#j++
+				cv[2]=6
+				if v<cv[3]:	#if A[j]<pivot:
+					cv[4]+=1	#i++
+					yield (SWAP,cv[4]-1,cv[5]-1,0)#SWAP i,j,0
+			elif a==8:
+				lv[-2].append(cv[4])#return i
+				del lv[-1],cv
 
 class Reverser(BaseAlgorithm):
 	name="Reverser"
