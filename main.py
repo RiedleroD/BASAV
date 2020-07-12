@@ -87,55 +87,7 @@ class GameWin(pyglet.window.Window):
 					tbe.print_tb(e.__traceback__)
 					print(f"{self.curalg.name}: {e}")
 					act=(FIN,)
-				if act==PASS:#pass
-					self.stats[4]+=1
-				elif act[0]==READ:#read value
-					self.curval=self.bucks[act[2]].getvalue(act[1])
-					self.stats[0]+=1
-					if self.curalg.gen:
-						self.curalg.v=self.curval
-				elif act[0]==SWAP:#swap items
-					self.bucks[act[3]].swapitems(act[1],act[2])
-					self.stats[1]+=1
-				elif act[0]==INSERT:#insert item to index
-					self.bucks[act[3]].insertitem(act[1],act[2])
-					self.stats[2]+=1
-				elif act[0]==NEW_BUCK:#create new empty bucket
-					self.bucks.append(Bucket(0,0,0,0,-BUCKLEN))
-					chunksize=WIDTH2/len(self.bucks)
-					for i,buck in enumerate(self.bucks):
-						buck.set_size(chunksize,HEIGHT)
-						buck.set_pos(chunksize*i,0)
-						buck.qrendered=False
-					if len(act)>1:
-						self.bucks[-1].insert_from(act[1],0,self.bucks[act[2]])
-						self.stats[2]+=1
-					self.stats[3]+=1
-				elif act[0]==BUCKSWAP:#swap from bucket into another
-					#(BUCKSWAP,x_i,x_buck,y_i,y_buck)
-					#(0       ,1   ,2    ,3  ,4     )
-					self.bucks[act[4]].swap_from(act[1],act[3],self.bucks[act[2]])
-					self.stats[1]+=1
-				elif act[0]==BUCKINSERT:#insert from bucket into another
-					#(BUCKINSERT,src_i,src_buck,dst_i,dst_buck)
-					#(0         ,1    ,2       ,3    ,4       )
-					self.bucks[act[4]].insert_from(act[1],act[3],self.bucks[act[2]])
-					self.stats[2]+=1
-				elif act[0]==DEL_BUCK:#delete bucket
-					if self.bucks[act[1]].itemc==0:
-						del self.bucks[act[1]]
-						chunksize=WIDTH2/len(self.bucks)
-						for i,buck in enumerate(self.bucks):
-							buck.set_size(chunksize,HEIGHT)
-							buck.set_pos(chunksize*i,0)
-					else:
-						print("%s, act %02i: DEL_BUCK on non-empty bucket %02i with %03i items"%(self.curalg.name,cura,act[1],self.bucks[act[1]].itemc))
-						self.btns[0].release()
-						break
-					for buck in self.bucks:
-						buck.qrendered=False
-					self.stats[3]+=1
-				elif act[0]==FIN:#finished
+				if not self.procact(act):
 					self.btns[0].release()
 					self.curalg=None
 					self.bucks[0].racts.clear()
@@ -159,6 +111,124 @@ class GameWin(pyglet.window.Window):
 		self.labels[4].setText("Insert:%02i"%self.stats[2])
 		self.labels[5].setText("Bucket:%02i"%self.stats[3])
 		self.labels[6].setText("Pass:%02i"%self.stats[4])
+	def act_read(self,act):
+		if len(act)!=3:
+			print(f"{self.curalg.name}: READ: incorrect act length {len(act)}: only length of 3 is allowed")
+			return False
+		elif act[2]>=len(self.bucks) or act[2]<0:
+			print(f"{self.curalg.name}: READ: Bucket {act[2]} does not exist, max is {len(self.bucks)-1}")
+			return False
+		else:
+			rv,self.curval=self.bucks[act[2]].getvalue(act[1])
+			self.stats[0]+=1
+			if self.curalg.gen:
+				self.curalg.v=self.curval
+			return rv
+	def act_swap(self,act):
+		if len(act)!=4:
+			print(f"{self.curalg.name}: SWAP: incorrect act length {len(act)}: only length of 4 is allowed")
+			return False
+		elif act[3]>=len(self.bucks) or act[3]<0:
+			print(f"{self.curalg.name}: SWAP: Bucket {act[3]} does not exist, max is {len(self.bucks)-1}")
+			return False
+		else:
+			self.stats[1]+=1
+			return self.bucks[act[3]].swapitems(act[1],act[2])
+	def act_insert(self,act):
+		if len(act)!=4:
+			print(f"{self.curalg.name}: INSERT: incorrect act length {len(act)}: only length of 4 is allowed")
+			return False
+		elif act[3]>=len(self.bucks) or act[3]<0:
+			print(f"{self.curalg.name}: INSERT: Bucket {act[3]} does not exist, max is {len(self.bucks)-1}")
+			return False
+		else:
+			self.stats[2]+=1
+			return self.bucks[act[3]].insertitem(act[1],act[2])
+	def act_new_buck(self,act):
+		if len(act) not in (1,3):
+			print(f"{self.curalg.name}: NEW_BUCK: incorrect act length {len(act)}: only length of 1 or 3 is allowed")
+			return False
+		self.bucks.append(Bucket(0,0,0,0,-BUCKLEN))
+		chunksize=WIDTH2/len(self.bucks)
+		for i,buck in enumerate(self.bucks):
+			buck.set_size(chunksize,HEIGHT)
+			buck.set_pos(chunksize*i,0)
+			buck.qrendered=False
+		self.stats[3]+=1
+		if len(act)==3:#TODO: deprecate this
+			return self.act_buckinsert((BUCKINSERT,act[1],act[2],len(self.bucks)-1,0))
+		else:
+			return True
+	def act_buckswap(self,act):
+		if len(act)!=5:
+			print(f"{self.curalg.name}: BUCKSWAP: incorrect act length {len(act)}: only length of 5 is allowed")
+			return False
+		elif act[2]>=len(self.bucks) or act[2]<0:
+			print(f"{self.curalg.name}: BUCKSWAP: Bucket {act[2]} does not exist, max is {len(self.bucks)-1}")
+			return False
+		elif act[4]>=len(self.bucks) or act[4]<0:
+			print(f"{self.curalg.name}: BUCKSWAP: Bucket {act[4]} does not exist, max is {len(self.bucks)-1}")
+			return False
+		else:
+			self.stats[1]+=1
+			return self.bucks[act[4]].swap_from(act[1],act[3],self.bucks[act[2]])
+	def act_buckinsert(self,act):
+		if len(act)!=5:
+			print(f"{self.curalg.name}: BUCKINSERT: incorrect act length {len(act)}: only length of 5 is allowed")
+			return False
+		elif act[2]>=len(self.bucks) or act[2]<0:
+			print(f"{self.curalg.name}: BUCKINSERT: Bucket {act[2]} does not exist, max is {len(self.bucks)-1}")
+			return False
+		elif act[4]>=len(self.bucks) or act[4]<0:
+			print(f"{self.curalg.name}: BUCKINSERT: Bucket {act[4]} does not exist, max is {len(self.bucks)-1}")
+			return False
+		else:
+			self.stats[2]+=1
+			return self.bucks[act[4]].insert_from(act[1],act[3],self.bucks[act[2]])
+	def act_del_buck(self,act):
+		if len(act)!=2:
+			print(f"{self.curalg.name}: DEL_BUCK: incorrect act length {len(act)}: only length of 2 is allowed")
+			return False
+		elif self.bucks[act[1]].itemc!=0:
+			print(f"{self.curalg.name}: DEL_BUCK on non-empty bucket {act[1]} with {self.bucks[act[1]].itemc} items")
+			return False
+		else:
+			del self.bucks[act[1]]
+			chunksize=WIDTH2/len(self.bucks)
+			for i,buck in enumerate(self.bucks):
+				buck.set_size(chunksize,HEIGHT)
+				buck.set_pos(chunksize*i,0)
+			for buck in self.bucks:
+				buck.qrendered=False
+			self.stats[3]+=1
+			return True
+	def procact(self,act):
+		if act!=PASS and type(act)!=tuple:
+			print(f"{self.curalg.name}: Invalid act type: {type(act)}, only tuples and PASS are allowed")
+			return False
+		if act==PASS or act[0]==PASS:#pass
+			self.stats[4]+=1
+			return True
+		elif act[0]==READ:#read value
+			return self.act_read(act)
+		elif act[0]==SWAP:#swap items
+			return self.act_swap(act)
+		elif act[0]==INSERT:#insert item to index
+			return self.act_insert(act)
+		elif act[0]==NEW_BUCK:#create new empty bucket
+			return self.act_new_buck(act)
+		elif act[0]==BUCKSWAP:#swap from bucket into another
+			return self.act_buckswap(act)
+		elif act[0]==BUCKINSERT:#insert from bucket into another
+			return self.act_buckinsert(act)
+		elif act[0]==DEL_BUCK:#delete bucket
+			return self.act_del_buck(act)
+		elif act[0]==FIN:#finished
+			print(f"{self.curalg.name}: finished")
+			return False
+		else:
+			print(f"{self.curalg.name}: Invalid act: {act}")
+			return False
 	def on_draw(self):
 		global TIME,DTIME,TIMEC
 		t=time()

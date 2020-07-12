@@ -430,19 +430,28 @@ class Bucket(Entity):
 		self.rendered=False
 	def getvalue(self,i):
 		if i>=self.itemc or i<0:
-			return None
+			print(f"out-of-bounds call to READ: {i} not in buck[{self.itemc}]")
+			return (False,None)
 		else:
 			self.rendered=False
 			self.racts.add(i)
-			return self.items[i]
+			return (True,self.items[i])
 	def swapitems(self,x,y):
-		self.items[x],self.items[y]=self.items[y],self.items[x]
-		self.wacts.add(x)
-		self.wacts.add(y)
-		self.rendered=False
+		if x>=self.itemc or x<0 or y>=self.itemc or y<0:
+			print(f"out-of-bounds call to SWAP: {x},{y} not in buck[{self.itemc}]")
+			return False
+		else:
+			self.items[x],self.items[y]=self.items[y],self.items[x]
+			self.wacts.add(x)
+			self.wacts.add(y)
+			self.rendered=False
+			return True
 	def insertitem(self,x,i):
 		#actually the fastest method I could find, see here: https://stackoverflow.com/a/62608192/10499494
-		if i>x:
+		if x>=self.itemc or x<0 or i>self.itemc or i<0:
+			print(f"out-of-bounds call to INSERT: {x},{i} not in buck[{self.itemc}]")
+			return False
+		elif i>x:
 			self.items[i:i]=self.items[x],
 			del self.items[x]
 			self.wacts.add(i-1)
@@ -451,24 +460,29 @@ class Bucket(Entity):
 			self.wacts.add(i)
 		self.wacts.add(x)
 		self.rendered=False
+		return True
 	def swap_from(self,x,y,other):
-		if other.itemc>x and self.itemc>y:
-			self.items[y],other.items[x]=self.items[x],other.items[y]
+		if x>=0 and y>=0 and other.itemc>x and self.itemc>y:
+			self.items[x],other.items[y]=other.items[y],self.items[x]
 			self.wacts.add(y)
 			other.wacts.add(x)
 			self.rendered=other.rendered=False
+			return True
 		else:
-			raise Exception(f"Bucket: out-of-scope call to swap_from: swap {x} at buck[{other.itemc}] and {y} at buck[{self.itemc}]")
+			print(f"out-of-scope call to BUCKSWAP: swap {x} at buck[{other.itemc}] and {y} at buck[{self.itemc}]")
+			return False
 	def insert_from(self,x,y,other):
-		if other.itemc>x and self.itemc>=y:
+		if x>=0 and y>=0 and other.itemc>x and self.itemc>=y:
 			self.items[y:y]=other.items.pop(x),
 			self.itemc+=1
 			other.itemc-=1
 			self.wacts.add(y)
 			other.wacts.add(x)
 			self.rendered=other.rendered=False
+			return True
 		else:
-			raise Exception(f"Bucket: out-of-scope call to insert_from: from {x} at buck[{other.itemc}] to {y} at buck[{self.itemc}]")
+			print(f"out-of-scope call to BUCKINSERT: from {x} at buck[{other.itemc}] to {y} at buck[{self.itemc}]")
+			return False
 	def render(self):
 		if not self.qrendered:
 			self.quads=[self.getquad(i/self.maxic) for i in range(self.maxic)]
