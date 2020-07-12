@@ -45,42 +45,23 @@ class BaseAlgorithm():
 class BubbleSort(BaseAlgorithm):
 	name="Bubble Sort"
 	desc="Bubble Sort checks two adjacent items.\nIf the first is greater, swap them.\nThen do this for each index in the list, until the list is sorted"
-	def cycle(self,v=None):
-		a=self.a
-		if a==0:#read current item
-			self.a=1
-			self.f=True
-			return (READ,self.i,0)
-		elif a==1:#store current item & read next item
-			if self.v1==None:
-				self.v1=v
-			self.a=2
-			return (READ,self.i+1,0)
-		elif a==2:#store next item & compare current and next item, then either swap the items or advance and read the next item
-			if v==None or self.i+self.s>self.l:#if end of unsorted list is reached (previously last item is always sorted)
-				self.s+=1
-				if self.f:#if finished: finish
-					self.a=7
-					return (FIN,)
-				else:#if unfinished: start over & read first item
-					self.i=0
-					self.a=1
-					self.f=True
-					self.v1=None
-					return (READ,self.i,0)
-			else:
-				self.v2=v
-				self.i+=1
-				if self.v1<=self.v2:
-					self.a=2
-					self.v1=self.v2
-					return (READ,self.i+1,0)
+	def gen(self):
+		l=self.l
+		i=l
+		rn=True
+		while rn and i>0:
+			yield (READ,0,0)
+			v1=self.v
+			rn=False
+			for j in range(1,i):
+				yield (READ,j,0)
+				v2=self.v
+				if v1>v2:
+					rn=True
+					yield (SWAP,j-1,j,0)
 				else:
-					self.a=1
-					self.f=False
-					return (SWAP,self.i-1,self.i,0)
-		elif a==7:
-			raise Exception("BubbleSort: Unexpected cycle after finishing")
+					v1=v2
+			i-=1
 
 class CocktailShaker(BaseAlgorithm):
 	name="Cocktail Shaker"
