@@ -18,8 +18,6 @@ class BaseAlgorithm():
 	v=None#current value; gets set when using gen
 	def __init__(self,l):
 		self.l=l#array length
-	#TODO: deprecate optional insert after new_buck, it was created to reduce the number of different actions by joining the creation and initialisation of a bucket
-	#TODO: this is obsolete now since there are no actions with the new yield gen API
 	#gen yields a tuple that tells the main program what to do each iteration - it doesn't have access to the list. Read values get stored in self.v.
 	#None		→ does nothing
 	#(READ,x,i)	→ reads value of item x in bucket i and puts it into the value param next cycle; None means there is no item at this index
