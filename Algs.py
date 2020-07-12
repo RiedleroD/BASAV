@@ -26,6 +26,8 @@ class BaseAlgorithm():
 	f=False#var to store if finished
 	def __init__(self,l):
 		self.l=l#array length
+	#TODO: deprecate optional insert after new_buck, it was created to reduce the number of different actions by joining the creation and initialisation of a bucket
+	#TODO: this is obsolete now since there are no actions with the new yield gen API
 	#cycle returns a tuple that tells the main program what to do - it doesn't have access to the list. (DEPRECATED, USE GEN)
 	#gen is the same as cycle, but uses the yield instruction to sort-of process array accesses in parallel. Read values get stored in self.v
 	#None		→ does nothing
@@ -257,37 +259,21 @@ class InsertionSort(BaseAlgorithm):
 class InsertionSortOOP(BaseAlgorithm):
 	name="InsertionSort OOP"
 	desc="Inserts first unsorted item into sorted bucket\nuntil no unsorted items remain"
-	i2=0
-	def cycle(self,v=None):
-		a=self.a
-		if a==0:
-			self.a=1
-			return (NEW_BUCK,0,0)
-		elif a==1:
-			self.a=2
-			self.i+=1
-			if self.i==self.l:
-				self.a=7
-				return (DEL_BUCK,0)
-			self.i2=self.i-1
-			return (READ,0,0)
-		elif a==2:
-			self.a=3
-			self.v1=v
-			return (READ,self.i2,1)
-		elif a==3:
-			self.v2=v
-			if self.v2<self.v1:
-				self.a=1
-				return (BUCKINSERT,0,0,self.i2+1,1)
-			elif self.i2==0:
-				self.a=1
-				return (BUCKINSERT,0,0,self.i2,1)
-			else:
-				self.i2-=1
-				return (READ,self.i2,1)
-		elif a==7:
-			return (FIN,)
+	def gen(self):
+		l=self.l
+		yield (NEW_BUCK,)
+		for z in range(l):
+			yield (READ,0,0)
+			v1=self.v
+			i=0
+			for j in range(z):
+				yield (READ,z-1-j,1)
+				v2=self.v
+				if v2<v1:
+					break
+				i=j+1
+			yield (BUCKINSERT,0,0,z-i,1)
+		yield (DEL_BUCK,0)
 
 class SelectionSort(BaseAlgorithm):
 	name="SelectionSort"
