@@ -31,10 +31,13 @@ class Timer():
 		else:
 			return self.t/self.c
 
-profs=[Timer() for i in range(0)]
+profs=[Timer() for i in range(6)]#for speed debugging purposes
 colorlamb=lambda perc:[int(SCOLOR[x]*(perc)+ECOLOR[x]*(1-perc)) for x in range(len(SCOLOR))]*2
 
-COLORS=[colorlamb(i/BUCKLEN) for i in range(BUCKLEN)]
+COLORS=[color for i in range(BUCKLEN) for color in colorlamb(i/BUCKLEN)]
 
 KP=pgw.key.KeyStateHandler()	#a dict with the key states inside
 MP={pgw.mouse.LEFT:False,pgw.mouse.RIGHT:False,pgw.mouse.MIDDLE:False}
+
+GRmp=pyglet.graphics.OrderedGroup(0)#midpoint – button backgrounds & buckets
+GRfg=pyglet.graphics.OrderedGroup(1)#foreground – labels

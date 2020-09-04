@@ -3,20 +3,23 @@ from CONSTANTS import *
 from random import shuffle
 import functools,operator
 class Entity:
-	def __init__(self,x,y,w,h,anch=0,batch=None):
+	vl=None
+	def __init__(self,x,y,w,h,batch,anch=0,bgcolor=(255,255,255)):
 		self.w=w
 		self.h=h
 		self.set_pos(x,y,anch)
+		self.setBgColor(bgcolor)
 		self.rendered=False
 		self.batch=batch
 	def set_pos(self,x,y,anch=0):
+		self.anch=anch
 		#anchor:
 		#______
 		#|6 7 8|
 		#|3 4 5|
 		#|0 1 2|
 		#——————
-		if anch>8:
+		if not 0<=anch<=8:
 			raise ValueError("Entity initialized with invalid position anchor: %i"%anch)
 		if anch%3==0:
 			self.x=x
@@ -31,6 +34,8 @@ class Entity:
 		else:
 			self.y=y-self.h
 		self.set_deriv()
+	def setBgColor(self,color):
+		self.cquad=("c3B",color*4)
 	def set_size(self,w,h):
 		self.w=w
 		self.h=h
@@ -71,92 +76,108 @@ class Entity:
 	def draw(self):
 		if not self.rendered:
 			self.render()
-		pyglet.graphics.draw(4,pyglet.gl.GL_QUADS,self.quad)
+		if not self.vl:
+			self.vl=self.batch.add(4,pyglet.gl.GL_QUADS,GRmp,self.quad,self.cquad)
+		else:
+			self.vl.vertices=self.quad[1]
+			self.vl.colors=self.cquad[1]
+	def __del__(self):
+		if self.vl:
+			self.vl.delete()
 
 class Label(Entity):
-	def __init__(self,x,y,w,h,text,anch=0,color=(255,255,255,255),bgcolor=(0,0,0,0),size=12,batch=None):
-		self.label=pyglet.text.Label(text,x=0,y=-size,color=color,font_size=size,batch=batch)
+	label=None
+	def __init__(self,x,y,w,h,text,batch,anch=0,color=(255,255,255),bgcolor=(0,0,0),size=12):
+		self.label=pyglet.text.Label(text,x=0,y=y-size,color=color+(255,),font_size=size,batch=batch,group=GRfg)
 		self.setText(text)
 		self.setColor(color)
-		self.setBgColor(bgcolor)
-		self.anch=anch
 		self.size=size
-		super().__init__(x,y,w,h,anch,batch=batch)
-	def setBgColor(self,color):
-		self.cquad=("c4B",color*4)
+		super().__init__(x,y,w,h,batch,anch=anch,bgcolor=bgcolor)
 	def setColor(self,color):
 		self.color=color
-		self.label.color=self.color
+		self.label.color=self.color+(255,)
 	def setText(self,text):
 		self.text=text
 		self.label.text=text
 	def render(self):
 		if self.w>0 and self.h>0:
 			self.quad=('v2f',(self.x,self.y,self._x,self.y,self._x,self._y,self.x,self._y))
+			self.label.begin_update()
 			self.label.x=self.cx
 			self.label.y=self.cy
 			self.label.anchor_x=ANCHORSx[1]
 			self.label.anchor_y=ANCHORSy[1]
+			self.label.end_update()
 		else:
+			self.label.begin_update()
 			self.label.x=self.x
 			self.label.y=self.y
 			self.label.anchor_x=ANCHORSx[self.anch%3]
 			self.label.anchor_y=ANCHORSy[self.anch//3]
+			self.label.end_update()
 		self.rendered=True
 	def draw(self):
 		if not self.rendered:
 			self.render()
 		if self.w>0 and self.h>0:
-			pyglet.graphics.draw(4,pyglet.gl.GL_QUADS,self.quad,self.cquad)
-		if self.batch==None:
-			self.label.draw()
+			if self.vl:
+				self.vl.vertices[:]=self.quad[1]
+				self.vl.colors[:]=self.cquad[1]
+			else:
+				self.vl=self.batch.add(4,pyglet.gl.GL_QUADS,GRmp,self.quad,self.cquad)
+	def __del__(self):
+		if self.label:
+			self.label.delete()
+		if self.vl:
+			self.vl.delete()
 
 class LabelMultiline(Label):
-	def __init__(self,x,y,w,h,text,anch=0,color=(255,255,255,255),bgcolor=(0,0,0,0),size=12,batch=None):
-		self.labels=[pyglet.text.Label(text,x=0,y=-size*1.5,color=color,font_size=size,batch=batch) for line in text.split("\n")]
-		super().__init__(x,y,w,h,text,anch,color,bgcolor,size,batch)
+	def __init__(self,x,y,w,h,text,batch,anch=0,color=(255,255,255),bgcolor=(0,0,0),size=12):
+		self.labels=[pyglet.text.Label(text,x=0,y=-size*1.5,color=color+(255,),font_size=size,batch=batch,group=GRfg) for line in text.split("\n")]
+		super().__init__(x,y,w,h,text,batch,anch,color,bgcolor,size)
 		del self.label
 	def setColor(self,color):
 		self.color=color
 		for label in self.labels:
-			label.color=self.color
+			label.color=self.color+(255,)
 	def setText(self,text):
 		self.text=text
 		text=text.split("\n")
-		while len(self.labels)<len(text):
-			self.labels.append(pyglet.text.Label("",x=0,y=-self.size*1.5,color=self.color,font_size=self.size,batch=self.batch))
-		self.rendered=False
-		for label in reversed(self.labels):
+		while len(self.labels)<len(text):#make new labels if necessary
+			self.labels.append(pyglet.text.Label("",x=0,y=-self.size*1.5,color=self.color,font_size=self.size,batch=self.batch,group=GRfg))
+		for label in reversed(self.labels):#set all labels' text
 			try:
 				label.text=text.pop()
 			except IndexError:
 				label.text=""
+		self.rendered=False
 	def render(self):
 		if self.w>0 and self.h>0:
 			self.quad=('v2f',(self.x,self.y,self._x,self.y,self._x,self._y,self.x,self._y))
 			for i,label in enumerate(self.labels):
+				label.begin_update()
 				label.x=self.cx
 				label.y=self.cy+self.size*(len(self.labels)-i-1)*1.5
 				label.anchor_x=ANCHORSx[1]
 				label.anchor_y=ANCHORSy[1]
+				label.end_update()
 		else:
 			for i,label in enumerate(self.labels):
+				label.begin_update()
 				label.x=self.x
 				label.y=self.y+self.size*(len(self.labels)-i-1)*1.5
 				label.anchor_x=ANCHORSx[self.anch%3]
 				label.anchor_y=ANCHORSy[self.anch//3]
+				label.end_update()
 		self.rendered=True
-	def draw(self):
-		if not self.rendered:
-			self.render()
-		if self.w>0 and self.h>0:
-			pyglet.graphics.draw(4,pyglet.gl.GL_QUADS,self.quad,self.cquad)
-		if self.batch==None:
-			for label in self.labels:
-				label.draw()
+	def __del__(self):
+		if self.vl:
+			self.vl.delete()
+		for label in self.labels:
+			label.delete()
 
 class Button(Label):
-	def __init__(self,x,y,w,h,text,anch=0,key=None,size=12,pressedText=None,batch=None):
+	def __init__(self,x,y,w,h,text,batch,anch=0,key=None,size=12,pressedText=None):
 		self.pressed=False
 		self.key=key
 		if pressedText:
@@ -164,12 +185,12 @@ class Button(Label):
 			self.unpressedText=text
 		else:
 			self.pressedText=self.unpressedText=text
-		super().__init__(x,y,w,h,text,anch,(0,0,0,255),(255,255,255,255),size,batch=batch)
+		super().__init__(x,y,w,h,text,batch,anch,(0,0,0),(255,255,255),size)
 	def setBgColor(self,color):
 		if self.pressed:
-			self.cquad=("c4B",(*color,*color,128,128,128,255,128,128,128,255))
+			self.cquad=("c3B",(*color,*color,128,128,128,128,128,128))
 		else:
-			self.cquad=("c4B",(128,128,128,255,128,128,128,255,*color,*color))
+			self.cquad=("c3B",(128,128,128,128,128,128,*color,*color))
 	def checkpress(self,x,y):
 		if self.doesPointCollide(x,y):
 			return self.press()
@@ -180,13 +201,13 @@ class Button(Label):
 		if not self.pressed:
 			self.pressed=True
 			self.setText(self.pressedText)
-			self.setBgColor((255,255,255,255))
+			self.setBgColor((255,255,255))
 			return pyglet.event.EVENT_HANDLED
 	def release(self):
 		if self.pressed:
 			self.pressed=False
 			self.setText(self.unpressedText)
-			self.setBgColor((255,255,255,255))
+			self.setBgColor((255,255,255))
 			return pyglet.event.EVENT_HANDLED
 
 class ButtonSwitch(Button):
@@ -198,11 +219,11 @@ class ButtonSwitch(Button):
 				self.press()
 
 class ButtonFlipthrough(Button):
-	def __init__(self,x,y,w,h,text,values,anch=0,key=None,size=12,batch=None):
+	def __init__(self,x,y,w,h,text,values,batch,anch=0,key=None,size=12):
 		self.vals=values
 		self.i=0
 		self.text=text
-		super().__init__(x,y,w,h,text%values[0],anch,key,size,batch=batch)
+		super().__init__(x,y,w,h,text%values[0],batch,anch,key,size)
 	def setText(self,text):
 		self.label.text=text
 	def getCurval(self):
@@ -214,10 +235,10 @@ class ButtonFlipthrough(Button):
 		return pyglet.event.EVENT_HANDLED
 
 class TextEdit(Button):#also unused
-	def __init__(self,x,y,w,h,desc,value="",anch=0,key=None,size=12,batch=None):
+	def __init__(self,x,y,w,h,desc,value,batch,anch=0,key=None,size=12):
 		self.desc=desc
 		self.value=value
-		super().__init__(x,y,w,h,desc,anch,key,size,batch=batch)
+		super().__init__(x,y,w,h,desc,batch,anch,key,size)
 	def checkKey(self,key):
 		if self.pressed:
 			if key==pgw.key.BACKSPACE:
@@ -235,13 +256,13 @@ class TextEdit(Button):#also unused
 		if not self.pressed:
 			self.pressed=True
 			self.setText("[%s]"%self.value)
-			self.setBgColor((255,255,255,255))
+			self.setBgColor((255,255,255))
 			return pyglet.event.EVENT_HANDLED
 	def release(self):
 		if self.pressed:
 			self.pressed=False
 			self.setText(self.desc)
-			self.setBgColor((255,255,255,255))
+			self.setBgColor((255,255,255))
 			return pyglet.event.EVENT_HANDLED
 
 class IntEdit(TextEdit):
@@ -273,17 +294,17 @@ class IntEdit(TextEdit):
 		return self.preval
 
 class RadioList(Entity):
-	def __init__(self,x,y,w,h,texts,anch=0,keys=None,pressedTexts=None,selected=None,size=12,batch=None):
+	def __init__(self,x,y,w,h,texts,batch,anch=0,keys=None,pressedTexts=None,selected=None,size=12):
 		btnc=len(texts)
 		if keys==None:
 			keys=[None for i in range(btnc)]
 		if pressedTexts==None:
 			pressedTexts=[None for i in range(btnc)]
-		self.btns=[Button(x,y-i*h/btnc,w,h/btnc,text,anch,keys[i],size,pressedTexts[i],batch=batch) for i,text in enumerate(texts)]
+		self.btns=[Button(x,y-i*h/btnc,w,h/btnc,text,batch,anch,keys[i],size,pressedTexts[i]) for i,text in enumerate(texts)]
 		self.setBgColor((192,192,192))#average color in btns
 		if selected!=None:
 			self.btns[selected].press()
-		super().__init__(x,y,w,h,anch,batch=batch)
+		super().__init__(x,y,w,h,batch,anch)
 	def checkpress(self,x,y):
 		prsd=None
 		for i,btn in enumerate(self.btns):
@@ -307,15 +328,8 @@ class RadioList(Entity):
 				if i!=prsd:
 					btn.release()
 			return pyglet.event.EVENT_HANDLED
-	def render(self):
-		self.quad=('v2f',(self.x,self.y,self._x,self.y,self._x,self._y,self.x,self._y))
-		self.rendered=True
-	def setBgColor(self,color):
-		self.cquad=("c3B",color*4)
 	def draw(self):
-		if not self.rendered:
-			self.render()
-		pyglet.graphics.draw(4,pyglet.gl.GL_QUADS,self.quad,self.cquad)
+		super().draw()
 		for btn in self.btns:
 			btn.draw()
 	def getSelected(self):
@@ -324,20 +338,23 @@ class RadioList(Entity):
 				return i
 
 class RadioListPaged(RadioList):
-	def __init__(self,x,y,w,h,texts,pageic,anch=0,keys=None,pressedTexts=None,selected=None,size=12,batch=None):
+	def __init__(self,x,y,w,h,texts,pageic,batch,anch=0,keys=None,pressedTexts=None,selected=None,size=12):
 		self.pageic=pageic
 		self.page=0
 		btnc=len(texts)
 		btnh=h/(pageic+1)
-		super().__init__(x,y,w,h,texts,anch,keys,pressedTexts,selected,size,batch)
+		super().__init__(x,y,w,h,texts,batch,anch,keys,pressedTexts,selected,size)
 		onscr=self.btns[self.page*self.pageic:(self.page+1)*self.pageic]#get buttons which should be on screen
 		for i,btn in enumerate(self.btns):#correct btn position and height based on pages and set label text to none
 			btn.set_size(w,btnh)
 			btn.set_pos(x,y-btnh*(i%self.pageic),anch)
 			if btn not in onscr:
 				btn.label.text=""
-		self.next=Button(x,y-btnh*pageic,w/2,btnh,"→",anch,None,size,batch=batch)
-		self.prev=Button(x-w/2,y-btnh*pageic,w/2,btnh,"←",anch,None,size,batch=batch)
+				if btn.vl:
+					btn.vl.delete()
+					btn.vl=None
+		self.next=Button(x,y-btnh*pageic,w/2,btnh,"→",batch,anch,None,size)
+		self.prev=Button(x-w/2,y-btnh*pageic,w/2,btnh,"←",batch,anch,None,size)
 	def checkpress(self,x,y):
 		if self.prev.checkpress(x,y):
 			prsd=-1
@@ -358,6 +375,9 @@ class RadioListPaged(RadioList):
 					btn.label.text=btn.text
 				else:
 					btn.label.text=""
+					if btn.vl:
+						btn.vl.delete()
+						btn.vl=None
 			prsd=None
 		for btn in onscr:
 			prsd=btn.checkpress(x,y)
@@ -387,7 +407,11 @@ class RadioListPaged(RadioList):
 			self.render()
 		onscr=self.btns[self.page*self.pageic:(self.page+1)*self.pageic]#get buttons which should be on screen
 		#draw the background plane
-		pyglet.graphics.draw(4,pyglet.gl.GL_QUADS,self.quad,self.cquad)
+		if self.vl:
+			self.vl.vertices[:]=self.quad[1]
+			self.vl.colors[:]=self.cquad[1]
+		else:
+			self.vl=self.batch.add(4,pyglet.gl.GL_QUADS,GRmp,self.quad,self.cquad)
 		#draw the buttons in the current page plus prev and next
 		for btn in onscr:
 			btn.draw()
@@ -400,40 +424,50 @@ class RadioListPaged(RadioList):
 			self.next.release()
 
 class Bucket(Entity):
-	def __init__(self,x,y,w,h,itemc,anch=0):
-		self.getquad=lambda perc:[self.x,self.y+self.h*perc,self.x+self.w-6,self.y+self.h*perc]
-		self.getquad2=lambda perc,perc2:[self.x,self.y+self.h*perc,self.x+self.w-6,self.y+self.h*perc,self.x+self.w-6,self.y+self.h*perc2,self.x,self.y+self.h*perc2]
-		self.getract=lambda perc:[self.x+self.w-6,self.y+self.h*perc,self.x+self.w-3,self.y+self.h*perc]
-		self.getract2=lambda perc,perc2:[self.x+self.w-6,self.y+self.h*perc,self.x+self.w-3,self.y+self.h*perc,self.x+self.w-3,self.y+self.h*perc2,self.x+self.w-6,self.y+self.h*perc2]
-		self.getwact=lambda perc:[self.x+self.w-3,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc]
-		self.getwact2=lambda perc,perc2:[self.x+self.w-3,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc,self.x+self.w,self.y+self.h*perc2,self.x+self.w-3,self.y+self.h*perc2]
-		self.qrendered=False
-		self.ls=None
-		self.qs=None
-		super().__init__(x,y,w,h,anch,batch=pyglet.graphics.Batch())
-		if itemc<0:#only sets maxic
-			self.maxic=-itemc
+	def __init__(self,x,y,w,h,itemc,batch,anch=0):
+		super().__init__(x,y,w,h,batch,anch)
+		self.maxic=abs(itemc)
+		blanc=self.blanc=[0,0,0]*self.maxic*2
+		if itemc<0:
 			self.itemc=0
+			colors=blanc.copy()
 		else:
 			self.itemc=itemc
-			self.maxic=itemc
-		self.items=[i for i in range(itemc)]
+			colors=COLORS.copy()
+		self.items=[i for i in range(abs(itemc))]
 		self.racts=set()
 		self.wacts=set()
-		self.grcl=[0,255,0,0,255,0,0,255,0,0,255,0]*self.maxic
-		self.rdcl=[255,0,0,255,0,0,255,0,0,255,0,0]*self.maxic
-	def shuffle(self):
-		shuffle(self.items)
-		self.rendered=False
-	def reverse(self):
-		self.items.reverse()
-		self.rendered=False
+		self.ravl=batch.add(
+			self.maxic*2,GL_LINES,GRmp,
+			('v2f',[pos for i in range(self.maxic) for pos in self._getract(i)]),
+			('c3B',blanc.copy())
+		)
+		self.wavl=batch.add(
+			self.maxic*2,GL_LINES,GRmp,
+			('v2f',[pos for i in range(self.maxic) for pos in self._getwact(i)]),
+			('c3B',blanc.copy())
+		)
+		self.vl=batch.add(
+			self.maxic*2,GL_LINES,GRmp,
+			('v2f',[pos for i in range(self.maxic) for pos in self._getline(i)]),
+			('c3B',colors)
+		)
+	def _getyfromi(self,i):
+		return self.y+self.h*(i+1)/self.maxic
+	def _getline(self,i):
+		y=self._getyfromi(i)
+		return (self.x,y,self.x+self.w*0.9,y)
+	def _getwact(self,i):
+		y=self._getyfromi(i)
+		return (self.x+self.w*0.9,y,self.x+self.w*0.95,y)
+	def _getract(self,i):
+		y=self._getyfromi(i)
+		return (self.x+self.w*0.95,y,self.x+self.w,y)
 	def getvalue(self,i):
 		if i>=self.itemc or i<0:
 			print(f"out-of-bounds call to READ: {i} not in buck[{self.itemc}]")
 			return (False,None)
 		else:
-			self.rendered=False
 			self.racts.add(i)
 			return (True,self.items[i])
 	def swapitems(self,x,y):
@@ -442,105 +476,85 @@ class Bucket(Entity):
 			return False
 		else:
 			self.items[x],self.items[y]=self.items[y],self.items[x]
+			self.vl.colors[6*x:6*x+6],self.vl.colors[6*y:6*y+6]=self.vl.colors[6*y:6*y+6],self.vl.colors[6*x:6*x+6]
 			self.wacts.add(x)
 			self.wacts.add(y)
-			self.rendered=False
 			return True
 	def insertitem(self,x,i):
 		#actually the fastest method I could find, see here: https://stackoverflow.com/a/62608192/10499494
 		if x>=self.itemc or x<0 or i>self.itemc or i<0:
 			print(f"out-of-bounds call to INSERT: {x},{i} not in buck[{self.itemc}]")
 			return False
+		elif i==x:
+			return True
 		elif i>x:
 			self.items[i:i]=self.items[x],
 			del self.items[x]
+			self.vl.colors[6*x:6*i],self.vl.colors[6*i:6*i+6]=self.vl.colors[6*x+6:6*i+6],self.vl.colors[6*x:6*x+6]
 			self.wacts.add(i-1)
 		else:
 			self.items[i:i]=self.items.pop(x),
+			self.vl.colors[6*i+6:6*x+6],self.vl.colors[6*i:6*i+6]=self.vl.colors[6*i:6*x],self.vl.colors[6*x:6*x+6]
 			self.wacts.add(i)
 		self.wacts.add(x)
-		self.rendered=False
 		return True
 	def swap_from(self,x,y,other):
 		if x>=0 and y>=0 and other.itemc>x and self.itemc>y:
 			self.items[x],other.items[y]=other.items[y],self.items[x]
+			self.vl.colors[6*x],other.vl.colors[6*y]=other.vl.colors[6*y],self.vl.colors[6*x]
 			self.wacts.add(y)
 			other.wacts.add(x)
-			self.rendered=other.rendered=False
 			return True
 		else:
 			print(f"out-of-scope call to BUCKSWAP: swap {x} at buck[{other.itemc}] and {y} at buck[{self.itemc}]")
 			return False
 	def insert_from(self,x,y,other):
-		if x>=0 and y>=0 and other.itemc>x and self.itemc>=y:
+		if other.itemc>=x>=0 and self.itemc>=y>=0:
 			self.items[y:y]=other.items.pop(x),
+			#getting the color to insert
+			color=other.vl.colors[6*x:6*x+6]
+			#shifting stuff around
+			other.vl.colors[6*x:6*other.itemc-6]=other.vl.colors[6*x+6:6*other.itemc]
+			self.vl.colors[6*y+6:6*self.itemc+6]=self.vl.colors[6*y:6*self.itemc]
+			#inserting the color to insert
+			self.vl.colors[6*y:6*y+6]=color
+			#deleting duplicate color
+			other.vl.colors[6*other.itemc-6:6*other.itemc]=0,0,0,0,0,0
 			self.itemc+=1
 			other.itemc-=1
 			self.wacts.add(y)
 			other.wacts.add(x)
-			self.rendered=other.rendered=False
 			return True
 		else:
 			print(f"out-of-scope call to BUCKINSERT: from {x} at buck[{other.itemc}] to {y} at buck[{self.itemc}]")
 			return False
 	def render(self):
-		if not self.qrendered:
-			self.quads=[self.getquad(i/self.maxic) for i in range(self.maxic)]
-			self.qwacts=[self.getwact(i/self.maxic) for i in range(self.maxic)]
-			self.qracts=[self.getract(i/self.maxic) for i in range(self.maxic)]
-			self.qrendered=True
-		maxic=self.maxic
-		if self.itemc>maxic:
-			raise ValueError("Bucket: itemc is larger than maxic")
-		self.ls=[]
-		self.lc=[]
-		self.qs=[]
-		self.qc=[]
-		if self.itemc>0:
-			iteml,itemq=helper.getrenderbuck(self.items,0)
-			if len(iteml)>0:
-				self.ls+=functools.reduce(operator.iconcat,[self.quads[i] for i in iteml],[])
-				self.lc+=[cquad for i in iteml for cquad in COLORS[self.items[i]]]
-			if len(itemq)>0:
-				self.qs+=functools.reduce(operator.iconcat,[self.getquad2(sit/maxic,bit/maxic) for sit,bit in itemq],[])
-				self.qc+=[cquad for sit,bit in itemq for cquad in COLORS[self.items[sit]]+COLORS[self.items[bit-1]]]
-			if len(self.racts)>0:
-				ractl,ractq=helper.getrenderbuck(self.racts,1)
-				if len(ractl)>0:
-					self.ls+=functools.reduce(operator.iconcat,[self.qracts[act] for act in ractl],[])
-					self.lc+=self.grcl[:len(ractl)*6]
-				if len(ractq)>0:
-					self.qs+=functools.reduce(operator.iconcat,[self.getract2(sact/maxic,bact/maxic) for sact,bact in ractq],[])
-					self.qc+=self.grcl[:len(ractq)*12]
-			if len(self.wacts)>0:
-				wactl,wactq=helper.getrenderbuck(self.wacts,1)
-				if len(wactl)>0:
-					self.ls+=functools.reduce(operator.iconcat,[self.qwacts[act] for act in wactl],[])
-					self.lc+=self.rdcl[:len(wactl)*6]
-				if len(wactq)>0:
-					self.qs+=functools.reduce(operator.iconcat,[self.getwact2(sact/maxic,bact/maxic) for sact,bact in wactq],[])
-					self.qc+=self.rdcl[:len(wactq)*12]
-			self.ls=tuple(self.ls)
-			self.lc=tuple(self.lc)
-			self.qs=tuple(self.qs)
-			self.qc=tuple(self.qc)
+		self.vl.vertices[:]=[pos for i in range(self.maxic) for pos in self._getline(i)]
+		self.wavl.vertices[:]=[pos for i in range(self.maxic) for pos in self._getwact(i)]
+		self.ravl.vertices[:]=[pos for i in range(self.maxic) for pos in self._getract(i)]
 		self.rendered=True
-	def draw(self,batch=None):
+	def draw(self):
 		if not self.rendered:
 			self.render()
-			self.batch=None
-		if batch!=None:
-			batch.add(len(self.ls)//2,GL_LINES,None,('v2f',self.ls),('c3B',self.lc))
-			batch.add(len(self.qs)//2,GL_QUADS,None,('v2f',self.qs),('c3B',self.qc))
-		else:
-			if self.batch==None:
-				self.batch=pyglet.graphics.Batch()
-				self.batch.add(len(self.ls)//2,GL_LINES,None,('v2f',self.ls),('c3B',self.lc))
-				self.batch.add(len(self.qs)//2,GL_QUADS,None,('v2f',self.qs),('c3B',self.qc))
-			self.batch.draw()
-		if len(self.racts)>0:
-			self.racts.clear()
-			self.rendered=False
-		if len(self.wacts)>0:
+		if self.itemc>self.maxic:
+			raise ValueError("Bucket: itemc is larger than maxic")
+		self.wavl.colors[:]=self.blanc.copy()
+		self.ravl.colors[:]=self.blanc.copy()
+		#actually faster than two separate for loops since looping over a set is pretty slow
+		#and checking if a value is in a set is lightning fast
+		#and looping over a range is not only memory efficient, but also pretty fast
+		for num in self.wacts:
+			self.wavl.colors[num*6:6+num*6]=(255,0,0,255,0,0)
+		for num in self.racts:
+			self.ravl.colors[num*6:6+num*6]=(0,255,0,0,255,0)
+		if self.wacts:
 			self.wacts.clear()
-			self.rendered=False
+		if self.racts:
+			self.racts.clear()
+	def __del__(self):
+		if self.wavl:
+			self.wavl.delete()
+		if self.ravl:
+			self.ravl.delete()
+		if self.vl:
+			self.vl.delete()

@@ -479,7 +479,7 @@ class ShufflerOneSideInsert(BaseAlgorithm):
 	desc="Shuffles the list one-sided by inserting\n(very,very bad)"
 	def gen(self):
 		for i in range(self.l):
-			yield (INSERT,i-1,random.randrange(i+1,self.l),0)
+			yield (INSERT,i,random.randrange(i,self.l),0)
 
 shufflers=[ShufflerOneSideInsert,ShufflerInsert,ShufflerOneSide,Shuffler]#shufflers from worst to best
 algs=[
