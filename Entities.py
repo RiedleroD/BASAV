@@ -1,7 +1,20 @@
 #!/usr/bin/python3
 from CONSTANTS import *
 from random import shuffle
-import functools,operator
+from collections import deque as _deque
+
+class deque(_deque):
+	def pop(self,index=None):
+		if index:
+			x=self[index]
+			del self[index]
+			return x
+		else:
+			if index==None:
+				return super().pop()
+			elif index==0:
+				return super().popleft()
+
 class Entity:
 	vl=None
 	def __init__(self,x,y,w,h,batch,anch=0,bgcolor=(255,255,255)):
@@ -440,10 +453,10 @@ class Bucket(Entity):
 		else:
 			self.itemc=itemc
 			colors=COLORS.copy()
-		self.items=[i for i in range(abs(itemc))]
+		self.items=[i for i in range(self.maxic)]
 		self.racts=set()
 		self.wacts=set()
-		self.colors=colors
+		self.colors=deque(colors)
 		self.ravl=batch.add(
 			self.maxic*2,GL_LINES,GRmp,
 			('v2f/dynamic',[pos for i in range(self.maxic) for pos in self._getract(i)]),
@@ -483,12 +496,12 @@ class Bucket(Entity):
 			return False
 		else:
 			self.items[x],self.items[y]=self.items[y],self.items[x]
-			self.colors[6*x:6*x+6],self.colors[6*y:6*y+6]=self.colors[6*y:6*y+6],self.colors[6*x:6*x+6]
+			for j in range(6):
+				self.colors[6*x+j],self.colors[6*y+j]=self.colors[6*y+j],self.colors[6*x+j]
 			self.wacts.add(x)
 			self.wacts.add(y)
 			return True
 	def insertitem(self,x,i):
-		#actually the fastest method I could find, see here: https://stackoverflow.com/a/62608192/10499494
 		if x>=self.itemc or x<0 or i>self.itemc or i<0:
 			print(f"out-of-bounds call to INSERT: {x},{i} not in buck[{self.itemc}]")
 			return False
@@ -497,21 +510,21 @@ class Bucket(Entity):
 		elif i>x:
 			self.items[i:i]=self.items[x],
 			del self.items[x]
-			self.colors[6*i:6*i]=self.colors[6*x:6*x+6]
-			del self.colors[6*x:6*x+6]
+			for j in range(6):#this is magic
+				self.colors.insert(6*i-1,self.colors.pop(6*x))
 			self.wacts.add(i-1)
 		else:
 			self.items[i:i]=self.items.pop(x),
-			colors=self.colors[6*x:6*x+6]
-			del self.colors[6*x:6*x+6]
-			self.colors[6*i:6*i]=colors
+			for j in range(6):#also magic
+				self.colors.insert(6*i+j,self.colors.pop(6*x+j))
 			self.wacts.add(i)
 		self.wacts.add(x)
 		return True
 	def swap_from(self,x,y,other):
 		if x>=0 and y>=0 and other.itemc>x and self.itemc>y:
 			self.items[x],other.items[y]=other.items[y],self.items[x]
-			self.colors[6*x],other.colors[6*y]=other.colors[6*y],self.colors[6*x]
+			for j in range(6):
+				self.colors[6*x+j],other.colors[6*y+j]=other.colors[6*y+j],self.colors[6*x+j]
 			self.wacts.add(y)
 			other.wacts.add(x)
 			return True
@@ -521,10 +534,9 @@ class Bucket(Entity):
 	def insert_from(self,x,y,other):
 		if other.itemc>=x>=0 and self.itemc>=y>=0:
 			self.items[y:y]=other.items.pop(x),
-			self.colors[y*6:y*6]=other.colors[x*6:x*6+6]
-			del self.colors[-6:]
-			other.colors.extend((0,0,0,0,0,0))
-			del other.colors[x*6:x*6+6]
+			for j in range(6):
+				self.colors.insert(y*6+j,other.colors.pop(x*6))
+				other.colors.append(self.colors.pop())
 			self.itemc+=1
 			other.itemc-=1
 			self.wacts.add(y)

@@ -228,30 +228,18 @@ class GameWin(pyglet.window.Window):
 		TIME=t
 		del t
 		self.clear()
-		profs[0].start()
 		for item in self.labels:#2000µs–5000µs
 			item.draw()
-		profs[0].end()
-		profs[1].start()
 		for item in self.btns:	#100µs
 			item.draw()
-		profs[1].end()
-		profs[2].start()
 		for item in self.rads:	#300µs
 			item.draw()
 		self.labels[-1].setText(algs[self.rads[0].getSelected()].desc)
-		profs[2].end()
-		profs[3].start()
 		for item in self.edits:	#40µs
 			item.draw()
-		profs[3].end()
-		profs[4].start()
-		for item in self.bucks:	#2000µs–3500µs depending on how much inserting (heavy) vs swapping (light) vs reading (ultra light) is done
-			item.draw()			#5000µs or more when working with multiple buckets (TODO: fix that)
-		profs[4].end()
-		profs[5].start()
+		for item in self.bucks:	#1000µs–1500µs depending on how much inserting (heavy) vs swapping (light) vs reading (ultra light) is done and how many buckets are present
+			item.draw()
 		self.batch.draw()		#1500µs–2000µs
-		profs[5].end()
 		pyglet.clock.tick()
 	def on_mouse_press(self,x,y,button,modifiers):
 		MP[button]=True

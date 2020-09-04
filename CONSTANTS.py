@@ -31,7 +31,7 @@ class Timer():
 		else:
 			return self.t/self.c
 
-profs=[Timer() for i in range(6)]#for speed debugging purposes
+profs=[Timer() for i in range(0)]#for speed debugging purposes
 colorlamb=lambda perc:[int(SCOLOR[x]*(perc)+ECOLOR[x]*(1-perc)) for x in range(len(SCOLOR))]*2
 
 COLORS=[color for i in range(BUCKLEN) for color in colorlamb(i/BUCKLEN)]
