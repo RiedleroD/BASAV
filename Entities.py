@@ -35,7 +35,7 @@ class Entity:
 			self.y=y-self.h
 		self.set_deriv()
 	def setBgColor(self,color):
-		self.cquad=("c3B",color*4)
+		self.cquad=("c3B/dynamic",color*4)
 	def set_size(self,w,h):
 		self.w=w
 		self.h=h
@@ -47,7 +47,7 @@ class Entity:
 		self._y=self.y+self.h
 		self.rendered=False
 	def render(self):
-		self.quad=('v2f',(self.x,self.y,self._x,self.y,self._x,self._y,self.x,self._y))
+		self.quad=('v2f/dynamic',(self.x,self.y,self._x,self.y,self._x,self._y,self.x,self._y))
 		self.rendered=True
 	def move(self,x,y):
 		self.x+=x
@@ -101,7 +101,7 @@ class Label(Entity):
 		self.label.text=text
 	def render(self):
 		if self.w>0 and self.h>0:
-			self.quad=('v2f',(self.x,self.y,self._x,self.y,self._x,self._y,self.x,self._y))
+			self.quad=('v2f/static',(self.x,self.y,self._x,self.y,self._x,self._y,self.x,self._y))
 			self.label.begin_update()
 			self.label.x=self.cx
 			self.label.y=self.cy
@@ -153,7 +153,7 @@ class LabelMultiline(Label):
 		self.rendered=False
 	def render(self):
 		if self.w>0 and self.h>0:
-			self.quad=('v2f',(self.x,self.y,self._x,self.y,self._x,self._y,self.x,self._y))
+			self.quad=('v2f/static',(self.x,self.y,self._x,self.y,self._x,self._y,self.x,self._y))
 			for i,label in enumerate(self.labels):
 				label.begin_update()
 				label.x=self.cx
@@ -188,9 +188,9 @@ class Button(Label):
 		super().__init__(x,y,w,h,text,batch,anch,(0,0,0),(255,255,255),size)
 	def setBgColor(self,color):
 		if self.pressed:
-			self.cquad=("c3B",(*color,*color,128,128,128,128,128,128))
+			self.cquad=("c3B/dynamic",(*color,*color,128,128,128,128,128,128))
 		else:
-			self.cquad=("c3B",(128,128,128,128,128,128,*color,*color))
+			self.cquad=("c3B/dynamic",(128,128,128,128,128,128,*color,*color))
 	def checkpress(self,x,y):
 		if self.doesPointCollide(x,y):
 			return self.press()
@@ -329,7 +329,13 @@ class RadioList(Entity):
 					btn.release()
 			return pyglet.event.EVENT_HANDLED
 	def draw(self):
-		super().draw()
+		if not self.rendered:
+			self.render()
+		if not self.vl:
+			self.vl=self.batch.add(4,pyglet.gl.GL_QUADS,GRbg,self.quad,self.cquad)
+		else:
+			self.vl.vertices=self.quad[1]
+			self.vl.colors=self.cquad[1]
 		for btn in self.btns:
 			btn.draw()
 	def getSelected(self):
@@ -411,7 +417,7 @@ class RadioListPaged(RadioList):
 			self.vl.vertices[:]=self.quad[1]
 			self.vl.colors[:]=self.cquad[1]
 		else:
-			self.vl=self.batch.add(4,pyglet.gl.GL_QUADS,GRmp,self.quad,self.cquad)
+			self.vl=self.batch.add(4,pyglet.gl.GL_QUADS,GRbg,self.quad,self.cquad)
 		#draw the buttons in the current page plus prev and next
 		for btn in onscr:
 			btn.draw()
@@ -437,20 +443,21 @@ class Bucket(Entity):
 		self.items=[i for i in range(abs(itemc))]
 		self.racts=set()
 		self.wacts=set()
+		self.colors=colors
 		self.ravl=batch.add(
 			self.maxic*2,GL_LINES,GRmp,
-			('v2f',[pos for i in range(self.maxic) for pos in self._getract(i)]),
-			('c3B',blanc.copy())
+			('v2f/dynamic',[pos for i in range(self.maxic) for pos in self._getract(i)]),
+			('c3B/stream',blanc.copy())
 		)
 		self.wavl=batch.add(
 			self.maxic*2,GL_LINES,GRmp,
-			('v2f',[pos for i in range(self.maxic) for pos in self._getwact(i)]),
-			('c3B',blanc.copy())
+			('v2f/dynamic',[pos for i in range(self.maxic) for pos in self._getwact(i)]),
+			('c3B/stream',blanc.copy())
 		)
 		self.vl=batch.add(
 			self.maxic*2,GL_LINES,GRmp,
-			('v2f',[pos for i in range(self.maxic) for pos in self._getline(i)]),
-			('c3B',colors)
+			('v2f/dynamic',[pos for i in range(self.maxic) for pos in self._getline(i)]),
+			('c3B/stream',colors)
 		)
 	def _getyfromi(self,i):
 		return self.y+self.h*(i+1)/self.maxic
@@ -476,7 +483,7 @@ class Bucket(Entity):
 			return False
 		else:
 			self.items[x],self.items[y]=self.items[y],self.items[x]
-			self.vl.colors[6*x:6*x+6],self.vl.colors[6*y:6*y+6]=self.vl.colors[6*y:6*y+6],self.vl.colors[6*x:6*x+6]
+			self.colors[6*x:6*x+6],self.colors[6*y:6*y+6]=self.colors[6*y:6*y+6],self.colors[6*x:6*x+6]
 			self.wacts.add(x)
 			self.wacts.add(y)
 			return True
@@ -490,18 +497,21 @@ class Bucket(Entity):
 		elif i>x:
 			self.items[i:i]=self.items[x],
 			del self.items[x]
-			self.vl.colors[6*x:6*i],self.vl.colors[6*i:6*i+6]=self.vl.colors[6*x+6:6*i+6],self.vl.colors[6*x:6*x+6]
+			self.colors[6*i:6*i]=self.colors[6*x:6*x+6]
+			del self.colors[6*x:6*x+6]
 			self.wacts.add(i-1)
 		else:
 			self.items[i:i]=self.items.pop(x),
-			self.vl.colors[6*i+6:6*x+6],self.vl.colors[6*i:6*i+6]=self.vl.colors[6*i:6*x],self.vl.colors[6*x:6*x+6]
+			colors=self.colors[6*x:6*x+6]
+			del self.colors[6*x:6*x+6]
+			self.colors[6*i:6*i]=colors
 			self.wacts.add(i)
 		self.wacts.add(x)
 		return True
 	def swap_from(self,x,y,other):
 		if x>=0 and y>=0 and other.itemc>x and self.itemc>y:
 			self.items[x],other.items[y]=other.items[y],self.items[x]
-			self.vl.colors[6*x],other.vl.colors[6*y]=other.vl.colors[6*y],self.vl.colors[6*x]
+			self.colors[6*x],other.colors[6*y]=other.colors[6*y],self.colors[6*x]
 			self.wacts.add(y)
 			other.wacts.add(x)
 			return True
@@ -511,15 +521,10 @@ class Bucket(Entity):
 	def insert_from(self,x,y,other):
 		if other.itemc>=x>=0 and self.itemc>=y>=0:
 			self.items[y:y]=other.items.pop(x),
-			#getting the color to insert
-			color=other.vl.colors[6*x:6*x+6]
-			#shifting stuff around
-			other.vl.colors[6*x:6*other.itemc-6]=other.vl.colors[6*x+6:6*other.itemc]
-			self.vl.colors[6*y+6:6*self.itemc+6]=self.vl.colors[6*y:6*self.itemc]
-			#inserting the color to insert
-			self.vl.colors[6*y:6*y+6]=color
-			#deleting duplicate color
-			other.vl.colors[6*other.itemc-6:6*other.itemc]=0,0,0,0,0,0
+			self.colors[y*6:y*6]=other.colors[x*6:x*6+6]
+			del self.colors[-6:]
+			other.colors.extend((0,0,0,0,0,0))
+			del other.colors[x*6:x*6+6]
 			self.itemc+=1
 			other.itemc-=1
 			self.wacts.add(y)
@@ -538,6 +543,8 @@ class Bucket(Entity):
 			self.render()
 		if self.itemc>self.maxic:
 			raise ValueError("Bucket: itemc is larger than maxic")
+		self.vl.colors=self.colors
+		#clearing wavl and ravl colors
 		self.wavl.colors[:]=self.blanc.copy()
 		self.ravl.colors[:]=self.blanc.copy()
 		#actually faster than two separate for loops since looping over a set is pretty slow
