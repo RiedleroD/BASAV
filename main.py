@@ -110,6 +110,8 @@ class GameWin(pyglet.window.Window):
 				apl.queue(AUDIOS[item])
 				apl.play()
 				return
+	def play_index(self,b,i):
+		return self.play(self.bucks[b]._getvalue(i)[1])
 	def act_read(self,act):
 		if len(act)!=3:
 			print(f"{self.curalg.name}: READ: incorrect act length {len(act)}: only length of 3 is allowed")
@@ -133,10 +135,9 @@ class GameWin(pyglet.window.Window):
 			return False
 		else:
 			self.stats[1]+=1
-			buck=self.bucks[act[3]]
-			self.play(buck._getvalue(act[1])[1])
-			self.play(buck._getvalue(act[2])[1])
-			return buck.swapitems(act[1],act[2])
+			self.play_index(act[3],act[1])
+			self.play_index(act[3],act[2])
+			return self.bucks[act[3]].swapitems(act[1],act[2])
 	def act_insert(self,act):
 		if len(act)!=4:
 			print(f"{self.curalg.name}: INSERT: incorrect act length {len(act)}: only length of 4 is allowed")
@@ -146,6 +147,7 @@ class GameWin(pyglet.window.Window):
 			return False
 		else:
 			self.stats[2]+=1
+			self.play_index(act[3],act[1])
 			return self.bucks[act[3]].insertitem(act[1],act[2])
 	def act_new_buck(self,act):
 		if len(act) not in (1,3):
@@ -171,6 +173,8 @@ class GameWin(pyglet.window.Window):
 			return False
 		else:
 			self.stats[1]+=1
+			self.play_index(act[2],act[1])
+			self.play_index(act[4],act[3])
 			return self.bucks[act[4]].swap_from(act[1],act[3],self.bucks[act[2]])
 	def act_buckinsert(self,act):
 		if len(act)!=5:
@@ -184,6 +188,7 @@ class GameWin(pyglet.window.Window):
 			return False
 		else:
 			self.stats[2]+=1
+			self.play_index(act[2],act[1])
 			return self.bucks[act[4]].insert_from(act[1],act[3],self.bucks[act[2]])
 	def act_del_buck(self,act):
 		if len(act)!=2:
