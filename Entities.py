@@ -453,7 +453,7 @@ class Bucket(Entity):
 		else:
 			self.itemc=itemc
 			colors=COLORS.copy()
-		self.items=[i for i in range(self.maxic)]
+		self.items=[i for i in range(self.itemc)]
 		self.racts=set()
 		self.wacts=set()
 		self.colors=deque(colors)
@@ -483,13 +483,15 @@ class Bucket(Entity):
 	def _getract(self,i):
 		y=self._getyfromi(i)
 		return (self.x+self.w*0.95,y,self.x+self.w,y)
-	def getvalue(self,i):
+	def _getvalue(self,i):
 		if i>=self.itemc or i<0:
 			print(f"out-of-bounds call to READ: {i} not in buck[{self.itemc}]")
 			return (False,None)
 		else:
-			self.racts.add(i)
 			return (True,self.items[i])
+	def getvalue(self,i):
+		self.racts.add(i)
+		return self._getvalue(i)
 	def swapitems(self,x,y):
 		if x>=self.itemc or x<0 or y>=self.itemc or y<0:
 			print(f"out-of-bounds call to SWAP: {x},{y} not in buck[{self.itemc}]")
@@ -550,6 +552,8 @@ class Bucket(Entity):
 		self.wavl.vertices[:]=[pos for i in range(self.maxic) for pos in self._getwact(i)]
 		self.ravl.vertices[:]=[pos for i in range(self.maxic) for pos in self._getract(i)]
 		self.rendered=True
+	def render_colors(self):
+		self.colors=[col for i in self.items for col in colorlamb(i/self.maxic)]
 	def draw(self):
 		if not self.rendered:
 			self.render()

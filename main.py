@@ -19,6 +19,9 @@ class GameWin(pyglet.window.Window):
 		self.rads=[]
 		self.edits=[]
 		self.bucks=[]
+		self.apls=[pyglet.media.Player() for i in range(25)]#audio players
+		for apl in self.apls:
+			apl.volume=0.1
 		self.batch=pyglet.graphics.Batch()
 		super().__init__(*args,**kwargs)
 	def set_fps(self,fps):
@@ -90,19 +93,23 @@ class GameWin(pyglet.window.Window):
 			self.curalg=None
 			self.gen=None
 			if len(self.bucks)>1:
-				newbuck=Bucket(0,0,WIDTH2,HEIGHT,-BUCKLEN,self.batch)
-				for buck in self.bucks[:]:
-					l=len(newbuck.items)
-					newbuck.items[l:l]=buck.items
-				del self.bucks[:]
-				newbuck.itemc=len(newbuck.items)
-				newbuck.rendered=False
-				self.bucks.append(newbuck)
+				for buck in range(1,len(self.bucks)):
+					self.bucks[0].items.extend(self.bucks[1].items)
+					del self.bucks[1]
+				self.bucks[0].itemc=BUCKLEN
+				self.bucks[0].render_colors()
+				self.bucks[0].set_size(WIDTH2,HEIGHT)
 		self.labels[2].setText("Read:%02i"%self.stats[0])
 		self.labels[3].setText("Swap:%02i"%self.stats[1])
 		self.labels[4].setText("Insert:%02i"%self.stats[2])
 		self.labels[5].setText("Bucket:%02i"%self.stats[3])
 		self.labels[6].setText("Pass:%02i"%self.stats[4])
+	def play(self,item):
+		for i,apl in enumerate(self.apls):
+			if not apl.playing:
+				apl.queue(AUDIOS[item])
+				apl.play()
+				return
 	def act_read(self,act):
 		if len(act)!=3:
 			print(f"{self.curalg.name}: READ: incorrect act length {len(act)}: only length of 3 is allowed")
@@ -115,6 +122,7 @@ class GameWin(pyglet.window.Window):
 			self.stats[0]+=1
 			if self.curalg.gen:
 				self.curalg.v=self.curval
+			self.play(self.curval)
 			return rv
 	def act_swap(self,act):
 		if len(act)!=4:
@@ -125,7 +133,10 @@ class GameWin(pyglet.window.Window):
 			return False
 		else:
 			self.stats[1]+=1
-			return self.bucks[act[3]].swapitems(act[1],act[2])
+			buck=self.bucks[act[3]]
+			self.play(buck._getvalue(act[1])[1])
+			self.play(buck._getvalue(act[2])[1])
+			return buck.swapitems(act[1],act[2])
 	def act_insert(self,act):
 		if len(act)!=4:
 			print(f"{self.curalg.name}: INSERT: incorrect act length {len(act)}: only length of 4 is allowed")

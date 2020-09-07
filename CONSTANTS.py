@@ -2,8 +2,8 @@
 import os,sys,pyglet
 from pyglet import window as pgw
 from pyglet.gl import GL_LINES, GL_QUADS
+from pyglet.media import synthesis
 from time import time
-import helper
 
 ANCHORSy=("bottom","center","top")
 ANCHORSx=("left","center","right")
@@ -33,8 +33,10 @@ class Timer():
 
 profs=[Timer() for i in range(0)]#for speed debugging purposes
 colorlamb=lambda perc:[int(SCOLOR[x]*(perc)+ECOLOR[x]*(1-perc)) for x in range(len(SCOLOR))]*2
+audiolamb=lambda perc:pyglet.media.StaticSource(synthesis.Square(1/80,440+440*perc,sample_size=8))#less than 1/60 because that reduces cpu load apparently, but doesn't sound too bad
 
 COLORS=[color for i in range(BUCKLEN) for color in colorlamb(i/BUCKLEN)]
+AUDIOS=[audiolamb(i/BUCKLEN) for i in range(BUCKLEN)]
 
 KP=pgw.key.KeyStateHandler()	#a dict with the key states inside
 MP={pgw.mouse.LEFT:False,pgw.mouse.RIGHT:False,pgw.mouse.MIDDLE:False}
