@@ -2,6 +2,7 @@
 from Entities import *
 from Algs import *
 import traceback as tbe
+from collections import deque
 
 class GameWin(pyglet.window.Window):
 	def __init__(self,*args,**kwargs):
@@ -19,7 +20,8 @@ class GameWin(pyglet.window.Window):
 		self.rads=[]
 		self.edits=[]
 		self.bucks=[]
-		self.apls=[pyglet.media.Player() for i in range(25)]#audio players
+		self.toplay=deque()
+		self.apls=[pyglet.media.Player() for i in range(10)]#audio players
 		for apl in self.apls:
 			apl.volume=0.1
 		self.batch=pyglet.graphics.Batch()
@@ -104,12 +106,21 @@ class GameWin(pyglet.window.Window):
 		self.labels[4].setText("Insert:%02i"%self.stats[2])
 		self.labels[5].setText("Bucket:%02i"%self.stats[3])
 		self.labels[6].setText("Pass:%02i"%self.stats[4])
-	def play(self,item):
+		self.play_all()
+	def play_all(self):
 		for i,apl in enumerate(self.apls):
-			if not apl.playing:
-				apl.queue(AUDIOS[item])
-				apl.play()
+			if self.toplay:
+				item=self.toplay.pop()
+			else:
 				return
+			if apl.playing:
+				apl.next_source()
+			apl.queue(AUDIOS[item])
+			if not apl.playing:
+				apl.play()
+		self.toplay.clear()
+	def play(self,item):
+		self.toplay.append(item)
 	def play_index(self,b,i):
 		return self.play(self.bucks[b]._getvalue(i)[1])
 	def act_read(self,act):
