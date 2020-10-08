@@ -443,7 +443,7 @@ class RadioListPaged(RadioList):
 			self.next.release()
 
 class Bucket(Entity):
-	def __init__(self,x,y,w,h,itemc,batch,anch=0):
+	def __init__(self,x,y,w,h,itemc,batch,anch=0,maxps=None):
 		super().__init__(x,y,w,h,batch,anch)
 		self.maxic=abs(itemc)
 		blanc=self.blanc=[0,0,0]*self.maxic*2
@@ -456,21 +456,26 @@ class Bucket(Entity):
 		self.items=[i for i in range(self.itemc)]
 		self.racts=set()
 		self.wacts=set()
+		if (not maxps) or maxps>self.maxic:
+			maxps=self.maxic
+		self.setmaxps(maxps)#also sets ravl and wavl
 		self.colors=deque(colors)
-		self.ravl=batch.add(
-			self.maxic*2,GL_LINES,GRmp,
-			('v2f/dynamic',[pos for i in range(self.maxic) for pos in self._getract(i)]),
-			('c3B/stream',blanc.copy())
-		)
-		self.wavl=batch.add(
-			self.maxic*2,GL_LINES,GRmp,
-			('v2f/dynamic',[pos for i in range(self.maxic) for pos in self._getwact(i)]),
-			('c3B/stream',blanc.copy())
-		)
 		self.vl=batch.add(
 			self.maxic*2,GL_LINES,GRmp,
 			('v2f/dynamic',[pos for i in range(self.maxic) for pos in self._getline(i)]),
 			('c3B/stream',colors)
+		)
+	def setmaxps(self,maxps):
+		self.maxps=maxps
+		self.ravl=self.batch.add(
+			maxps*2,GL_LINES,GRmp,
+			('v2f/dynamic',[0,0,0,0]*maxps),
+			('c3B/stream',(0,255,0,0,255,0)*maxps)
+		)
+		self.wavl=self.batch.add(
+			maxps*2,GL_LINES,GRmp,
+			('v2f/dynamic',[0,0,0,0]*maxps),
+			('c3B/stream',(255,0,0,255,0,0)*maxps)
 		)
 	def _getyfromi(self,i):
 		return self.y+self.h*(i+1)/self.maxic
@@ -549,8 +554,12 @@ class Bucket(Entity):
 			return False
 	def render(self):
 		self.vl.vertices[:]=[pos for i in range(self.maxic) for pos in self._getline(i)]
-		self.wavl.vertices[:]=[pos for i in range(self.maxic) for pos in self._getwact(i)]
-		self.ravl.vertices[:]=[pos for i in range(self.maxic) for pos in self._getract(i)]
+		wvs=self._getwact(0)
+		wvs=[wvs[0],0,wvs[2],0]*self.maxps
+		self.wavl.vertices[:]=wvs
+		rvs=self._getract(0)
+		rvs=[rvs[0],0,rvs[2],0]*self.maxps
+		self.ravl.vertices[:]=rvs
 		self.rendered=True
 	def render_colors(self):
 		self.colors=[col for i in self.items for col in colorlamb(i/self.maxic)]
@@ -560,16 +569,20 @@ class Bucket(Entity):
 		if self.itemc>self.maxic:
 			raise ValueError("Bucket: itemc is larger than maxic")
 		self.vl.colors=self.colors
-		#clearing wavl and ravl colors
-		self.wavl.colors[:]=self.blanc.copy()
-		self.ravl.colors[:]=self.blanc.copy()
-		#actually faster than two separate for loops since looping over a set is pretty slow
-		#and checking if a value is in a set is lightning fast
-		#and looping over a range is not only memory efficient, but also pretty fast
-		for num in self.wacts:
-			self.wavl.colors[num*6:6+num*6]=(255,0,0,255,0,0)
-		for num in self.racts:
-			self.ravl.colors[num*6:6+num*6]=(0,255,0,0,255,0)
+		for i,num in enumerate(self.wacts):
+			if i>=self.maxps:
+				break
+			self.wavl.vertices[1+i*4]=self.wavl.vertices[3+i*4]=self._getyfromi(num)
+		wl=len(self.wacts)
+		for i in range(wl,self.maxps):
+			self.wavl.vertices[1+i*4]=self.wavl.vertices[3+i*4]=-1
+		for i,num in enumerate(self.racts):
+			if i>=self.maxps:
+				break
+			self.ravl.vertices[1+i*4]=self.ravl.vertices[3+i*4]=self._getyfromi(num)
+		rl=len(self.racts)
+		for i in range(rl,self.maxps):
+			self.ravl.vertices[1+i*4]=self.ravl.vertices[3+i*4]=-1
 		if self.wacts:
 			self.wacts.clear()
 		if self.racts:

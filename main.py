@@ -169,7 +169,7 @@ class GameWin(pyglet.window.Window):
 			for i,buck in enumerate(self.bucks):
 				buck.set_pos(chunksize*i,0)
 				buck.set_size(chunksize,HEIGHT)
-			self.bucks.append(Bucket(WIDTH2-chunksize,0,chunksize,HEIGHT,-BUCKLEN,self.batch))
+			self.bucks.append(Bucket(WIDTH2-chunksize,0,chunksize,HEIGHT,-BUCKLEN,self.batch,maxps=self.edits[0].getNum()))
 			self.stats[3]+=1
 			return True
 	def act_buckswap(self,act):
@@ -317,7 +317,7 @@ window.btns=[	ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",window.batch,8
 window.rads=[	RadioListPaged(WIDTH,HEIGHT-BTNHEIGHT*5,BTNWIDTH*2,BTNHEIGHT*13,[alg.name for alg in algs],12,window.batch,8,selected=0)]#radiolists
 window.edits=[	IntEdit(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Speed","100",window.batch,8),#Edits
 			  	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"FPS/UPS","60",window.batch,8)]
-window.bucks=[	Bucket(0,0,WIDTH2,HEIGHT,BUCKLEN,window.batch)]#buckets
+window.bucks=[	Bucket(0,0,WIDTH2,HEIGHT,BUCKLEN,window.batch,maxps=window.edits[0].getNum())]#buckets
 try:
 	pyglet.app.run()
 finally:
