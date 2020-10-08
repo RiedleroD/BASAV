@@ -108,16 +108,17 @@ class GameWin(pyglet.window.Window):
 		self.labels[6].setText("Pass:%02i"%self.stats[4])
 		self.play_all()
 	def play_all(self):
-		for i,apl in enumerate(self.apls):
-			if self.toplay:
-				item=self.toplay.pop()
-			else:
-				return
-			if apl.playing:
-				apl.next_source()
-			apl.queue(AUDIOS[item])
-			if not apl.playing:
-				apl.play()
+		if self.btns[4].pressed:
+			for i,apl in enumerate(self.apls):
+				if self.toplay:
+					item=self.toplay.pop()
+				else:
+					return
+				if apl.playing:
+					apl.next_source()
+				apl.queue(AUDIOS[item])
+				if not apl.playing:
+					apl.play()
 		self.toplay.clear()
 	def play(self,item):
 		self.toplay.append(item)
@@ -313,6 +314,7 @@ window.btns=[	ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",window.batch,8
 			 	Button(WIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Shuffle",window.batch,8),
 			 	Button(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Reverse",window.batch,8),
 			 	ButtonFlipthrough(WIDTH,HEIGHT-BTNHEIGHT*2,BTNWIDTH,BTNHEIGHT,"Randomness: %i",[3,0,1,2],window.batch,8),
+			 	ButtonSwitch(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*2,BTNWIDTH,BTNHEIGHT,"Audio: OFF",window.batch,8,pressedText="Audio: ON"),
 			 	Button(WIDTH,0,BTNWIDTH,BTNHEIGHT,"Quit",window.batch,2,pgw.key.ESCAPE)]
 window.rads=[	RadioListPaged(WIDTH,HEIGHT-BTNHEIGHT*5,BTNWIDTH*2,BTNHEIGHT*13,[alg.name for alg in algs],12,window.batch,8,selected=0)]#radiolists
 window.edits=[	IntEdit(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Speed","100",window.batch,8),#Edits
