@@ -310,9 +310,64 @@ class OddEvenSort(BaseAlgorithm):
 					fin=False
 			odd=not odd
 
+class RadixMSDBASE(BaseAlgorithm):
+	name="Radix MSD BASE"
+	desc="Base for all Radix MSD in-place sorts"
+	def gen(self):
+		b=self.b
+		l=self.l
+		maxnum=0#negative numbers hate this one weird trick
+		#go through the whole list to find the largest number
+		for i in range(l):
+			yield (READ,i,0)
+			if self.v>maxnum:
+				maxnum=self.v
+		curbs=[]
+		curb=b
+		while True:
+			curbs.append(curb)
+			curb*=b
+			if curb>=maxnum:
+				break
+		curbs.reverse()
+		curbs.append(1)
+		ii=[[0]*b]
+		ii[0][-1]=l
+		for curb in curbs:
+			for i in ii:
+				if i[-1]-i[0]<2:
+					continue
+				for j in range(i[0],i[-1]):
+					yield (READ,j,0)
+					digit=(self.v//curb)%b
+					for x in range(digit,b-1):
+						i[x]+=1
+					if digit==b-1:
+						continue
+					else:
+						yield (INSERT,j,i[digit]-1,0)
+			ii=[j for i in ii for j in i]
+			ii.insert(0,0)#at index 0, insert 0 (because the lists beginning would be lost otherwise)
+			ii=[[ii[i]]*(b-1)+[ii[i+1]] for i in range(len(ii)-1) if ii[i+1]-ii[i]>1]
+
+class RadixMSDB2(RadixMSDBASE):
+	name="Radix MSD 2"
+	desc="Sorts by most significant digit in base 2"
+	b=2
+
+class RadixMSDB4(RadixMSDBASE):
+	name="Radix MSD 4"
+	desc="Sorts by most significant digit in base 4"
+	b=4
+
+class RadixMSDB10(RadixMSDBASE):
+	name="Radix MSD 10"
+	desc="Sorts by most significant digit in base 10"
+	b=10
+
 class RadixLSDBASE(BaseAlgorithm):
 	name="Radix LSD BASE"
-	desc="Base for all Radix LSD non-OOP Sorts."
+	desc="Base for all Radix LSD in-place Sorts."
 	def gen(self):
 		b=self.b
 		l=self.l
@@ -338,7 +393,7 @@ class RadixLSDBASE(BaseAlgorithm):
 
 class RadixLSDBASEOOP(BaseAlgorithm):
 	name="Radix LSD BASE OOP"
-	desc="Base for all Radix LSD OOP Sorts."
+	desc="Base for all Radix LSD out-of-place Sorts."
 	def gen(self):
 		b=self.b
 		l=self.l
@@ -490,6 +545,9 @@ algs=[
 	SelectionSort,SelectionSortOOP,
 	DoubleSelectionSort,DoubleSelectionSortOOP,
 	Quicksort,
+	RadixMSDB2,
+	RadixMSDB4,
+	RadixMSDB10,
 	RadixLSDB2,RadixLSDB2OOP,
 	RadixLSDB4,RadixLSDB4OOP,
 	RadixLSDB10,RadixLSDB10OOP,
