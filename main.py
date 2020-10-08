@@ -4,11 +4,37 @@ from Algs import *
 import traceback as tbe
 from collections import deque
 
+class ClockCounter():
+	def __init__(self):
+		self.reset()
+	def cycle(self,dt):
+		self.dt+=dt
+		self.tc+=1
+	def start(self):
+		self.st=time()
+	def checkpoint(self):
+		t=time()
+		self.dt+=t-self.st
+		self.tc+=1
+		self.st=t
+	def end(self):
+		self.dt+=time()-self.st
+		self.tc+=1
+	def reset(self):
+		self.dt=0
+		self.tc=0
+	def getHz(self):
+		return self.tc/self.dt
+
 class GameWin(pyglet.window.Window):
 	def __init__(self,*args,**kwargs):
 		self.push_handlers(KP)
-		self.tc=0
-		self.dt=0
+		self.upscc=ClockCounter()
+		self.fpscc=ClockCounter()
+		self.fpscc.start()
+		self.avgupscc=ClockCounter()
+		self.avgfpscc=ClockCounter()
+		self.avgfpscc.start()
 		self.fps=0
 		self.set_fps(60)#set_fps needs self.fps to exist & sets more than that, so I have to do both here.
 		self.curalg=None
@@ -32,11 +58,11 @@ class GameWin(pyglet.window.Window):
 			pyglet.clock.unschedule(self.update)
 			pyglet.clock.schedule_interval(self.update,1/fps)
 	def update(self,dt):
-		self.tc+=1
-		self.dt+=dt
-		if self.dt>=0.1:
+		self.upscc.cycle(dt)
+		self.avgupscc.cycle(dt)
+		if self.upscc.dt>=0.1:
 			#update ups counter
-			self.labels[1].setText("UPS:%02i/%02i"%(round(self.tc/self.dt),self.fps))
+			self.labels[1].setText("UPS:%02i/%02i"%(round(self.upscc.getHz()),self.fps))
 			#update randomness counter
 			randomness=0
 			for buck in self.bucks:
@@ -49,9 +75,7 @@ class GameWin(pyglet.window.Window):
 							randomness+=previ-i
 						previ=i
 			self.labels[7].setText("Randomness:%02i"%randomness)
-			#set tc and dt to 0
-			self.tc=0
-			self.dt=0
+			self.upscc.reset()
 		if not self.edits[1].pressed:
 			self.set_fps(self.edits[1].getNum())
 		if self.btns[-1].pressed:
@@ -60,18 +84,24 @@ class GameWin(pyglet.window.Window):
 		if self.btns[2].pressed:
 			self.btns[2].release()
 			self.curalg=Reverser(self.bucks[0].itemc)
+			self.avgupscc.reset()
+			self.avgfpscc.reset()
 			self.gen=self.curalg.gen()
 			self.stats=[0,0,0,0,0]
 			self.btns[0].press()
 		if self.btns[1].pressed:
 			self.btns[1].release()
 			self.curalg=shufflers[self.btns[3].getCurval()](self.bucks[0].itemc)
+			self.avgupscc.reset()
+			self.avgfpscc.reset()
 			self.gen=self.curalg.gen()
 			self.stats=[0,0,0,0,0]
 			self.btns[0].press()
 		if self.btns[0].pressed:
 			if self.curalg==None:
 				self.curalg=algs[self.rads[0].getSelected()](self.bucks[0].itemc)
+				self.avgupscc.reset()
+				self.avgfpscc.reset()
 				self.gen=self.curalg.gen()
 				self.stats=[0,0,0,0,0]
 			for x in range(self.edits[0].getNum()):
@@ -239,22 +269,17 @@ class GameWin(pyglet.window.Window):
 		elif act[0]==DEL_BUCK:#delete bucket
 			return self.act_del_buck(act)
 		elif act[0]==FIN:#finished
-			print(f"{self.curalg.name}: finished")
+			print(f"{self.curalg.name}: finished with average fps {self.avgfpscc.getHz():.0f} and ups {self.avgupscc.getHz():.0f}")
 			return False
 		else:
 			print(f"{self.curalg.name}: Invalid act: {act}")
 			return False
 	def on_draw(self):
-		global TIME,DTIME,TIMEC
-		t=time()
-		DTIME+=t-TIME
-		TIMEC+=1
-		if DTIME>=0.1:
-			self.labels[0].setText("FPS:%02i/%02i"%(round(TIMEC/DTIME),self.fps))
-			TIMEC=0
-			DTIME=0
-		TIME=t
-		del t
+		self.fpscc.checkpoint()#updates dt and tc and waits for next checkpoint
+		self.avgfpscc.checkpoint()
+		if self.fpscc.dt>=0.1:
+			self.labels[0].setText("FPS:%02i/%02i"%(round(self.fpscc.getHz()),self.fps))
+			self.fpscc.reset()
 		self.clear()
 		for item in self.labels:#2000µs–5000µs
 			item.draw()

@@ -8,9 +8,6 @@ from time import time
 ANCHORSy=("bottom","center","top")
 ANCHORSx=("left","center","right")
 
-TIME=time()
-DTIME=0
-TIMEC=0
 BUCKLEN=2000
 SCOLOR=(0,255,255)
 ECOLOR=(255,0,0)
