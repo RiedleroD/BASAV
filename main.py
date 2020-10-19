@@ -1,6 +1,9 @@
 #!/usr/bin/python3
+print("importing entities…")
 from Entities import *
+print("importing algorithms…")
 from Algs import *
+print("importing various other libraries…")
 import traceback as tbe
 from collections import deque
 
@@ -25,6 +28,8 @@ class ClockCounter():
 		self.tc=0
 	def getHz(self):
 		return self.tc/self.dt
+
+print("defining main window…")
 
 class GameWin(pyglet.window.Window):
 	def __init__(self,*args,**kwargs):
@@ -326,6 +331,8 @@ BTNWIDTH2=BTNWIDTH/2
 BTNHEIGHT=HEIGHT/20
 BTNHEIGHT2=BTNHEIGHT/2
 
+print(f"window size is {WIDTH}x{HEIGHT}")
+
 window.labels=[	Label(WIDTH2,HEIGHT,0,0,"FPS:00",window.batch,6),
 				Label(WIDTH2,HEIGHT-15,0,0,"UPS:00/60",window.batch,6),
 				Label(WIDTH2,HEIGHT-45,0,0,"Read:00",window.batch,6),
@@ -346,6 +353,9 @@ window.edits=[	IntEdit(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Spe
 			  	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"FPS/UPS","60",window.batch,8)]
 window.bucks=[	Bucket(0,0,WIDTH2,HEIGHT,BUCKLEN,window.batch,maxps=window.edits[0].getNum())]#buckets
 try:
+	print("starting main app…")
 	pyglet.app.run()
 finally:
-	print(*tuple(t.get() for t in profs))
+	if profs:
+		print(*tuple(t.get() for t in profs))
+	print("goodbye")

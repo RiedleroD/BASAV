@@ -1,5 +1,7 @@
 #!/usr/bin/python3
+print("  importing constants…")
 from CONSTANTS import *
+print("  importing other libs…")
 from random import shuffle
 from collections import deque as _deque
 
@@ -14,6 +16,8 @@ class deque(_deque):
 				return super().pop()
 			elif index==0:
 				return super().popleft()
+
+print("  defining entities…")
 
 class Entity:
 	vl=None

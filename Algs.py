@@ -1,7 +1,9 @@
 #!/usr/bin/python3
+print("  importing various libs…")
 import os,sys
 import random
 
+print("  defining bases…")
 PASS=None
 READ=0
 SWAP=1
@@ -29,6 +31,8 @@ class BaseAlgorithm():
 	#(DEL_BUCK,i)		→ destroys bucket i (only empty buckets can be destroyed)
 	#(FIN,)		→ finish (not necessary anymore, StopIteration finishes too)
 	gen=None
+
+print("  defining algorithms…")
 
 class BubbleSort(BaseAlgorithm):
 	name="Bubble Sort"
