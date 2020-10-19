@@ -106,16 +106,26 @@ class Label(Entity):
 	label=None
 	def __init__(self,x,y,w,h,text,batch,anch=0,color=(255,255,255),bgcolor=(0,0,0),size=12):
 		self.label=pyglet.text.Label(text,x=0,y=y-size,color=color+(255,),font_size=size,batch=batch,group=GRfg)
-		self.setText(text)
-		self.setColor(color)
 		self.size=size
 		super().__init__(x,y,w,h,batch,anch=anch,bgcolor=bgcolor)
+		self.setText(text)
+		self.setColor(color)
 	def setColor(self,color):
 		self.color=color
 		self.label.color=self.color+(255,)
 	def setText(self,text):
 		self.text=text
 		self.label.text=text
+		self.adjust_kerning()
+	def adjust_kerning(self):
+		if self.w:
+			kern=0
+			self.set_kerning(kern)
+			while self.label.content_width>self.w:
+				kern-=0.1
+				self.set_kerning(kern)
+	def set_kerning(self,kern):
+		self.label.document.set_style(0,-1,{"kerning":kern})
 	def render(self):
 		if self.w>0 and self.h>0:
 			self.quad=('v2f/static',(self.x,self.y,self._x,self.y,self._x,self._y,self.x,self._y))
