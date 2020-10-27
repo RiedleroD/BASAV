@@ -45,7 +45,7 @@ class GameWin(pyglet.window.Window):
 		self.curalg=None
 		self.curval=None
 		self.gen=None
-		self.aconcur=4
+		self.aconcur=0
 		self.stats=[0,0,0,0,0]
 		self.labels=[]
 		self.btns=[]
@@ -53,9 +53,7 @@ class GameWin(pyglet.window.Window):
 		self.edits=[]
 		self.bucks=[]
 		self.toplay=deque()
-		self.apls=[pyglet.media.Player() for i in range(self.aconcur)]#audio players
-		for apl in self.apls:
-			apl.volume=0.1
+		self.apls=[]#audio players
 		self.batch=pyglet.graphics.Batch()
 		super().__init__(*args,**kwargs)
 	def set_fps(self,fps):
@@ -108,7 +106,10 @@ class GameWin(pyglet.window.Window):
 		if aconcur>0:
 			for i in range(aconcur):
 				apl=pyglet.media.Player()
-				apl.volume=0.1
+				apl.queue(AUDIO)
+				apl.volume=0
+				apl.loop=True
+				apl.play()
 				self.apls.append(apl)
 		elif aconcur<0:
 			for apl in self.apls[aconcur:]:
@@ -156,17 +157,13 @@ class GameWin(pyglet.window.Window):
 		self.labels[6].setText("Pass:%02i"%self.stats[4])
 		self.play_all()
 	def play_all(self):
-		if self.btns[4].pressed:
-			for i,apl in enumerate(self.apls):
-				if self.toplay:
-					item=self.toplay.pop()
-				else:
-					return
-				if apl.playing:
-					apl.next_source()
-				apl.queue(AUDIOS[item])
-				if not apl.playing:
-					apl.play()
+		for i,apl in enumerate(self.apls):
+			if (not self.toplay) or not self.btns[4].pressed:
+				apl.volume=0
+			else:
+				item=self.toplay.pop()
+				apl.volume=1/self.aconcur
+				apl.pitch=1+item/BUCKLEN
 		self.toplay.clear()
 	def play(self,item):
 		self.toplay.append(item)
@@ -364,8 +361,11 @@ window.btns=[	ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",window.batch,8
 window.rads=[	RadioListPaged(WIDTH,HEIGHT-BTNHEIGHT*6,BTNWIDTH*2,BTNHEIGHT*12,[alg.name for alg in algs],11,window.batch,8,selected=0)]
 window.edits=[	IntEdit(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Speed","20",window.batch,8),
 			 	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"FPS/UPS","60",window.batch,8),
-			 	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"Audio Concurrency",f"{window.aconcur}",window.batch,8)]
+			 	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"Audio Concurrency",f"{32}",window.batch,8)]
 window.bucks=[	Bucket(0,0,WIDTH2,HEIGHT,BUCKLEN,window.batch,maxps=window.edits[0].getNum())]
+
+window.btns[4].press()
+
 try:
 	print("starting main app…")
 	pyglet.app.run()
