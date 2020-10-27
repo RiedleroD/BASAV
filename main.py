@@ -46,6 +46,7 @@ class GameWin(pyglet.window.Window):
 		self.curval=None
 		self.gen=None
 		self.aconcur=0
+		self.playing=True
 		self.stats=[0,0,0,0,0]
 		self.labels=[]
 		self.btns=[]
@@ -157,13 +158,21 @@ class GameWin(pyglet.window.Window):
 		self.labels[6].setText("Pass:%02i"%self.stats[4])
 		self.play_all()
 	def play_all(self):
-		for i,apl in enumerate(self.apls):
-			if (not self.toplay) or not self.btns[4].pressed:
-				apl.volume=0
-			else:
-				item=self.toplay.pop()
-				apl.volume=1/self.aconcur
-				apl.pitch=1+item/BUCKLEN
+		if self.btns[4].pressed and self.toplay:
+			for apl in self.apls:
+				if not self.toplay:
+					apl.volume=0
+				else:
+					item=self.toplay.pop()
+					apl.volume=1/self.aconcur
+					apl.pitch=1+item/BUCKLEN
+				if not self.playing:
+					apl.play()
+			self.playing=True
+		elif self.playing:
+			for apl in self.apls:
+				apl.pause()
+			self.playing=False
 		self.toplay.clear()
 	def play(self,item):
 		self.toplay.append(item)
