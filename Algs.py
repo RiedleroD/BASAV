@@ -86,8 +86,8 @@ class CocktailShaker(BaseAlgorithm):
 					v1=v2
 			i-=1
 
-class MergeSort(BaseAlgorithm):
-	name="Merge Sort"
+class MergeSortOOP(BaseAlgorithm):
+	name="Merge Sort OOP"
 	desc="Merges buckets until sorted"
 	def gen(self):
 		yield (NEW_BUCK,)
@@ -139,6 +139,42 @@ class MergeSort(BaseAlgorithm):
 			s*=2
 		yield (DEL_BUCK,1)
 		yield (DEL_BUCK,1)
+
+class MergeSortIP(BaseAlgorithm):
+	name="Merge Sort In-Place"
+	desc="Merges sections until sorted"
+	def gen(self):
+		size=1
+		while size<self.l:
+			for i in range(0,self.l,size*2):
+				if self.l-i<=size:#if only one block or less remains
+					break
+				gen1=iter(range(i,i+size))
+				gen2=iter(range(i+size,min(i+size*2,self.l)))
+				off=0
+				i1=next(gen1)
+				yield (READ,i1,0)
+				v1=self.v
+				i2=next(gen2)
+				yield (READ,i2,0)
+				v2=self.v
+				try:
+					while True:
+						if v1>v2:
+							yield (INSERT,i2,i1+off,0)
+							off+=1
+							v2=None
+							i2=next(gen2)
+							yield (READ,i2,0)
+							v2=self.v
+						else:
+							v1=None
+							i1=next(gen1)
+							yield (READ,i1+off,0)
+							v1=self.v
+				except StopIteration:
+					pass
+			size*=2
 
 class BogoSort(BaseAlgorithm):
 	name="Bogo Sort"
@@ -577,5 +613,5 @@ algs=[
 	RadixLSDB2,RadixLSDB2OOP,
 	RadixLSDB4,RadixLSDB4OOP,
 	RadixLSDB10,RadixLSDB10OOP,
-	MergeSort,
+	MergeSortIP,MergeSortOOP,
 	BogoSort]
