@@ -452,58 +452,79 @@ class RadixLSDB10OOP(RadixLSDBASEOOP):
 	desc="Sorts by least significant digit in base 10 out-of-place."
 	b=10
 
-#implementation of https://en.wikipedia.org/wiki/Quicksort#Lomuto_partition_scheme with pseudo-recursion.
-class Quicksort(BaseAlgorithm):
-	name="Quicksort"
+class QuicksortBASE(BaseAlgorithm):
+	name="Quicksort BASE"
 	desc="Recursively picks a pivot and partitions all items around it\nuntil list is sorted.\nHilariously bad at sorted and reversed lists."
-	def gen(self):#TODO: this is badly transitioned from the days of the cycle API, rewrite needed
-		lv=[[0,self.l-1,0]]
-		while True:
-			cv=lv[-1]
-			a=cv[2]
-			v=self.v
-			if a==0:
-				if cv[0]<cv[1]:#if lo<hi:
-					cv[2]=1
-					lv.append([cv[0],cv[1],4])
-				else:
-					del lv[-1],cv
-					if len(lv)==0:
-						break
-			elif a==1:
-				cv[2]=2
-				lv.append([cv[0],cv[3]-1,0])
-			elif a==2:
-				cv[2]=3
-				lv.append([cv[3]+1,cv[1],0])
-			elif a==3:
-				del lv[-1],cv
-				if len(lv)==0:
+	p=None#needed for partitioning
+	conc=False
+	def gen(self):
+		for act in self.qs(0,self.l-1):
+			yield act
+	def qs(self,lo,hi):
+		if lo<hi:
+			for act in self.partition(lo,hi):
+				yield act
+			p,_p=self.p
+			gens=self.qs(lo,p),self.qs(_p,hi)
+			gen=0
+			while True:
+				try:
+					act=next(gens[gen])
+				except StopIteration:
+					gen=gens[abs(gen-1)]
 					break
-			elif a==4:
-				cv[2]=5
-				yield (READ,cv[1],0)
-			elif a==5:
-				cv.append(v)#3 - pivot
-				cv.append(cv[0])#4 - i
-				cv.append(cv[0])#5 - j
-				cv[2]=6#a=6
-			elif a==6:
-				if cv[5]>cv[1]:#if j>hi
-					cv[2]=8	#a=8
-					yield (SWAP,cv[4],cv[1],0)#SWAP i,hi,0
 				else:
-					cv[2]=7#a=7
-					yield (READ,cv[5],0)#READ j,0
-			elif a==7:
-				cv[5]+=1#j++
-				cv[2]=6
-				if v<cv[3]:	#if A[j]<pivot:
-					cv[4]+=1	#i++
-					yield (SWAP,cv[4]-1,cv[5]-1,0)#SWAP i,j,0
-			elif a==8:
-				lv[-2].append(cv[4])#return i
-				del lv[-1],cv
+					yield act
+					if act[0]!=READ and self.conc:
+						gen=abs(gen-1)
+			for act in gen:
+				yield act
+
+#implementation of https://en.wikipedia.org/wiki/Quicksort#Lomuto_partition_scheme
+class QuicksortLomuto(QuicksortBASE):
+	name="Quicksort Lomuto"
+	def partition(self,lo,hi):
+		yield (READ,hi,0)
+		pivot=self.v
+		i=lo
+		for j in range(lo,hi):
+			yield (READ,j,0)
+			if self.v<pivot:
+				yield (SWAP,i,j,0)
+				i+=1
+		yield (SWAP,i,hi,0)
+		self.p=(i-1,i+1)
+
+#implementation of https://en.wikipedia.org/wiki/Quicksort#Hoare_partition_scheme
+class QuicksortHoare(QuicksortBASE):
+	name="Quicksort Hoare"
+	def partition(self,lo,hi):
+		yield (READ,(hi+lo)//2,0)
+		pivot=self.v
+		i=lo-1
+		j=hi+1
+		while True:
+			while True:
+				i+=1
+				yield (READ,i,0)
+				if self.v>=pivot:
+					break
+			while True:
+				j-=1
+				yield (READ,j,0)
+				if self.v<=pivot:
+					break
+			if i>=j:
+				self.p=(j,j+1)
+				break
+			yield (SWAP,i,j,0)
+
+class QuicksortLomutoCC(QuicksortLomuto):
+	name="Quicksort Lomuto Concurrent"
+	conc=True
+class QuicksortHoareCC(QuicksortHoare):
+	name="Quicksort Hoare Concurrent"
+	conc=True
 
 class Reverser(BaseAlgorithm):
 	name="Reverser"
@@ -548,7 +569,8 @@ algs=[
 	InsertionSort,InsertionSortOOP,
 	SelectionSort,SelectionSortOOP,
 	DoubleSelectionSort,DoubleSelectionSortOOP,
-	Quicksort,
+	QuicksortLomuto,QuicksortLomutoCC,
+	QuicksortHoare,QuicksortHoareCC,
 	RadixMSDB2,
 	RadixMSDB4,
 	RadixMSDB10,
