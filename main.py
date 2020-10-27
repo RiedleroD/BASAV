@@ -45,6 +45,7 @@ class GameWin(pyglet.window.Window):
 		self.curalg=None
 		self.curval=None
 		self.gen=None
+		self.aconcur=4
 		self.stats=[0,0,0,0,0]
 		self.labels=[]
 		self.btns=[]
@@ -52,7 +53,7 @@ class GameWin(pyglet.window.Window):
 		self.edits=[]
 		self.bucks=[]
 		self.toplay=deque()
-		self.apls=[pyglet.media.Player() for i in range(10)]#audio players
+		self.apls=[pyglet.media.Player() for i in range(self.aconcur)]#audio players
 		for apl in self.apls:
 			apl.volume=0.1
 		self.batch=pyglet.graphics.Batch()
@@ -102,6 +103,18 @@ class GameWin(pyglet.window.Window):
 			self.gen=self.curalg.gen()
 			self.stats=[0,0,0,0,0]
 			self.btns[0].press()
+		aconcur=self.edits[2].getNum()-self.aconcur
+		self.aconcur+=aconcur
+		if aconcur>0:
+			for i in range(aconcur):
+				apl=pyglet.media.Player()
+				apl.volume=0.1
+				self.apls.append(apl)
+		elif aconcur<0:
+			for apl in self.apls[aconcur:]:
+				apl.next_source()
+				apl.delete()
+				self.apls.remove(apl)
 		if self.btns[0].pressed:
 			if self.curalg==None:
 				self.curalg=algs[self.rads[0].getSelected()](self.bucks[0].itemc)
@@ -318,7 +331,7 @@ class GameWin(pyglet.window.Window):
 			if ret:
 				return ret
 config = pyglet.gl.Config(sample_buffers=1, samples=8)#because items otherwise flicker when they're over 1000
-window=GameWin(fullscreen=False,style=GameWin.WINDOW_STYLE_BORDERLESS,caption="Riedler Sound of Sorting",config=config,vsync=True,visible=False)
+window=GameWin(fullscreen=False,style=GameWin.WINDOW_STYLE_BORDERLESS,caption="Riedlers Sound of Sorting",config=config,vsync=True,visible=False)
 window.maximize()
 window.set_visible(True)
 
@@ -343,15 +356,16 @@ window.labels=[	Label(WIDTH2,HEIGHT,0,0,"FPS:00",window.batch,6),
 				Label(WIDTH2,HEIGHT-120,0,0,"Randomness:00",window.batch,6),
 				LabelMultiline(WIDTH2,0,0,0,"Sorting\nalgorithm\nDescription",window.batch,0)]
 window.btns=[	ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",window.batch,8,pressedText="Stop"),
-			 	Button(WIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Shuffle",window.batch,8),
-			 	Button(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Reverse",window.batch,8),
-			 	ButtonFlipthrough(WIDTH,HEIGHT-BTNHEIGHT*2,BTNWIDTH,BTNHEIGHT,"Randomness: %i",[3,0,1,2],window.batch,8),
-			 	ButtonSwitch(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*2,BTNWIDTH,BTNHEIGHT,"Audio: OFF",window.batch,8,pressedText="Audio: ON"),
-			 	Button(WIDTH,0,BTNWIDTH,BTNHEIGHT,"Quit",window.batch,2,pgw.key.ESCAPE)]
-window.rads=[	RadioListPaged(WIDTH,HEIGHT-BTNHEIGHT*5,BTNWIDTH*2,BTNHEIGHT*13,[alg.name for alg in algs],12,window.batch,8,selected=0)]#radiolists
-window.edits=[	IntEdit(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Speed","100",window.batch,8),#Edits
-			  	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"FPS/UPS","60",window.batch,8)]
-window.bucks=[	Bucket(0,0,WIDTH2,HEIGHT,BUCKLEN,window.batch,maxps=window.edits[0].getNum())]#buckets
+				Button(WIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Shuffle",window.batch,8),
+				Button(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Reverse",window.batch,8),
+				ButtonFlipthrough(WIDTH,HEIGHT-BTNHEIGHT*2,BTNWIDTH,BTNHEIGHT,"Randomness: %i",[3,0,1,2],window.batch,8),
+				ButtonSwitch(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"Audio: OFF",window.batch,8,pressedText="Audio: ON"),
+				Button(WIDTH,0,BTNWIDTH,BTNHEIGHT,"Quit",window.batch,2,pgw.key.ESCAPE)]
+window.rads=[	RadioListPaged(WIDTH,HEIGHT-BTNHEIGHT*6,BTNWIDTH*2,BTNHEIGHT*12,[alg.name for alg in algs],11,window.batch,8,selected=0)]
+window.edits=[	IntEdit(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Speed","20",window.batch,8),
+			 	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"FPS/UPS","60",window.batch,8),
+			 	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"Audio Concurrency",f"{window.aconcur}",window.batch,8)]
+window.bucks=[	Bucket(0,0,WIDTH2,HEIGHT,BUCKLEN,window.batch,maxps=window.edits[0].getNum())]
 try:
 	print("starting main app…")
 	pyglet.app.run()
