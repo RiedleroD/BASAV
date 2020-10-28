@@ -130,7 +130,7 @@ class MainLogic():
 					elif type(element)==ButtonSwitch:
 						val=element.pressed
 					elif type(element)==ButtonFlipThrough:
-						val=element.getCurVal()
+						val=element.getCurIndex()
 					self.curalg.vals[name]=val
 				self.curalg=self.curalg(self.bucks[0].itemc)
 				self.avgupscc.reset()
@@ -218,7 +218,25 @@ class MainLogic():
 						self.algui[name]=ButtonSwitch(WIDTH-BTNWIDTH*(2+x),HEIGHT-BTNHEIGHT*(y+6),BTNWIDTH,BTNHEIGHT,opt[3],batch=self.batch,anch=8,pressedText=opt[2])
 						y+=1
 				elif opt[0]==list:
-					pass
+					if len(opt)!=4 or \
+						type(opt[1])!=int or \
+						type(opt[2]) not in (list,tuple,set) or \
+						any(type(val)!=str for val in opt[2]) or \
+						type(opt[3])!=str:
+						
+						print(f"{curalg.name}: option {name} with type list doesn't match pattern (type,int,(str,str,…),str)")
+						curalg.vals[name]=None
+					elif len(opt[2])<=opt[1]:
+						print(f"{curalg.name}: option {name} with type list has a default value {opt[2]} outside of its boundaries 0:{len(opt[2])}")
+						curalg.vals[name]=None
+					elif len(opt[2])<2:
+						print(f"{curalg.name}: option {name} with type list only has {len(opt[2])} possible values, while at least 2 are needed.")
+						curalg.vals[name]=None
+					elif opt[3].count("%")!=1 or opt[3].count("%s")!=1:
+						print(f"{curalg.name}: option {name} with type list has an invalid format string '{opt[3]}' specified. Exactly one %s has to exist.")
+					else:
+						self.algui[name]=ButtonFlipthrough(WIDTH-BTNWIDTH*(2+x),HEIGHT-BTNHEIGHT*(y+6),BTNWIDTH,BTNHEIGHT,opt[3],opt[2],batch=self.batch,anch=8,default=opt[1])
+						
 	def play_all(self):
 		if self.btns[4].pressed and self.toplay:
 			for apl in self.apls:
