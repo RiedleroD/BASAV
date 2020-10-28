@@ -255,6 +255,8 @@ class ButtonFlipthrough(Button):
 		self.label.text=text
 	def getCurval(self):
 		return self.vals[self.i]
+	def getCurIndex(self):
+		return self.i
 	def press(self):
 		self.i+=1
 		self.i%=len(self.vals)
