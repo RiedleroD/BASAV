@@ -262,63 +262,67 @@ class ButtonFlipthrough(Button):
 		return pyglet.event.EVENT_HANDLED
 
 class TextEdit(Button):#also unused
-	def __init__(self,x,y,w,h,desc,value,batch,anch=0,key=None,size=12):
+	cache=None
+	def __init__(self,x,y,w,h,desc,value,batch,anch=0,key=None,size=12,allowed_chars=None):
 		self.desc=desc
-		self.value=value
+		self.value=self.cache=value
+		self.alchrs=allowed_chars
 		super().__init__(x,y,w,h,desc,batch,anch,key,size)
 	def checkKey(self,key):
 		if self.pressed:
 			if key==pgw.key.BACKSPACE:
-				self.value=self.value[:-1]
-				self.setText("[%s]"%self.value)
+				self.cache=self.cache[:-1]
+				self.setText(f"[{self.cache}]")
 			elif key in (pgw.key.RETURN,pgw.key.ESCAPE):
-				self.release()
+				if self.valid_input(self.cache):
+					self.release()
 			else:
-				self.value+=chr(key)
-				self.setText("[%s]"%(self.value))
+				try:
+					char=chr(key)
+				except OverflowError:#if a weird utf-8 symbol comes rolling in. Most apparent on non-english keyboards that have ß ö ä ü ect.
+					return None
+				if self.valid_key(char):
+					self.cache+=char
+					self.setText(f"[{self.cache}]")
 			return pyglet.event.EVENT_HANDLED
 		elif self.key!=None and key==self.key:
 			return self.press()
+	def valid_key(self,key):
+		return self.alchrs==None or key in self.alchrs
+	def valid_input(self,inpot):
+		return True
+	def getVal(self):
+		return self.value
 	def press(self):
 		if not self.pressed:
 			self.pressed=True
-			self.setText("[%s]"%self.value)
+			self.setText(f"[{self.cache}]")
 			self.setBgColor((255,255,255))
 			return pyglet.event.EVENT_HANDLED
 	def release(self):
 		if self.pressed:
+			self.value=self.cache
 			self.pressed=False
 			self.setText(self.desc)
 			self.setBgColor((255,255,255))
 			return pyglet.event.EVENT_HANDLED
 
 class IntEdit(TextEdit):
-	nums=("0","1","2","3","4","5","6","7","8","9")
-	preval=None
-	def checkKey(self,key):
-		if self.pressed:
-			if key==pgw.key.BACKSPACE:
-				self.value=self.value[:-1]
-				self.setText("[%s]"%self.value)
-			elif key in (pgw.key.RETURN,pgw.key.ESCAPE):
-				if len(self.value)==0:
-					self.value="0"
-				self.release()
-			else:
-				try:
-					char=chr(key)
-				except OverflowError:#if a weird utf-8 symbol comes rolling in. Most apparent on non-english keyboards that have ß ö ä ü ect.
-					return None
-				if char in self.nums:
-					self.value+=chr(key)
-					self.setText("[%s]"%(self.value))
-			return pyglet.event.EVENT_HANDLED
-		elif self.key!=None and key==self.key:
-			return self.press()
+	def __init__(self,x,y,w,h,desc,value,batch,anch=0,key=None,size=12,numrange=(None,None)):
+		self.minnum,self.maxnum=numrange
+		alchrs=tuple(str(num) for num in range(10))
+		if self.minnum==None or self.minnum<0:
+			alchrs+=("-",)
+		super().__init__(x,y,w,h,desc,f"{value}",batch,anch,key,size,alchrs)
+	def valid_input(self,inpot):
+		try:
+			i=int(inpot)
+		except ValueError:
+			return False
+		else:
+			return (self.minnum==None or self.minnum<=i) and (self.maxnum==None or self.maxnum>i)
 	def getNum(self):
-		if not self.pressed:
-			self.preval=int(self.value)
-		return self.preval
+		return int(self.value)
 
 class RadioList(Entity):
 	def __init__(self,x,y,w,h,texts,batch,anch=0,keys=None,pressedTexts=None,selected=None,size=12):
