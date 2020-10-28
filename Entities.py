@@ -246,9 +246,9 @@ class ButtonSwitch(Button):
 				self.press()
 
 class ButtonFlipthrough(Button):
-	def __init__(self,x,y,w,h,text,values,batch,anch=0,key=None,size=12):
+	def __init__(self,x,y,w,h,text,values,batch,anch=0,key=None,size=12,default=0):
 		self.vals=values
-		self.i=0
+		self.i=default
 		self.text=text
 		super().__init__(x,y,w,h,text%values[0],batch,anch,key,size)
 	def setText(self,text):
