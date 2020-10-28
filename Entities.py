@@ -250,7 +250,7 @@ class ButtonFlipthrough(Button):
 		self.vals=values
 		self.i=default
 		self.text=text
-		super().__init__(x,y,w,h,text%values[0],batch,anch,key,size)
+		super().__init__(x,y,w,h,text%values[default],batch,anch,key,size)
 	def setText(self,text):
 		self.label.text=text
 	def getCurval(self):
