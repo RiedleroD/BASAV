@@ -62,7 +62,7 @@ class MainWin(pyglet.window.Window):
 		MP[button]=True
 		if button==pgw.mouse.LEFT:
 			if self.logic:
-				for item in self.logic.btns+self.logic.rads+self.logic.edits:
+				for item in self.logic.btns+self.logic.rads+self.logic.edits+list(self.logic.algui.values()):
 					ret=item.checkpress(x,y)
 					if ret:
 						return ret
@@ -74,7 +74,7 @@ class MainWin(pyglet.window.Window):
 		MP[button]=False
 	def on_key_press(self,symbol,modifiers):
 		if self.logic:
-			for item in self.logic.edits+self.logic.btns+self.logic.rads:
+			for item in self.logic.edits+self.logic.btns+self.logic.rads+list(self.logic.algui.values()):
 				ret=item.checkKey(symbol)
 				if ret:
 					return ret

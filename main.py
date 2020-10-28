@@ -55,6 +55,8 @@ class MainLogic():
 		self.rads=[]
 		self.edits=[]
 		self.bucks=[]
+		self.selalg=None#currently selected algorithm (for algui)
+		self.algui={}#ui elements for algorithm
 		self.toplay=deque()
 		self.apls=[]#audio players
 		self.batch=pyglet.graphics.Batch()
@@ -103,6 +105,7 @@ class MainLogic():
 			self.gen=self.curalg.gen()
 			self.stats=[0,0,0,0,0]
 			self.btns[0].press()
+		self.process_alg_opts()
 		aconcur=self.edits[2].getNum()-self.aconcur
 		self.aconcur+=aconcur
 		if aconcur>0:
@@ -120,7 +123,16 @@ class MainLogic():
 				self.apls.remove(apl)
 		if self.btns[0].pressed:
 			if self.curalg==None:
-				self.curalg=algs[self.rads[0].getSelected()](self.bucks[0].itemc)
+				self.curalg=algs[self.rads[0].getSelected()]
+				for name,element in self.algui.items():
+					if type(element)==IntEdit:
+						val=element.getNum()
+					elif type(element)==ButtonSwitch:
+						val=element.pressed
+					elif type(element)==ButtonFlipThrough:
+						val=element.getCurVal()
+					self.curalg.vals[name]=val
+				self.curalg=self.curalg(self.bucks[0].itemc)
 				self.avgupscc.reset()
 				self.avgfpscc.reset()
 				self.gen=self.curalg.gen()
@@ -158,6 +170,55 @@ class MainLogic():
 		self.labels[5].setText("Bucket:%02i"%self.stats[3])
 		self.labels[6].setText("Pass:%02i"%self.stats[4])
 		self.play_all()
+	def process_alg_opts(self):
+		selalg=self.rads[0].getSelected()
+		if selalg!=self.selalg:
+			self.selalg=selalg
+			self.algui.clear()
+			curalg=algs[selalg]
+			x=0
+			y=0
+			for name,opt in curalg.opts.items():
+				if y>10:
+					if x>0:
+						continue
+					else:
+						x+=1
+						y=0
+				
+				if type(opt) not in (tuple,list,set):
+					print(f"{curalg.name}: option {name} initialized with invalid value {opt}")
+					curalg.vals[name]=None
+				elif len(opt)==0:
+					print(f"{curalg.name}: empty option {name} found")
+					curalg.vals[name]=None
+				elif opt[0]==int:
+					if len(opt)!=5 or \
+						type(opt[1])!=int or \
+						type(opt[2]) not in (int,type(None)) or \
+						type(opt[3]) not in (int,type(None)) or \
+						type(opt[4])!=str:
+						
+						print(f"{curalg.name}: option {name} with type int doesn't match pattern (type,int,int|None,int|None,str)")
+						curalg.vals[name]=None
+					elif (opt[2]!=None and opt[2]>opt[1]) or (opt[3]!=None and opt[3]<=opt[1]):#if default not in input boudaries
+						print(f"{curalg.name}: option {name} with type int has a default value {opt[1]} outside of its boundaries {opt[2]}:{opt[3]}")
+					else:
+						self.algui[name]=IntEdit(WIDTH-BTNWIDTH*(2+x),HEIGHT-BTNHEIGHT*(y+6),BTNWIDTH,BTNHEIGHT,opt[4],opt[1],batch=self.batch,anch=8,numrange=(opt[2],opt[3]))
+						y+=1
+				elif opt[0]==bool:
+					if len(opt)!=4 or \
+						type(opt[1])!=bool or \
+						type(opt[2])!=str or \
+						type(opt[3])!=str:
+						
+						print(f"{curalg.name}: option {name} with type bool doesn't match pattern (type,bool,str,str)")
+						curalg.vals[name]=None
+					else:
+						self.algui[name]=ButtonSwitch(WIDTH-BTNWIDTH*(2+x),HEIGHT-BTNHEIGHT*(y+6),BTNWIDTH,BTNHEIGHT,opt[3],batch=self.batch,anch=8,pressedText=opt[2])
+						y+=1
+				elif opt[0]==list:
+					pass
 	def play_all(self):
 		if self.btns[4].pressed and self.toplay:
 			for apl in self.apls:
@@ -314,6 +375,8 @@ class MainLogic():
 		self.labels[-1].setText(algs[self.rads[0].getSelected()].desc)
 		for item in self.edits:	#40µs
 			item.draw()
+		for item in self.algui.values():
+			item.draw()
 		for item in self.bucks:	#1000µs–1500µs depending on how much inserting (heavy) vs swapping (light) vs reading (ultra light) is done and how many buckets are present
 			item.draw()
 		self.batch.draw()		#1500µs–2000µs
@@ -337,9 +400,9 @@ logic.btns=[	ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",logic.batch,8,p
 				ButtonSwitch(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"Audio: OFF",logic.batch,8,pressedText="Audio: ON"),
 				Button(WIDTH,0,BTNWIDTH,BTNHEIGHT,"Quit",logic.batch,2,pgw.key.ESCAPE)]
 logic.rads=[	RadioListPaged(WIDTH,HEIGHT-BTNHEIGHT*6,BTNWIDTH*2,BTNHEIGHT*12,[alg.name for alg in algs],11,logic.batch,8,selected=0)]
-logic.edits=[	IntEdit(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Speed","20",logic.batch,8),
-				IntEdit(WIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"FPS/UPS","60",logic.batch,8),
-				IntEdit(WIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"Audio Concurrency",f"{32}",logic.batch,8)]
+logic.edits=[	IntEdit(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Speed","20",logic.batch,8,numrange=(1,None)),
+				IntEdit(WIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"FPS/UPS","60",logic.batch,8,numrange=(1,None)),
+				IntEdit(WIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"Audio Concurrency",f"{32}",logic.batch,8,numrange=(0,None))]
 logic.bucks=[	Bucket(0,0,WIDTH2,HEIGHT,BUCKLEN,logic.batch,maxps=logic.edits[0].getNum())]
 
 logic.btns[4].press()

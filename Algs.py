@@ -18,6 +18,8 @@ class BaseAlgorithm():
 	name="Base Algorithm"
 	desc="This is the Base algorithm,\nit doesn't sort, but lays the foundation\nfor other algorithms."
 	v=None#current value; gets set when using gen
+	opts={}#algorithm options; optional (ha)
+	vals={}#values that get set for the options
 	def __init__(self,l):
 		self.l=l#array length
 	#gen yields a tuple that tells the main program what to do each iteration - it doesn't have access to the list. Read values get stored in self.v.
@@ -176,6 +178,19 @@ class MergeSortIP(BaseAlgorithm):
 					pass
 			size*=2
 
+class MergeSortOPT(BaseAlgorithm):
+	name="Merge Sort"
+	desc="Merges buckets until sorted"
+	opts={
+		"OOP":(bool,False,"Out-of-Place","In-Place")#Flip-Button with Out-of-Place for True (pressed) and In-Place for False (released), default is released
+	}
+	def __new__(cls,l):
+		if cls.vals["OOP"]:
+			alg=MergeSortOOP
+		else:
+			alg=MergeSortIP
+		return alg(l)
+
 class BogoSort(BaseAlgorithm):
 	name="Bogo Sort"
 	desc="Randomizes the whole set, then checks if it's sorted"
@@ -201,132 +216,116 @@ class BogoSort(BaseAlgorithm):
 class InsertionSort(BaseAlgorithm):
 	name="InsertionSort"
 	desc="Inserts first unsorted item into sorted subarray\nuntil no unsorted items remain"
+	opts={
+		"oop":[bool,False,"Out-of-Place","In-Place"]
+		}
 	def gen(self):
 		l=self.l
-		for z in range(1,l):
-			yield (READ,z,0)
+		oop=self.vals["oop"]
+		noop=not oop
+		if oop:
+			yield (NEW_BUCK,)
+		for z in range(noop,l):
+			yield (READ,z*noop,0)
 			v=self.v
-			i=z
-			for j in range(z-1,-1,-1):
-				yield (READ,j,0)
-				if v>self.v:
+			i=z*noop
+			for j in (range(z) if oop else range(z-1,-1,-1)):
+				yield (READ,z-1-j if oop else j,oop)
+				if v>=self.v:
 					break
-				i=j
-			if i!=z:
+				i=j+oop
+			if oop:
+				yield (BUCKINSERT,0,0,z-i,1)
+			elif i!=z:
 				yield (INSERT,z,i,0)
-
-class InsertionSortOOP(BaseAlgorithm):
-	name="InsertionSort OOP"
-	desc="Inserts first unsorted item into sorted bucket\nuntil no unsorted items remain"
-	def gen(self):
-		l=self.l
-		yield (NEW_BUCK,)
-		for z in range(l):
-			yield (READ,0,0)
-			v1=self.v
-			i=0
-			for j in range(z):
-				yield (READ,z-1-j,1)
-				v2=self.v
-				if v2<v1:
-					break
-				i=j+1
-			yield (BUCKINSERT,0,0,z-i,1)
-		yield (DEL_BUCK,0)
+		if oop:
+			yield (DEL_BUCK,0)
 
 class SelectionSort(BaseAlgorithm):
 	name="SelectionSort"
 	desc="Swaps the smalles unsorted item with the first unsorted item\nuntil the list is sorted."
+	opts={
+		"oop":[bool,False,"Out-of-Place","In-Place"],
+		"dp":[bool,False,"Double Pivot","Single Pivot"]
+		}
 	def gen(self):
 		l=self.l
-		for i in range(l):
-			sn=None
-			si=None
+		oop=self.vals["oop"]
+		dp=self.vals["dp"]
+		if oop and dp:#double-pviot, out-of-place Selection Sort
+			yield (NEW_BUCK,)
+			yield (NEW_BUCK,)
+			for i in range(l//2):
+				bn=0
+				bi=None
+				sn=None
+				si=None
+				for j in range(l-i*2):
+					yield (READ,j,0)
+					v=self.v
+					if v>=bn:# >= makes the sort stable
+						bn=v
+						bi=j
+					if sn==None or sn>v:
+						sn=v
+						si=j
+				if si<bi:
+					bi-=1
+				yield (BUCKINSERT,si,0,i,1)
+				yield (BUCKINSERT,bi,0,0,2)
+			if l%2==1:#if odd → one item left in bucket 0
+				yield (BUCKINSERT,0,0,i,1)#put on top of buck 1 since it's the median
+				i=1+l//2
+			else:
+				i=l//2
+			yield (DEL_BUCK,0)
 			for j in range(i,l):
-				yield (READ,j,0)
-				v=self.v
-				if sn==None or sn>v:
-					sn=v
-					si=j
-			yield (SWAP,si,i,0)
-
-class DoubleSelectionSort(BaseAlgorithm):
-	name="Double Selection Sort"
-	desc="Swaps the smalles unsorted item with the first unsorted item\nand the biggest unsorted item with the last unsorted item\nuntil the list is sorted."
-	def gen(self):
-		l=self.l
-		l1=l-1
-		for i in range(l//2):
-			bn=0
-			bi=None
-			sn=None
-			si=None
-			for j in range(i,l-i):
-				yield (READ,j,0)
-				v=self.v
-				if v>=bn:# >= makes the sort stable
-					bn=v
-					bi=j
-				if sn==None or sn>v:
-					sn=v
-					si=j
-			if si==l1-i:
-				si=bi
-			yield (SWAP,bi,l1-i,0)
-			yield (SWAP,si,i,0)
-
-class SelectionSortOOP(BaseAlgorithm):
-	name="Selectionsort OOP"
-	desc="Puts the smallest item in bucket 0 to the end of bucket 1\nuntil bucket 0 is empty."
-	def gen(self):
-		l=self.l
-		yield (NEW_BUCK,)
-		for i in range(l):
-			sn=None
-			si=None
-			for j in range(l-i):
-				yield (READ,j,0)
-				v=self.v
-				if sn==None or sn>v:
-					sn=v
-					si=j
-			yield (BUCKINSERT,si,0,i,1)
-		yield (DEL_BUCK,0)
-
-class DoubleSelectionSortOOP(BaseAlgorithm):
-	name="Double Selectionsort OOP"
-	desc="Puts the smalles unsorted item in the first bucket\nand the biggest unsorted item in the second bucket,\nthen dumps the buckets in the main one."
-	def gen(self):
-		l=self.l
-		yield (NEW_BUCK,)
-		yield (NEW_BUCK,)
-		for i in range(l//2):
-			bn=0
-			bi=None
-			sn=None
-			si=None
-			for j in range(l-i*2):
-				yield (READ,j,0)
-				v=self.v
-				if v>=bn:# >= makes the sort stable
-					bn=v
-					bi=j
-				if sn==None or sn>v:
-					sn=v
-					si=j
-			if si<bi:
-				bi-=1
-			yield (BUCKINSERT,si,0,i,1)
-			yield (BUCKINSERT,bi,0,0,2)
-		if l%2==1:#if odd → one item left in bucket 0
-			yield (BUCKINSERT,0,0,i,1)#put on top of buck 1 since it's the median
-			i=1+l//2
-		else:
-			i=l//2
-		yield (DEL_BUCK,0)
-		for j in range(i,l):
-			yield (BUCKINSERT,0,1,j,0)
-		yield (DEL_BUCK,1)
+				yield (BUCKINSERT,0,1,j,0)
+			yield (DEL_BUCK,1)
+		elif oop:#single-pivot, out-of-place Selection Sort
+			yield (NEW_BUCK,)
+			for i in range(l):
+				sn=None
+				si=None
+				for j in range(l-i):
+					yield (READ,j,0)
+					v=self.v
+					if sn==None or sn>v:
+						sn=v
+						si=j
+				yield (BUCKINSERT,si,0,i,1)
+			yield (DEL_BUCK,0)
+		elif dp:#dual-pivot, in-place Selection Sort
+			l1=l-1
+			for i in range(l//2):
+				bn=0
+				bi=None
+				sn=None
+				si=None
+				for j in range(i,l-i):
+					yield (READ,j,0)
+					v=self.v
+					if v>=bn:# >= makes the sort stable
+						bn=v
+						bi=j
+					if sn==None or sn>v:
+						sn=v
+						si=j
+				if si==l1-i:
+					si=bi
+				yield (SWAP,bi,l1-i,0)
+				yield (SWAP,si,i,0)
+		else:#single-pivot, in-place Selection Sort
+			for i in range(l):
+				sn=None
+				si=None
+				for j in range(i,l):
+					yield (READ,j,0)
+					v=self.v
+					if sn==None or sn>v:
+						sn=v
+						si=j
+				yield (SWAP,si,i,0)
 
 class OddEvenSort(BaseAlgorithm):
 	name="Odd-Even Sort"
@@ -350,11 +349,14 @@ class OddEvenSort(BaseAlgorithm):
 					fin=False
 			odd=not odd
 
-class RadixMSDBASE(BaseAlgorithm):
-	name="Radix MSD BASE"
-	desc="Base for all Radix MSD in-place sorts"
+class RadixMSD(BaseAlgorithm):
+	name="Radix MSD"
+	desc="Sorts by most to least significant digit"
+	opts={
+		"b":(int,2,2,None,"Base")
+	}
 	def gen(self):
-		b=self.b
+		b=self.vals["b"]
 		l=self.l
 		maxnum=0#negative numbers hate this one weird trick
 		#go through the whole list to find the largest number
@@ -390,110 +392,75 @@ class RadixMSDBASE(BaseAlgorithm):
 			ii.insert(0,0)#at index 0, insert 0 (because the lists beginning would be lost otherwise)
 			ii=[[ii[i]]*(b-1)+[ii[i+1]] for i in range(len(ii)-1) if ii[i+1]-ii[i]>1]
 
-class RadixMSDB2(RadixMSDBASE):
-	name="Radix MSD 2"
-	desc="Sorts by most significant digit in base 2"
-	b=2
-
-class RadixMSDB4(RadixMSDBASE):
-	name="Radix MSD 4"
-	desc="Sorts by most significant digit in base 4"
-	b=4
-
-class RadixMSDB10(RadixMSDBASE):
-	name="Radix MSD 10"
-	desc="Sorts by most significant digit in base 10"
-	b=10
-
-class RadixLSDBASE(BaseAlgorithm):
-	name="Radix LSD BASE"
-	desc="Base for all Radix LSD in-place Sorts."
+class RadixLSD(BaseAlgorithm):
+	name="Radix LSD"
+	desc="Sorts from least to most significant digit"
+	opts={
+		"oop":(bool,False,"Out-of-Place","In-Place"),
+		"b":(int,2,2,None,"Base")
+	}
 	def gen(self):
-		b=self.b
+		b=self.vals["b"]
+		oop=self.vals["oop"]
+		noop=not oop
 		l=self.l
 		maxb=b
 		curb=1
-		i=[0 for x in range(b)]
-		while True:
-			if i[0]==l:
+		if oop:
+			for x in range(b):
+				yield (NEW_BUCK,)
+		else:
+			i=[0 for x in range(b)]
+		while noop or curb<maxb:
+			if oop:
+				i=[0 for x in range(b)]
+			elif i[0]==l:
 				i=[0 for i in range(b)]
 				curb*=b
-			if curb>=maxb:
-				break
-			yield (READ,i[0],0)
-			while self.v>maxb:
-				maxb*=b
-			digit=(b-1)-(self.v//curb)%b#actually the inverse of the digit, it would reverse the list otherwise
-			for j in range(digit+1):
-				i[j]+=1
-			if digit==0:
-				continue
+			if oop:
+				for j in range(l):
+					yield (READ,0,0)
+					v=self.v
+					while v>maxb:
+						maxb*=b
+					digit=b-(v//curb)%b
+					i[digit-1]+=1
+					yield (BUCKINSERT,0,0,0,digit)
+				for j,x in enumerate(i):
+					for y in range(x):
+						yield (BUCKINSERT,0,j+1,0,0)
+				curb*=b
 			else:
-				yield (INSERT,i[0]-1,i[digit]-1,0)
-
-class RadixLSDBASEOOP(BaseAlgorithm):
-	name="Radix LSD BASE OOP"
-	desc="Base for all Radix LSD out-of-place Sorts."
-	def gen(self):
-		b=self.b
-		l=self.l
-		maxb=b
-		curb=1
-		for x in range(b):
-			yield (NEW_BUCK,)
-		while curb<maxb:
-			i=[0 for x in range(b)]
-			for j in range(l):
-				yield (READ,0,0)
-				v=self.v
-				while v>maxb:
+				if curb>=maxb:
+					break
+				yield (READ,i[0],0)
+				while self.v>maxb:
 					maxb*=b
-				digit=b-(v//curb)%b
-				i[digit-1]+=1
-				yield (BUCKINSERT,0,0,0,digit)
-			for j,x in enumerate(i):
-				for y in range(x):
-					yield (BUCKINSERT,0,j+1,0,0)
-			curb*=b
-		for x in range(b):
-			yield (DEL_BUCK,1)
+				digit=(b-1)-(self.v//curb)%b#actually the inverse of the digit, it would reverse the list otherwise
+				for j in range(digit+1):
+					i[j]+=1
+				if digit==0:
+					continue
+				else:
+					yield (INSERT,i[0]-1,i[digit]-1,0)
+		if oop:
+			for x in range(b):
+				yield (DEL_BUCK,1)
 
-class RadixLSDB2(RadixLSDBASE):
-	name="Radix LSD 2"
-	desc="Sorts by least significant digit in base 2."
-	b=2
-
-class RadixLSDB2OOP(RadixLSDBASEOOP):
-	name="Radix LSD 2 OOP"
-	desc="Sorts by least significant digit in base 2 out of place."
-	b=2
-
-class RadixLSDB4(RadixLSDBASE):
-	name="Radix LSD 4"
-	desc="Sorts by least significant digit in base 4."
-	b=4
-
-class RadixLSDB4OOP(RadixLSDBASEOOP):
-	name="Radix LSD 4 OOP"
-	desc="Sorts by least significant digit in base 4 out-of-place."
-	b=4
-
-class RadixLSDB10(RadixLSDBASE):
-	name="Radix LSD 10"
-	desc="Sorts by least significant digit in base 10."
-	b=10
-
-class RadixLSDB10OOP(RadixLSDBASEOOP):
-	name="Radix LSD 10 OOP"
-	desc="Sorts by least significant digit in base 10 out-of-place."
-	b=10
-
-class QuicksortBASE(BaseAlgorithm):
-	name="Quicksort BASE"
+class Quicksort(BaseAlgorithm):
+	name="Quicksort"
 	desc="Recursively picks a pivot and partitions all items around it\nuntil list is sorted.\nHilariously bad at sorted and reversed lists."
 	p=None#needed for partitioning
-	conc=False
+	opts={
+		"conc":(bool,False,"Concurrent","Separate"),
+		"ps":(bool,False,"Lomuto","Hoare")
+	}
 	def gen(self):
+		if self.vals["ps"]:
+			self.partition=self.partition_lm
+		else:
+			self.partition=self.partition_hr
+		self.conc=self.vals["conc"]
 		for act in self.qs(0,self.l-1):
 			yield act
 	def qs(self,lo,hi):
@@ -515,11 +482,8 @@ class QuicksortBASE(BaseAlgorithm):
 						gen=abs(gen-1)
 			for act in gen:
 				yield act
-
-#implementation of https://en.wikipedia.org/wiki/Quicksort#Lomuto_partition_scheme
-class QuicksortLomuto(QuicksortBASE):
-	name="Quicksort Lomuto"
-	def partition(self,lo,hi):
+	#implementation of https://en.wikipedia.org/wiki/Quicksort#Lomuto_partition_scheme
+	def partition_lm(self,lo,hi):
 		yield (READ,hi,0)
 		pivot=self.v
 		i=lo
@@ -530,11 +494,8 @@ class QuicksortLomuto(QuicksortBASE):
 				i+=1
 		yield (SWAP,i,hi,0)
 		self.p=(i-1,i+1)
-
-#implementation of https://en.wikipedia.org/wiki/Quicksort#Hoare_partition_scheme
-class QuicksortHoare(QuicksortBASE):
-	name="Quicksort Hoare"
-	def partition(self,lo,hi):
+	#implementation of https://en.wikipedia.org/wiki/Quicksort#Hoare_partition_scheme
+	def partition_hr(self,lo,hi):
 		yield (READ,(hi+lo)//2,0)
 		pivot=self.v
 		i=lo-1
@@ -554,13 +515,6 @@ class QuicksortHoare(QuicksortBASE):
 				self.p=(j,j+1)
 				break
 			yield (SWAP,i,j,0)
-
-class QuicksortLomutoCC(QuicksortLomuto):
-	name="Quicksort Lomuto Concurrent"
-	conc=True
-class QuicksortHoareCC(QuicksortHoare):
-	name="Quicksort Hoare Concurrent"
-	conc=True
 
 class Reverser(BaseAlgorithm):
 	name="Reverser"
@@ -602,16 +556,10 @@ algs=[
 	BubbleSort,
 	CocktailShaker,
 	OddEvenSort,
-	InsertionSort,InsertionSortOOP,
-	SelectionSort,SelectionSortOOP,
-	DoubleSelectionSort,DoubleSelectionSortOOP,
-	QuicksortLomuto,QuicksortLomutoCC,
-	QuicksortHoare,QuicksortHoareCC,
-	RadixMSDB2,
-	RadixMSDB4,
-	RadixMSDB10,
-	RadixLSDB2,RadixLSDB2OOP,
-	RadixLSDB4,RadixLSDB4OOP,
-	RadixLSDB10,RadixLSDB10OOP,
-	MergeSortIP,MergeSortOOP,
+	InsertionSort,
+	SelectionSort,
+	Quicksort,
+	RadixMSD,
+	RadixLSD,
+	MergeSortOPT,
 	BogoSort]
