@@ -43,6 +43,55 @@ GRbg=pyglet.graphics.OrderedGroup(0)#background – radiolist backgrounds
 GRmp=pyglet.graphics.OrderedGroup(1)#midpoint – button backgrounds & buckets
 GRfg=pyglet.graphics.OrderedGroup(2)#foreground – labels
 
+print("    defining main window…")
+
+class MainWin(pyglet.window.Window):
+	logic=None
+	def __init__(self):
+		config = pyglet.gl.Config(sample_buffers=1, samples=8)#because items otherwise flicker when they're over 1000
+		super().__init__(fullscreen=False,style=self.WINDOW_STYLE_BORDERLESS,caption="Riedlers Sound of Sorting",config=config,vsync=True,visible=False)
+		self.maximize()
+		self.set_visible(True)
+	def on_draw(self):
+		self.clear()
+		if self.logic:
+			self.logic.on_draw()
+	def set_logic(self,logic):
+		self.logic=logic
+	def on_mouse_press(self,x,y,button,modifiers):
+		MP[button]=True
+		if button==pgw.mouse.LEFT:
+			if self.logic:
+				for item in self.logic.btns+self.logic.rads+self.logic.edits:
+					ret=item.checkpress(x,y)
+					if ret:
+						return ret
+		elif button==pgw.mouse.RIGHT:
+			pass
+		elif button==pgw.mouse.MIDDLE:
+			pass
+	def on_mouse_release(self,x,y,button,modifiers):
+		MP[button]=False
+	def on_key_press(self,symbol,modifiers):
+		if self.logic:
+			for item in self.logic.edits+self.logic.btns+self.logic.rads:
+				ret=item.checkKey(symbol)
+				if ret:
+					return ret
+
+window=MainWin()
+
+WIDTH,HEIGHT=window.get_size()
+WIDTH2=WIDTH/2
+HEIGHT2=HEIGHT/2
+SIZE=(WIDTH+HEIGHT)/2#only for scaling stuff
+BTNWIDTH=WIDTH/10
+BTNWIDTH2=BTNWIDTH/2
+BTNHEIGHT=HEIGHT/20
+BTNHEIGHT2=BTNHEIGHT/2
+
+print(f"    window size is {WIDTH}x{HEIGHT}")
+
 print("    generating colors…")
 COLORS=[color for i in range(BUCKLEN) for color in colorlamb(i/BUCKLEN)]
 print("    generating audio…")

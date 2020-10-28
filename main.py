@@ -29,11 +29,13 @@ class ClockCounter():
 	def getHz(self):
 		return self.tc/self.dt
 
-print("defining main window…")
+print("defining main logic…")
 
-class GameWin(pyglet.window.Window):
-	def __init__(self,*args,**kwargs):
-		self.push_handlers(KP)
+class MainLogic():
+	def __init__(self,win):
+		self.window=win
+		self.window.push_handlers(KP)
+		self.window.set_logic(self)
 		self.upscc=ClockCounter()
 		self.fpscc=ClockCounter()
 		self.fpscc.start()
@@ -56,7 +58,6 @@ class GameWin(pyglet.window.Window):
 		self.toplay=deque()
 		self.apls=[]#audio players
 		self.batch=pyglet.graphics.Batch()
-		super().__init__(*args,**kwargs)
 	def set_fps(self,fps):
 		if fps!=self.fps and fps>0:
 			self.fps=fps
@@ -304,7 +305,6 @@ class GameWin(pyglet.window.Window):
 		if self.fpscc.dt>=0.1:
 			self.labels[0].setText("FPS:%02i/%02i"%(round(self.fpscc.getHz()),self.fps))
 			self.fpscc.reset()
-		self.clear()
 		for item in self.labels:#2000µs–5000µs
 			item.draw()
 		for item in self.btns:	#100µs
@@ -318,62 +318,31 @@ class GameWin(pyglet.window.Window):
 			item.draw()
 		self.batch.draw()		#1500µs–2000µs
 		pyglet.clock.tick()
-	def on_mouse_press(self,x,y,button,modifiers):
-		MP[button]=True
-		if button==pgw.mouse.LEFT:
-			for item in self.btns+self.rads+self.edits:
-				ret=item.checkpress(x,y)
-				if ret:
-					return ret
-		elif button==pgw.mouse.RIGHT:
-			pass
-		elif button==pgw.mouse.MIDDLE:
-			pass
-	def on_mouse_release(self,x,y,button,modifiers):
-		MP[button]=False
-	def on_key_press(self,symbol,modifiers):
-		for item in self.edits+self.btns+self.rads:
-			ret=item.checkKey(symbol)
-			if ret:
-				return ret
-config = pyglet.gl.Config(sample_buffers=1, samples=8)#because items otherwise flicker when they're over 1000
-window=GameWin(fullscreen=False,style=GameWin.WINDOW_STYLE_BORDERLESS,caption="Riedlers Sound of Sorting",config=config,vsync=True,visible=False)
-window.maximize()
-window.set_visible(True)
 
-WIDTH,HEIGHT=window.get_size()
-WIDTH2=WIDTH/2
-HEIGHT2=HEIGHT/2
-SIZE=(WIDTH+HEIGHT)/2#only for scaling stuff
-BTNWIDTH=WIDTH/10
-BTNWIDTH2=BTNWIDTH/2
-BTNHEIGHT=HEIGHT/20
-BTNHEIGHT2=BTNHEIGHT/2
+logic=MainLogic(window)
 
-print(f"window size is {WIDTH}x{HEIGHT}")
+logic.labels=[	Label(WIDTH2,HEIGHT,0,0,"FPS:00",logic.batch,6),
+				Label(WIDTH2,HEIGHT-15,0,0,"UPS:00/60",logic.batch,6),
+				Label(WIDTH2,HEIGHT-45,0,0,"Read:00",logic.batch,6),
+				Label(WIDTH2,HEIGHT-60,0,0,"Swap:00",logic.batch,6),
+				Label(WIDTH2,HEIGHT-75,0,0,"Insert:00",logic.batch,6),
+				Label(WIDTH2,HEIGHT-90,0,0,"Bucket:00",logic.batch,6),
+				Label(WIDTH2,HEIGHT-105,0,0,"Pass:00",logic.batch,6),
+				Label(WIDTH2,HEIGHT-120,0,0,"Randomness:00",logic.batch,6),
+				LabelMultiline(WIDTH2,0,0,0,"Sorting\nalgorithm\nDescription",logic.batch,0)]
+logic.btns=[	ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",logic.batch,8,pressedText="Stop"),
+				Button(WIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Shuffle",logic.batch,8),
+				Button(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Reverse",logic.batch,8),
+				ButtonFlipthrough(WIDTH,HEIGHT-BTNHEIGHT*2,BTNWIDTH,BTNHEIGHT,"Randomness: %i",[3,0,1,2],logic.batch,8),
+				ButtonSwitch(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"Audio: OFF",logic.batch,8,pressedText="Audio: ON"),
+				Button(WIDTH,0,BTNWIDTH,BTNHEIGHT,"Quit",logic.batch,2,pgw.key.ESCAPE)]
+logic.rads=[	RadioListPaged(WIDTH,HEIGHT-BTNHEIGHT*6,BTNWIDTH*2,BTNHEIGHT*12,[alg.name for alg in algs],11,logic.batch,8,selected=0)]
+logic.edits=[	IntEdit(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Speed","20",logic.batch,8),
+				IntEdit(WIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"FPS/UPS","60",logic.batch,8),
+				IntEdit(WIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"Audio Concurrency",f"{32}",logic.batch,8)]
+logic.bucks=[	Bucket(0,0,WIDTH2,HEIGHT,BUCKLEN,logic.batch,maxps=logic.edits[0].getNum())]
 
-window.labels=[	Label(WIDTH2,HEIGHT,0,0,"FPS:00",window.batch,6),
-				Label(WIDTH2,HEIGHT-15,0,0,"UPS:00/60",window.batch,6),
-				Label(WIDTH2,HEIGHT-45,0,0,"Read:00",window.batch,6),
-				Label(WIDTH2,HEIGHT-60,0,0,"Swap:00",window.batch,6),
-				Label(WIDTH2,HEIGHT-75,0,0,"Insert:00",window.batch,6),
-				Label(WIDTH2,HEIGHT-90,0,0,"Bucket:00",window.batch,6),
-				Label(WIDTH2,HEIGHT-105,0,0,"Pass:00",window.batch,6),
-				Label(WIDTH2,HEIGHT-120,0,0,"Randomness:00",window.batch,6),
-				LabelMultiline(WIDTH2,0,0,0,"Sorting\nalgorithm\nDescription",window.batch,0)]
-window.btns=[	ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",window.batch,8,pressedText="Stop"),
-				Button(WIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Shuffle",window.batch,8),
-				Button(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Reverse",window.batch,8),
-				ButtonFlipthrough(WIDTH,HEIGHT-BTNHEIGHT*2,BTNWIDTH,BTNHEIGHT,"Randomness: %i",[3,0,1,2],window.batch,8),
-				ButtonSwitch(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"Audio: OFF",window.batch,8,pressedText="Audio: ON"),
-				Button(WIDTH,0,BTNWIDTH,BTNHEIGHT,"Quit",window.batch,2,pgw.key.ESCAPE)]
-window.rads=[	RadioListPaged(WIDTH,HEIGHT-BTNHEIGHT*6,BTNWIDTH*2,BTNHEIGHT*12,[alg.name for alg in algs],11,window.batch,8,selected=0)]
-window.edits=[	IntEdit(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Speed","20",window.batch,8),
-			 	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"FPS/UPS","60",window.batch,8),
-			 	IntEdit(WIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"Audio Concurrency",f"{32}",window.batch,8)]
-window.bucks=[	Bucket(0,0,WIDTH2,HEIGHT,BUCKLEN,window.batch,maxps=window.edits[0].getNum())]
-
-window.btns[4].press()
+logic.btns[4].press()
 
 try:
 	print("starting main app…")
