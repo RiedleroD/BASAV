@@ -351,12 +351,15 @@ class OddEvenSort(BaseAlgorithm):
 
 class RadixMSD(BaseAlgorithm):
 	name="Radix MSD"
-	desc="Sorts by most to least significant digit"
+	desc="Sorts from most to least significant digit"
 	opts={
+		"oop":(bool,False,"Out-of-Place","In-Place"),
 		"b":(int,2,2,None,"Base")
 	}
 	def gen(self):
 		b=self.vals["b"]
+		oop=self.vals["oop"]
+		noop=not oop
 		l=self.l
 		maxnum=0#negative numbers hate this one weird trick
 		#go through the whole list to find the largest number
@@ -364,33 +367,44 @@ class RadixMSD(BaseAlgorithm):
 			yield (READ,i,0)
 			if self.v>maxnum:
 				maxnum=self.v
-		curbs=[]
+		curbs=[1]
 		curb=b
-		while True:
+		while curb<maxnum:
 			curbs.append(curb)
 			curb*=b
-			if curb>=maxnum:
-				break
 		curbs.reverse()
-		curbs.append(1)
 		ii=[[0]*b]
 		ii[0][-1]=l
+		if oop:
+			for i in range(b):
+				yield (NEW_BUCK,)
 		for curb in curbs:
 			for i in ii:
 				if i[-1]-i[0]<2:
 					continue
+				_j=i[0]
 				for j in range(i[0],i[-1]):
-					yield (READ,j,0)
+					yield (READ,_j if oop else j,0)
 					digit=(self.v//curb)%b
 					for x in range(digit,b-1):
 						i[x]+=1
-					if digit==b-1:
-						continue
+					if oop:
+						yield (BUCKINSERT,_j,0,0,digit+1)
 					else:
-						yield (INSERT,j,i[digit]-1,0)
+						if digit==b-1:
+							continue
+						else:
+							yield (INSERT,j,i[digit]-1,0)
+				if oop:
+					for digit in range(b):
+						for j in range(i[digit-1] if digit>0 else _j,i[digit]):
+							yield (BUCKINSERT,0,digit+1,j,0)
 			ii=[j for i in ii for j in i]
 			ii.insert(0,0)#at index 0, insert 0 (because the lists beginning would be lost otherwise)
 			ii=[[ii[i]]*(b-1)+[ii[i+1]] for i in range(len(ii)-1) if ii[i+1]-ii[i]>1]
+		if oop:
+			for i in range(b):
+				yield (DEL_BUCK,1)
 
 class RadixLSD(BaseAlgorithm):
 	name="Radix LSD"
