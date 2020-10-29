@@ -129,7 +129,7 @@ class MainLogic():
 						val=element.getNum()
 					elif type(element)==ButtonSwitch:
 						val=element.pressed
-					elif type(element)==ButtonFlipThrough:
+					elif type(element)==ButtonFlipthrough:
 						val=element.getCurIndex()
 					self.curalg.vals[name]=val
 				self.curalg=self.curalg(self.bucks[0].itemc)
