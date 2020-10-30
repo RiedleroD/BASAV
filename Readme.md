@@ -31,9 +31,6 @@ Dependencies installable through pip include:
 
 - pyglet
 
-#### Compiling
-The code uses a helper module written in C that needs to be compiled first. You only have to edit the second and third line of helper.c to use the correct python version, run the init.py script with the instructions inside it and you should be good2go. You may also need to install the development packages for your python version, although they are usually preinstalled on linux. I don't know about windows though.
-
 #### running
 In order to start the program, you have to run main.py with python. This opens the game in borderless window mode. You can close the program by pressing ESC.
 
