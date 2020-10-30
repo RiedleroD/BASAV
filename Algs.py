@@ -88,107 +88,178 @@ class CocktailShaker(BaseAlgorithm):
 					v1=v2
 			i-=1
 
-class MergeSortOOP(BaseAlgorithm):
-	name="Merge Sort OOP"
-	desc="Merges buckets until sorted"
-	def gen(self):
-		yield (NEW_BUCK,)
-		yield (NEW_BUCK,)
-		s=1#merge block size
-		i=0#main bucket index
-		i1=0#left bucket index
-		i2=0#right bucket index
-		l=self.l
-		while s+1<l:
-			while i+s<l:
-				for i1 in range(s):
-					yield (BUCKINSERT,i,0,i1,1)
-				for i2 in range(s):
-					if i+i1+i2+1==l:
-						i2-=1
-						break
-					yield (BUCKINSERT,i,0,i2,2)
-				self.a=1.6
-				i1+=1
-				i2+=1
-				v1=None
-				v2=None
-				while i1>0 and i2>0:
-					if v1==None:
-						yield (READ,0,1)
-						v1=self.v
-					if v2==None:
-						yield (READ,0,2)
-						v2=self.v
-					if v2<v1:#this implementation ensures stable mergesort, v1<v2 and reversed actions wouldn't be stable.
-						i2-=1
-						v2=None
-						yield (BUCKINSERT,0,2,i,0)
-					else:
-						i1-=1
-						v1=None
-						yield (BUCKINSERT,0,1,i,0)
-					i+=1
-				while i1>0:
-					i1-=1
-					yield (BUCKINSERT,0,1,i,0)
-					i+=1
-				while i2>0:
-					i2-=1
-					yield (BUCKINSERT,0,2,i,0)
-					i+=1
-			i=0
-			s*=2
-		yield (DEL_BUCK,1)
-		yield (DEL_BUCK,1)
-
-class MergeSortIP(BaseAlgorithm):
-	name="Merge Sort In-Place"
+class NormalMergeSort(BaseAlgorithm):
+	name="Merge Sort"
 	desc="Merges sections until sorted"
+	opts={
+		"oop":(bool,False,"Out-of-Place","In-Place")
+	}
 	def gen(self):
+		oop=self.vals["oop"]
+		noop=not oop
 		size=1
+		if oop:
+			yield (NEW_BUCK,)
+			yield (NEW_BUCK,)
 		while size<self.l:
 			for i in range(0,self.l,size*2):
 				if self.l-i<=size:#if only one block or less remains
 					break
-				gen1=iter(range(i,i+size))
-				gen2=iter(range(i+size,min(i+size*2,self.l)))
-				off=0
-				i1=next(gen1)
-				yield (READ,i1,0)
-				v1=self.v
-				i2=next(gen2)
-				yield (READ,i2,0)
-				v2=self.v
-				try:
+				if oop:
+					m=i+size
+					e=min(i+size*2,self.l)
+					for _i in range(m,e):
+						yield (BUCKINSERT,m,0,0,2)
+					for _i in range(i,m):
+						yield (BUCKINSERT,i,0,0,1)
+					v=None
+					_v=None
+					j1=0
+					j2=0
+					for _i in range(i,e):
+						if v==None and j1<m-i:
+							yield (READ,0,1)
+							v=self.v
+						if _v==None and j2<e-m:
+							yield (READ,0,2)
+							_v=self.v
+						if v==None:
+							yield (BUCKINSERT,0,2,i,0)
+						elif _v==None:
+							yield (BUCKINSERT,0,1,i,0)
+						elif v<_v:
+							yield (BUCKINSERT,0,2,i,0)
+							j2+=1
+							_v=None
+						else:
+							yield (BUCKINSERT,0,1,i,0)
+							j1+=1
+							v=None
+				else:
+					m=i+size
+					e=min(i+size*2,self.l)
+					off=0
+					i1=i
+					yield (READ,i1,0)
+					v1=self.v
+					i2=m
+					yield (READ,i2,0)
+					v2=self.v
 					while True:
 						if v1>v2:
 							yield (INSERT,i2,i1+off,0)
 							off+=1
-							v2=None
-							i2=next(gen2)
+							i2+=1
+							if i2==e:
+								break
 							yield (READ,i2,0)
 							v2=self.v
 						else:
-							v1=None
-							i1=next(gen1)
+							i1+=1
+							if i1==m:
+								break
 							yield (READ,i1+off,0)
 							v1=self.v
-				except StopIteration:
-					pass
 			size*=2
+		if oop:
+			yield (DEL_BUCK,1)
+			yield (DEL_BUCK,1)
+
+class NaturalMergeSort(BaseAlgorithm):
+	name="Natural Merge Sort"
+	desc="Uses presorted sections to its advantage.\nMerges buckets until sorted."
+	opts={
+		"oop":(bool,False,"Out-of-Place","In-Place")
+	}
+	def gen(self):
+		oop=self.vals["oop"]
+		sects=[]
+		yield (READ,0,0)
+		v=self.v
+		for i in range(1,self.l):
+			yield (READ,i,0)
+			if self.v<v:
+				sects.append(i)
+			v=self.v
+		sects.append(self.l)
+		if oop:
+			yield (NEW_BUCK,)
+			yield (NEW_BUCK,)
+		while len(sects)>1:
+			_i=0
+			for j in range(0,len(sects)-1,2):
+				m=sects[j]
+				e=sects[j+1]
+				_v=None
+				v=None
+				j1=0
+				j2=0
+				if oop:
+					for i in range(m,e):
+						yield (BUCKINSERT,m,0,0,2)
+					for i in range(_i,m):
+						yield (BUCKINSERT,_i,0,0,1)
+					for i in range(_i,e):
+						if v==None and j1<m-_i:
+							yield (READ,0,1)
+							v=self.v
+						if _v==None and j2<e-m:
+							yield (READ,0,2)
+							_v=self.v
+						if v==None:
+							yield (BUCKINSERT,0,2,_i,0)
+						elif _v==None:
+							yield (BUCKINSERT,0,1,_i,0)
+						elif v<_v:
+							yield (BUCKINSERT,0,2,_i,0)
+							_v=None
+							j2+=1
+						else:
+							yield (BUCKINSERT,0,1,_i,0)
+							v=None
+							j1+=1
+				else:
+					off=0
+					for i in range(m,e):
+						yield (READ,i,0)
+						v=self.v
+						while True:
+							if _v==None:
+								yield (READ,_i+off,0)
+								_v=self.v
+							if _v>v:
+								yield (INSERT,i,_i+off,0)
+								off+=1
+								break
+							else:
+								_i+=1
+								_v=None
+								if _i==m:
+									break
+						if _v==None:
+							break
+				_i=e
+			if len(sects)%2==1:
+				sects=[*sects[1::2],sects[-1]]
+			else:
+				sects=sects[1::2]
+		if oop:
+			yield (DEL_BUCK,1)
+			yield (DEL_BUCK,1)
 
 class MergeSortOPT(BaseAlgorithm):
 	name="Merge Sort"
 	desc="Merges buckets until sorted"
 	opts={
-		"OOP":(bool,False,"Out-of-Place","In-Place")#Flip-Button with Out-of-Place for True (pressed) and In-Place for False (released), default is released
+		"oop":(bool,False,"Out-of-Place","In-Place"),
+		"vrs":(list,0,("Normal","Natural"),"%s")
 	}
 	def __new__(cls,l):
-		if cls.vals["OOP"]:
-			alg=MergeSortOOP
-		else:
-			alg=MergeSortIP
+		if cls.vals["vrs"]==0:
+			alg=NormalMergeSort
+		elif cls.vals["vrs"]==1:
+			alg=NaturalMergeSort
+		alg.vals=cls.vals
 		return alg(l)
 
 class BogoSort(BaseAlgorithm):
