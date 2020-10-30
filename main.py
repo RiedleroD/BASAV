@@ -355,6 +355,8 @@ class MainLogic():
 		if act!=PASS and type(act)!=tuple:
 			print(f"{self.curalg.name}: Invalid act type: {type(act)}, only tuples and PASS are allowed")
 			return False
+		if VERBOSE:
+			print(f"{self.curalg.name}: {act}")
 		if act==PASS or act[0]==PASS:#pass
 			self.stats[4]+=1
 			return True

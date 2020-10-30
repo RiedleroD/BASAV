@@ -8,6 +8,16 @@ from pyglet import window as pgw
 from pyglet.gl import GL_LINES, GL_QUADS
 from pyglet.media import synthesis
 
+VERBOSE=False
+
+print("    getting parameters…")
+for arg in sys.argv:
+	if arg in ("-v","--verbose"):
+		VERBOSE=True
+		print("    Verbose mode \033[32mon\033[39m")
+	else:
+		print()
+
 print("    defining various constants…")
 
 ANCHORSy=("bottom","center","top")
