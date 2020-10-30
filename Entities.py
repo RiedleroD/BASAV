@@ -556,10 +556,10 @@ class Bucket(Entity):
 			other.wacts.add(x)
 			return True
 		else:
-			print(f"out-of-scope call to BUCKSWAP: swap {x} at buck[{other.itemc}] and {y} at buck[{self.itemc}]")
+			print(f"out-of-bounds call to BUCKSWAP: swap {x} at buck[{other.itemc}] and {y} at buck[{self.itemc}]")
 			return False
 	def insert_from(self,x,y,other):
-		if other.itemc>=x>=0 and self.itemc>=y>=0:
+		if other.itemc>x>=0 and self.itemc>=y>=0:
 			self.items[y:y]=other.items.pop(x),
 			for j in range(6):
 				self.colors.insert(y*6+j,other.colors.pop(x*6))
@@ -570,7 +570,7 @@ class Bucket(Entity):
 			other.wacts.add(x)
 			return True
 		else:
-			print(f"out-of-scope call to BUCKINSERT: from {x} at buck[{other.itemc}] to {y} at buck[{self.itemc}]")
+			print(f"out-of-bounds call to BUCKINSERT: from {x} at buck[{other.itemc}] to {y} at buck[{self.itemc}]")
 			return False
 	def render(self):
 		self.vl.vertices[:]=[pos for i in range(self.maxic) for pos in self._getline(i)]
