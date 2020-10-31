@@ -34,6 +34,7 @@ class ClockCounter():
 print("defining main logic…")
 
 class MainLogic():
+	spd=20
 	def __init__(self,win):
 		self.window=win
 		self.window.push_handlers(KP)
@@ -100,12 +101,14 @@ class MainLogic():
 		if self.btns[1].pressed:
 			self.btns[1].release()
 			self.start_algorithm(shufflers[self.btns[3].getCurval()])
+		if not self.edits[0].pressed:
+			self.set_speed(self.edits[0].getNum())
 		self.check_itemc()
 		self.process_alg_opts()
 		if self.btns[0].pressed:
 			if self.curalg==None:
 				self.start_algorithm(algs[self.rads[0].getSelected()])
-			for x in range(self.edits[0].getNum()):
+			for x in range(self.spd):
 				try:
 					act=next(self.gen)
 				except StopIteration:
@@ -164,6 +167,11 @@ class MainLogic():
 		self.stop_algorithm(False)
 		self.bucks.clear()
 		self.bucks.append(Bucket(0,0,WIDTH2,HEIGHT,BUCKLEN,self.batch,maxps=self.edits[0].getNum()))
+	def set_speed(self,spd):
+		if spd!=self.spd:
+			self.spd=spd
+			for buck in self.bucks:
+				buck.setmaxps(spd)
 	def check_itemc(self):
 		global BUCKLEN,COLORS
 		itemc=self.edits[3].getNum()
@@ -437,7 +445,7 @@ logic.btns=[	ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",logic.batch,8,p
 				Button(WIDTH-BTNWIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Reset",logic.batch,8),
 				Button(WIDTH,0,BTNWIDTH,BTNHEIGHT,"Quit",logic.batch,2,pgw.key.ESCAPE)]
 logic.rads=[	RadioListPaged(WIDTH,HEIGHT-BTNHEIGHT*6,BTNWIDTH*2,BTNHEIGHT*12,[alg.name for alg in algs],11,logic.batch,8,selected=0)]
-logic.edits=[	IntEdit(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Speed","20",logic.batch,8,numrange=(1,None)),
+logic.edits=[	IntEdit(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Speed",f"{logic.spd}",logic.batch,8,numrange=(1,None)),
 				IntEdit(WIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"FPS/UPS","60",logic.batch,8,numrange=(1,None)),
 				IntEdit(WIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"Audio Concurrency","32",logic.batch,8,numrange=(0,None)),
 				IntEdit(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*2,BTNWIDTH,BTNHEIGHT,"Item count",f"{BUCKLEN}",logic.batch,8,numrange=(2,None))]

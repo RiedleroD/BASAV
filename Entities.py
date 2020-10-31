@@ -463,6 +463,8 @@ class RadioListPaged(RadioList):
 			self.next.release()
 
 class Bucket(Entity):
+	ravl=None
+	wavl=None
 	def __init__(self,x,y,w,h,itemc,batch,anch=0,maxps=None):
 		super().__init__(x,y,w,h,batch,anch)
 		self.maxic=abs(itemc)
@@ -487,16 +489,21 @@ class Bucket(Entity):
 		)
 	def setmaxps(self,maxps):
 		self.maxps=maxps
+		if self.ravl:
+			self.ravl.delete()
 		self.ravl=self.batch.add(
 			maxps*2,GL_LINES,GRmp,
 			('v2f/dynamic',[0,0,0,0]*maxps),
 			('c3B/stream',(0,255,0,0,255,0)*maxps)
 		)
+		if self.wavl:
+			self.wavl.delete()
 		self.wavl=self.batch.add(
 			maxps*2,GL_LINES,GRmp,
 			('v2f/dynamic',[0,0,0,0]*maxps),
 			('c3B/stream',(255,0,0,255,0,0)*maxps)
 		)
+		self.rendered=False
 	def _getyfromi(self,i):
 		return self.y+self.h*(i+1)/self.maxic
 	def _getline(self,i):
