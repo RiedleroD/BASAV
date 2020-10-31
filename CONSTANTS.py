@@ -11,12 +11,12 @@ from pyglet.media import synthesis
 VERBOSE=False
 
 print("    getting parameters…")
-for arg in sys.argv:
+for arg in sys.argv[1:]:
 	if arg in ("-v","--verbose"):
 		VERBOSE=True
 		print("    Verbose mode \033[32mon\033[39m")
 	else:
-		print()
+		print(f"    Unrecognized argument: \033[36m{arg}\033[39m")
 
 print("    defining various constants…")
 
