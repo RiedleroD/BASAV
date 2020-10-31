@@ -298,8 +298,8 @@ class StoogeSort(BaseAlgorithm):
 		jv=self.v
 		if iv>jv:
 			yield (SWAP,i,j,0)
-		if (j-i)>3:#if there are at least 3 items in the section
-			t=round((j-i+1)/3)
+		if (j-i)>1:#if there are at least 3 items in the section
+			t=(j-i+1)//3
 			for args in ((i,j-t),(i+t,j),(i,j-t)):
 				for act in self.stooge(*args):
 					yield act
