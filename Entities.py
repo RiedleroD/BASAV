@@ -253,6 +253,7 @@ class ButtonFlipthrough(Button):
 		super().__init__(x,y,w,h,text%values[default],batch,anch,key,size)
 	def setText(self,text):
 		self.label.text=text
+		self.adjust_kerning()
 	def getCurval(self):
 		return self.vals[self.i]
 	def getCurIndex(self):
