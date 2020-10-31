@@ -621,6 +621,66 @@ class Quicksort(BaseAlgorithm):
 				break
 			yield (SWAP,i,j,0)
 
+#implementation of https://en.wikipedia.org/wiki/Heapsort#Pseudocode
+class HeapSort(BaseAlgorithm):
+	name="Heap Sort"
+	desc="Maintains a heap and selects with its help\nefficiently the largest unsorted value\nuntil the heap is empty and the array is sorted"
+	opts={
+		"hc":(list,1,("Up","Down"),"Heap Construction: %s")
+	}
+	def gen(self):
+		for act in self.heapify():
+			yield act
+		for end in range(self.l-1,0,-1):
+			yield (SWAP,end,0,0)
+			for act in self.siftDown(0,end-1):
+				yield act
+	def heapify(self):
+		if self.vals["hc"]==0:
+			end=1
+			while end<self.l:
+				for act in self.siftUp(0,end):
+					yield act
+				end+=1
+		elif self.vals["hc"]==1:
+			for start in range((self.l-2)//2,-1,-1):
+				for act in self.siftDown(start,self.l-1):
+					yield act
+	def siftDown(self,start,end):
+		root=start
+		swap=root
+		yield (READ,swap,0)
+		vswap=vroot=self.v
+		while 2*root<end:
+			child=2*root+1
+			yield (READ,child,0)
+			if vswap<self.v:
+				swap=child
+				vswap=self.v
+			if child<end:
+				yield (READ,child+1,0)
+				if vswap<self.v:
+					swap=child+1
+					vswap=self.v
+			if swap==root:
+				break
+			else:
+				yield (SWAP,root,swap,0)
+				vswap=vroot
+				root=swap
+	def siftUp(self,start,end):
+		child=end
+		yield (READ,child,0)
+		vchild=self.v#never changes
+		while child>start:
+			parent=(child-1)//2
+			yield (READ,parent,0)
+			if self.v<vchild:
+				yield (SWAP,parent,child,0)
+				child=parent
+			else:
+				break
+
 class Reverser(BaseAlgorithm):
 	name="Reverser"
 	desc="reverses the set"
@@ -664,6 +724,7 @@ algs=[
 	InsertionSort,
 	SelectionSort,
 	Quicksort,
+	HeapSort,
 	RadixMSD,
 	RadixLSD,
 	MergeSortOPT,
