@@ -472,7 +472,7 @@ class Bucket(Entity):
 			colors=blanc.copy()
 		else:
 			self.itemc=itemc
-			colors=COLORS.copy()
+			colors=self.generate_colors()
 		self.items=[i for i in range(self.itemc)]
 		self.racts=set()
 		self.wacts=set()
@@ -581,8 +581,8 @@ class Bucket(Entity):
 		rvs=[rvs[0],0,rvs[2],0]*self.maxps
 		self.ravl.vertices[:]=rvs
 		self.rendered=True
-	def render_colors(self):
-		self.colors=[col for i in self.items for col in colorlamb(i/self.maxic)]
+	def generate_colors(self):
+		return [col for i in range(self.maxic) for col in colorlamb(i/self.maxic)]
 	def draw(self):
 		if not self.rendered:
 			self.render()

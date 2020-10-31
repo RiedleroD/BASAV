@@ -101,8 +101,5 @@ BTNHEIGHT=HEIGHT/20
 BTNHEIGHT2=BTNHEIGHT/2
 
 print(f"    window size is {WIDTH}x{HEIGHT}")
-
-print("    generating colors…")
-COLORS=[color for i in range(BUCKLEN) for color in colorlamb(i/BUCKLEN)]
 print("    generating audio…")
 AUDIO=pyglet.media.StaticSource(synthesis.Square(8,sample_size=8))#the longer the note, the less crackling, but the more RAM is used
