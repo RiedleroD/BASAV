@@ -27,6 +27,8 @@ class ClockCounter():
 		self.dt=0
 		self.tc=0
 	def getHz(self):
+		if self.tc==0 or self.dt==0:
+			return 0
 		return self.tc/self.dt
 
 print("defining main logic…")
