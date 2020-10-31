@@ -123,6 +123,10 @@ class Label(Entity):
 			self.set_kerning(kern)
 			while self.label.content_width>self.w:
 				kern-=0.1
+				if kern<-1.5:
+					self.size-=0.1
+					kern=0
+					self.label.document.set_style(0,-1,{"font_size":self.size})
 				self.set_kerning(kern)
 	def set_kerning(self,kern):
 		self.label.document.set_style(0,-1,{"kerning":kern})
