@@ -89,54 +89,19 @@ class MainLogic():
 		if self.btns[-1].pressed:
 			self.btns[3].release()
 			sys.exit(0)
+		if self.btns[5].pressed:
+			self.reset()
+			self.btns[5].release()
 		if self.btns[2].pressed:
 			self.btns[2].release()
-			self.curalg=Reverser(self.bucks[0].itemc)
-			self.avgupscc.reset()
-			self.avgfpscc.reset()
-			self.gen=self.curalg.gen()
-			self.stats=[0,0,0,0,0]
-			self.btns[0].press()
+			self.start_algorithm(Reverser)
 		if self.btns[1].pressed:
 			self.btns[1].release()
-			self.curalg=shufflers[self.btns[3].getCurval()](self.bucks[0].itemc)
-			self.avgupscc.reset()
-			self.avgfpscc.reset()
-			self.gen=self.curalg.gen()
-			self.stats=[0,0,0,0,0]
-			self.btns[0].press()
+			self.start_algorithm(shufflers[self.btns[3].getCurval()])
 		self.process_alg_opts()
-		aconcur=self.edits[2].getNum()-self.aconcur
-		self.aconcur+=aconcur
-		if aconcur>0:
-			for i in range(aconcur):
-				apl=pyglet.media.Player()
-				apl.queue(AUDIO)
-				apl.volume=0
-				apl.loop=True
-				apl.play()
-				self.apls.append(apl)
-		elif aconcur<0:
-			for apl in self.apls[aconcur:]:
-				apl.next_source()
-				apl.delete()
-				self.apls.remove(apl)
 		if self.btns[0].pressed:
 			if self.curalg==None:
-				self.curalg=algs[self.rads[0].getSelected()]
-				for name,element in self.algui.items():
-					if type(element)==IntEdit:
-						val=element.getNum()
-					elif type(element)==ButtonSwitch:
-						val=element.pressed
-					elif type(element)==ButtonFlipthrough:
-						val=element.getCurIndex()
-					self.curalg.vals[name]=val
-				self.curalg=self.curalg(self.bucks[0].itemc)
-				self.avgupscc.reset()
-				self.avgfpscc.reset()
-				self.gen=self.curalg.gen()
-				self.stats=[0,0,0,0,0]
+				self.start_algorithm(algs[self.rads[0].getSelected()])
 			for x in range(self.edits[0].getNum()):
 				try:
 					act=next(self.gen)
@@ -147,29 +112,55 @@ class MainLogic():
 					print(f"{self.curalg.name}: {e}")
 					act=(FIN,)
 				if not self.procact(act):
-					self.btns[0].release()
-					self.curalg=None
-					self.gen=None
-					self.bucks[0].racts.clear()
-					self.bucks[0].wacts.clear()
-					self.bucks[0].rendered=False
+					self.stop_algorithm()
 					break
 		elif self.curalg!=None:
 			self.curalg=None
 			self.gen=None
-			if len(self.bucks)>1:
-				for buck in range(1,len(self.bucks)):
-					self.bucks[0].items.extend(self.bucks[1].items)
-					del self.bucks[1]
-				self.bucks[0].itemc=BUCKLEN
-				self.bucks[0].render_colors()
-				self.bucks[0].set_size(WIDTH2,HEIGHT)
 		self.labels[2].setText("Read:%02i"%self.stats[0])
 		self.labels[3].setText("Swap:%02i"%self.stats[1])
 		self.labels[4].setText("Insert:%02i"%self.stats[2])
 		self.labels[5].setText("Bucket:%02i"%self.stats[3])
 		self.labels[6].setText("Pass:%02i"%self.stats[4])
+		self.check_apls()
 		self.play_all()
+	def stop_algorithm(self,reset_buck0=True):
+		self.btns[0].release()
+		self.curalg=None
+		self.gen=None
+		if reset_buck0:
+			self.bucks[0].racts.clear()
+			self.bucks[0].wacts.clear()
+			self.bucks[0].rendered=False
+	def start_algorithm(self,alg):
+		self.curalg=alg
+		self.squash_bucks()
+		for name,element in self.algui.items():
+			if type(element)==IntEdit:
+				val=element.getNum()
+			elif type(element)==ButtonSwitch:
+				val=element.pressed
+			elif type(element)==ButtonFlipthrough:
+				val=element.getCurIndex()
+			self.curalg.vals[name]=val
+		self.curalg=self.curalg(BUCKLEN)
+		self.avgupscc.reset()
+		self.avgfpscc.reset()
+		self.gen=self.curalg.gen()
+		self.stats=[0,0,0,0,0]
+		self.btns[0].press()
+	def squash_bucks(self):
+		if len(self.bucks)>1:
+			for buck in range(1,len(self.bucks)):
+				self.bucks[0].items.extend(self.bucks[1].items)
+				del self.bucks[1]
+			self.bucks[0].itemc=BUCKLEN
+			self.bucks[0].render_colors()
+			self.bucks[0].set_size(WIDTH2,HEIGHT)
+	def reset(self):
+		self.stop_algorithm(False)
+		self.bucks.clear()
+		self.bucks.append(Bucket(0,0,WIDTH2,HEIGHT,BUCKLEN,self.batch,maxps=self.edits[0].getNum()))
 	def process_alg_opts(self):
 		selalg=self.rads[0].getSelected()
 		if selalg!=self.selalg:
@@ -236,7 +227,22 @@ class MainLogic():
 						print(f"{curalg.name}: option {name} with type list has an invalid format string '{opt[3]}' specified. Exactly one %s has to exist.")
 					else:
 						self.algui[name]=ButtonFlipthrough(WIDTH-BTNWIDTH*(2+x),HEIGHT-BTNHEIGHT*(y+6),BTNWIDTH,BTNHEIGHT,opt[3],opt[2],batch=self.batch,anch=8,default=opt[1])
-						
+	def check_apls(self):
+		aconcur=self.edits[2].getNum()-self.aconcur
+		self.aconcur+=aconcur
+		if aconcur>0:
+			for i in range(aconcur):
+				apl=pyglet.media.Player()
+				apl.queue(AUDIO)
+				apl.volume=0
+				apl.loop=True
+				apl.play()
+				self.apls.append(apl)
+		elif aconcur<0:
+			for apl in self.apls[aconcur:]:
+				apl.next_source()
+				apl.delete()
+				self.apls.remove(apl)
 	def play_all(self):
 		if self.btns[4].pressed and self.toplay:
 			for apl in self.apls:
@@ -418,6 +424,7 @@ logic.btns=[	ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",logic.batch,8,p
 				Button(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Reverse",logic.batch,8),
 				ButtonFlipthrough(WIDTH,HEIGHT-BTNHEIGHT*2,BTNWIDTH,BTNHEIGHT,"Randomness: %i",[3,0,1,2],logic.batch,8),
 				ButtonSwitch(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"Audio: OFF",logic.batch,8,pressedText="Audio: ON"),
+				Button(WIDTH-BTNWIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Reset",logic.batch,8),
 				Button(WIDTH,0,BTNWIDTH,BTNHEIGHT,"Quit",logic.batch,2,pgw.key.ESCAPE)]
 logic.rads=[	RadioListPaged(WIDTH,HEIGHT-BTNHEIGHT*6,BTNWIDTH*2,BTNHEIGHT*12,[alg.name for alg in algs],11,logic.batch,8,selected=0)]
 logic.edits=[	IntEdit(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Speed","20",logic.batch,8,numrange=(1,None)),
