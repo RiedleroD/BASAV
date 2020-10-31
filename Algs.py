@@ -284,6 +284,26 @@ class BogoSort(BaseAlgorithm):
 			for i in range(l):
 				yield (SWAP,i,random.randrange(l),0)
 
+#implemented from https://en.wikipedia.org/wiki/Stooge_sort
+class StoogeSort(BaseAlgorithm):
+	name="Stooge Sort"
+	desc="Recursively sorts the first 2/3rds, then the 2nd 2/3rds\nand then the 1st 2/3rds of a section again"
+	def gen(self):
+		for act in self.stooge(0,self.l-1):
+			yield act
+	def stooge(self,i,j):
+		yield (READ,i,0)
+		iv=self.v
+		yield (READ,j,0)
+		jv=self.v
+		if iv>jv:
+			yield (SWAP,i,j,0)
+		if (j-i)>3:#if there are at least 3 items in the section
+			t=round((j-i+1)/3)
+			for args in ((i,j-t),(i+t,j),(i,j-t)):
+				for act in self.stooge(*args):
+					yield act
+
 class InsertionSort(BaseAlgorithm):
 	name="InsertionSort"
 	desc="Inserts first unsorted item into sorted subarray\nuntil no unsorted items remain"
@@ -647,4 +667,5 @@ algs=[
 	RadixMSD,
 	RadixLSD,
 	MergeSortOPT,
+	StoogeSort,
 	BogoSort]
