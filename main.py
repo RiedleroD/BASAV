@@ -245,6 +245,7 @@ class MainLogic():
 						print(f"{curalg.name}: option {name} with type list has an invalid format string '{opt[3]}' specified. Exactly one %s has to exist.")
 					else:
 						self.algui[name]=ButtonFlipthrough(WIDTH-BTNWIDTH*(2+x),HEIGHT-BTNHEIGHT*(y+6),BTNWIDTH,BTNHEIGHT,opt[3],opt[2],batch=self.batch,anch=8,default=opt[1])
+						y+=1
 	def check_apls(self):
 		aconcur=self.edits[2].getNum()-self.aconcur
 		self.aconcur+=aconcur
