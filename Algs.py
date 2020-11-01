@@ -727,6 +727,93 @@ class HeapSort(BaseAlgorithm):
 			else:
 				break
 
+#implementation of https://www.dangermouse.net/esoteric/demonsort.html with a few assumptions,
+#e.g. how to check if all lower values are in the lower partition.
+class DemonSort(BaseAlgorithm):
+	name="Demon Sort"
+	desc="Divides the array into 2 sections.\nThen gets largest item i from the first\nand lowest j from the second subarray. If j>i, apply motion,\nswap the center values or move section by 1 if necessary and repeat the check.\nthen apply this recursively if j<=i."
+	opts={
+		"mot":(list,0,("Rollout","Rollin","Randswap"),"Motion: %s"),
+		"r":(list,0,("Inwards","Outwards"),"Checking: %s")
+	}
+	def gen(self):
+		for act in self.deso(0,self.l):
+			yield act
+	def deso(self,s,e):
+		thresh=(s+e)/2
+		m=round(thresh)
+		while True:
+			max1=None
+			min2=None
+			if self.vals["r"]==0:
+				sm=iter(range(s,m))
+				em=iter(range(e-1,m-1,-1))
+			else:
+				sm=iter(range(m-1,s-1,-1))
+				em=iter(range(m,e))
+			for _ in range(max(m-s,e-m)):
+				try:
+					i=next(sm)
+				except StopIteration:
+					pass
+				else:
+					yield (READ,i,0)
+					if max1==None or max1<self.v:
+						max1=self.v
+				try:
+					j=next(em)
+				except StopIteration:
+					pass
+				else:
+					yield (READ,j,0)
+					if min2==None or min2>self.v:
+						min2=self.v
+				if min2<max1:
+					break
+			if min2<max1:
+				if self.vals["mot"]==2:
+					if m-s>1:
+						yield (SWAP,m-1,random.randrange(s,m-1),0)
+					if e-m>1:
+						yield (SWAP,m,random.randrange(m+1,e),0)
+				else:
+					if self.vals["mot"]==0:
+						if m-s>1:
+							yield (INSERT,s,m,0)
+						if e-m>1:
+							yield (INSERT,e-1,m,0)
+					else:
+						if m-s>1:
+							yield (INSERT,m-1,s,0)
+						if e-m>1:
+							yield (INSERT,m,e,0)
+				yield (READ,m-1,0)
+				v1=self.v
+				yield (READ,m,0)
+				v2=self.v
+				if v1>thresh:
+					if v2>thresh:
+						if m-1>s:
+							m-=1
+						else:
+							thresh+=1
+					else:
+						yield (SWAP,m,m-1,0)
+				else:
+					if v2<thresh:
+						if m+1<e:
+							m+=1
+						else:
+							thresh-=1
+			else:
+				if m-s>1:
+					for act in self.deso(s,m):
+						yield act
+				if e-m>1:
+					for act in self.deso(m,e):
+						yield act
+				break
+
 class Reverser(BaseAlgorithm):
 	name="Reverser"
 	desc="reverses the set"
@@ -756,5 +843,6 @@ algs=[
 	RadixMSD,
 	RadixLSD,
 	MergeSortOPT,
+	DemonSort,
 	StoogeSort,
 	BogoSort]
