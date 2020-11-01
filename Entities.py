@@ -164,7 +164,7 @@ class Label(Entity):
 
 class LabelMultiline(Label):
 	def __init__(self,x,y,w,h,text,batch,anch=0,color=(255,255,255),bgcolor=(0,0,0),size=12):
-		self.labels=[pyglet.text.Label(text,x=0,y=-size*1.5,color=color+(255,),font_size=size,batch=batch,group=GRfg) for line in text.split("\n")]
+		self.labels=[pyglet.text.Label(line,x=0,y=-size*1.5,color=color+(255,),font_size=size,batch=batch,group=GRfg) for line in text.split("\n")]
 		super().__init__(x,y,w,h,text,batch,anch,color,bgcolor,size)
 		del self.label
 	def setColor(self,color):
@@ -174,14 +174,17 @@ class LabelMultiline(Label):
 	def setText(self,text):
 		self.text=text
 		text=text.split("\n")
-		while len(self.labels)<len(text):#make new labels if necessary
-			self.labels.append(pyglet.text.Label("",x=0,y=-self.size*1.5,color=self.color,font_size=self.size,batch=self.batch,group=GRfg))
-		for label in reversed(self.labels):#set all labels' text
-			try:
-				label.text=text.pop()
-			except IndexError:
-				label.text=""
-		self.rendered=False
+		labels=self.labels.copy()
+		for txt in reversed(text):
+			if labels:
+				label=labels.pop()
+				label.text=txt
+			else:
+				label=pyglet.text.Label(txt,x=0,y=-self.size*1.5,color=self.color+(255,),font_size=self.size,batch=self.batch,group=GRfg)
+				self.labels.append(label)
+				self.rendered=False
+		for remaining in labels:
+			remaining.text=""
 	def render(self):
 		if self.w>0 and self.h>0:
 			self.quad=('v2f/static',(self.x,self.y,self._x,self.y,self._x,self._y,self.x,self._y))
