@@ -737,32 +737,14 @@ class Reverser(BaseAlgorithm):
 class Shuffler(BaseAlgorithm):
 	name="Shuffler"
 	desc="Shuffles the list"
+	opts={
+		"q":(int,3,0,4,"Randomness")
+	}
 	def gen(self):
-		for i in range(self.l):
-			yield (SWAP,i,random.randrange(self.l),0)
+		q=self.vals["q"]
+		for i in range(self.l if q!=2 else self.l-1):
+			yield (SWAP if q in (2,3) else INSERT,i,random.randrange([i,0,i+1,0][q],self.l),0)
 
-class ShufflerOneSide(BaseAlgorithm):
-	name="One-Sided Shuffler"
-	desc="Shuffles the list one-sided\n(not 100% random)"
-	def gen(self):
-		for i in range(self.l):
-			yield (SWAP,i,random.randrange(i+1,self.l),0)
-
-class ShufflerInsert(BaseAlgorithm):
-	name="Shuffler"
-	desc="Shuffles the list by inserting\n(pretty bad)"
-	def gen(self):
-		for i in range(self.l):
-			yield (INSERT,i,random.randrange(self.l),0)
-
-class ShufflerOneSideInsert(BaseAlgorithm):
-	name="Shuffler"
-	desc="Shuffles the list one-sided by inserting\n(very,very bad)"
-	def gen(self):
-		for i in range(self.l):
-			yield (INSERT,i,random.randrange(i,self.l),0)
-
-shufflers=[ShufflerOneSideInsert,ShufflerInsert,ShufflerOneSide,Shuffler]#shufflers from worst to best
 algs=[
 	BubbleSort,
 	CocktailShaker,

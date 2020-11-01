@@ -100,7 +100,8 @@ class MainLogic():
 			self.start_algorithm(Reverser)
 		if self.btns[1].pressed:
 			self.btns[1].release()
-			self.start_algorithm(shufflers[self.btns[3].getCurval()])
+			Shuffler.vals["q"]=self.btns[3].getCurval()
+			self.start_algorithm(Shuffler,False)
 		if not self.edits[0].pressed:
 			self.set_speed(self.edits[0].getNum())
 		self.check_itemc()
@@ -138,17 +139,18 @@ class MainLogic():
 			self.bucks[0].racts.clear()
 			self.bucks[0].wacts.clear()
 			self.bucks[0].rendered=False
-	def start_algorithm(self,alg):
+	def start_algorithm(self,alg,procopts=True):
 		self.curalg=alg
 		self.squash_bucks()
-		for name,element in self.algui.items():
-			if type(element)==IntEdit:
-				val=element.getNum()
-			elif type(element)==ButtonSwitch:
-				val=element.pressed
-			elif type(element)==ButtonFlipthrough:
-				val=element.getCurIndex()
-			self.curalg.vals[name]=val
+		if procopts:
+			for name,element in self.algui.items():
+				if type(element)==IntEdit:
+					val=element.getNum()
+				elif type(element)==ButtonSwitch:
+					val=element.pressed
+				elif type(element)==ButtonFlipthrough:
+					val=element.getCurIndex()
+				self.curalg.vals[name]=val
 		self.curalg=self.curalg(BUCKLEN)
 		self.avgupscc.reset()
 		self.avgfpscc.reset()
