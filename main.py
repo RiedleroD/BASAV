@@ -269,6 +269,8 @@ class MainLogic():
 					apl.volume=0
 				else:
 					item=self.toplay.pop()
+					if item==None:
+						item=-BUCKLEN
 					apl.volume=1/self.aconcur
 					apl.pitch=1+item/BUCKLEN
 				if not self.playing:
