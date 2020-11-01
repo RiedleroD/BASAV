@@ -308,28 +308,6 @@ class MergeSortOPT(BaseAlgorithm):
 		alg.vals=cls.vals
 		return alg(l)
 
-class BogoSort(BaseAlgorithm):
-	name="Bogo Sort"
-	desc="Randomizes the whole set, then checks if it's sorted"
-	def gen(self):
-		l=self.l
-		while True:
-			yield (READ,0,0)
-			v1=self.v
-			fin=True
-			for i in range(1,l):
-				yield (READ,i,0)
-				v2=self.v
-				if v1>v2:
-					fin=False
-					break
-				else:
-					v1=v2
-			if fin:
-				break
-			for i in range(l):
-				yield (SWAP,i,random.randrange(l),0)
-
 #implemented from https://en.wikipedia.org/wiki/Stooge_sort
 class StoogeSort(BaseAlgorithm):
 	name="Stooge Sort"
@@ -831,6 +809,31 @@ class Shuffler(BaseAlgorithm):
 		q=self.vals["q"]
 		for i in range(self.l if q!=2 else self.l-1):
 			yield (SWAP if q in (2,3) else INSERT,i,random.randrange([i,0,i+1,0][q],self.l),0)
+
+class BogoSort(BaseAlgorithm):
+	name="Bogo Sort"
+	desc="Shuffles the whole array, then checks if it's sorted.\nRepeat until success."
+	opts=Shuffler.opts.copy()
+	def gen(self):
+		l=self.l
+		Shuffler.vals=self.vals.copy()
+		shuf=Shuffler(self.l)
+		while True:
+			yield (READ,0,0)
+			v1=self.v
+			fin=True
+			for i in range(1,l):
+				yield (READ,i,0)
+				v2=self.v
+				if v1>v2:
+					fin=False
+					break
+				else:
+					v1=v2
+			if fin:
+				break
+			for act in shuf.gen():
+				yield act
 
 algs=[
 	BubbleSort,
