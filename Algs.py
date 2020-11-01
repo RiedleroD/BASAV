@@ -92,9 +92,11 @@ class NormalMergeSort(BaseAlgorithm):
 	name="Merge Sort"
 	desc="Merges sections until sorted"
 	opts={
-		"oop":(bool,False,"Out-of-Place","In-Place")
+		"oop":(bool,False,"Out-of-Place","In-Place"),
+		"conc":(bool,False,"Concurrent","Seperate")
 	}
 	def gen(self):
+		conc=self.vals["conc"]
 		oop=self.vals["oop"]
 		noop=not oop
 		size=1
@@ -102,77 +104,99 @@ class NormalMergeSort(BaseAlgorithm):
 			yield (NEW_BUCK,)
 			yield (NEW_BUCK,)
 		while size<self.l:
-			for i in range(0,self.l,size*2):
-				if self.l-i<=size:#if only one block or less remains
-					break
-				if oop:
-					m=i+size
-					e=min(i+size*2,self.l)
-					for _i in range(m,e):
-						yield (BUCKINSERT,m,0,0,2)
-					for _i in range(i,m):
-						yield (BUCKINSERT,i,0,0,1)
-					v=None
-					_v=None
-					j1=0
-					j2=0
-					for _i in range(i,e):
-						if v==None and j1<m-i:
-							yield (READ,0,1)
-							v=self.v
-						if _v==None and j2<e-m:
-							yield (READ,0,2)
-							_v=self.v
-						if v==None:
-							yield (BUCKINSERT,0,2,i,0)
-						elif _v==None:
-							yield (BUCKINSERT,0,1,i,0)
-						elif v<_v:
-							yield (BUCKINSERT,0,2,i,0)
-							j2+=1
-							_v=None
-						else:
-							yield (BUCKINSERT,0,1,i,0)
-							j1+=1
-							v=None
-				else:
-					m=i+size
-					e=min(i+size*2,self.l)
-					off=0
-					i1=i
-					yield (READ,i1,0)
-					v1=self.v
-					i2=m
-					yield (READ,i2,0)
-					v2=self.v
-					while True:
-						if v1>v2:
-							yield (INSERT,i2,i1+off,0)
-							off+=1
-							i2+=1
-							if i2==e:
-								break
-							yield (READ,i2,0)
-							v2=self.v
-						else:
-							i1+=1
-							if i1==m:
-								break
-							yield (READ,i1+off,0)
-							v1=self.v
+			merges=[self.merge(i,size,oop) for i in range(0,self.l,size*2)]
+			if conc and noop:
+				merge=None
+				while len(merges)>0:
+					if merge==None:
+						merge=random.choice(merges)
+					try:
+						act=next(merge)
+					except StopIteration:
+						merges.remove(merge)
+						merge=None
+					else:
+						if act[0]!=READ:
+							merge=None
+						yield act
+			else:
+				for merge in merges:
+					for act in merge:
+						yield act
 			size*=2
 		if oop:
 			yield (DEL_BUCK,1)
 			yield (DEL_BUCK,1)
+	def merge(self,i,size,oop):
+		if self.l-i<=size:#if only one block or less remains
+			pass
+		elif oop:
+			m=i+size
+			e=min(i+size*2,self.l)
+			for _i in range(m,e):
+				yield (BUCKINSERT,m,0,0,2)
+			for _i in range(i,m):
+				yield (BUCKINSERT,i,0,0,1)
+			v=None
+			_v=None
+			j1=0
+			j2=0
+			for _i in range(i,e):
+				if v==None and j1<m-i:
+					yield (READ,0,1)
+					v=self.v
+				if _v==None and j2<e-m:
+					yield (READ,0,2)
+					_v=self.v
+				if v==None:
+					yield (BUCKINSERT,0,2,i,0)
+				elif _v==None:
+					yield (BUCKINSERT,0,1,i,0)
+				elif v<_v:
+					yield (BUCKINSERT,0,2,i,0)
+					j2+=1
+					_v=None
+				else:
+					yield (BUCKINSERT,0,1,i,0)
+					j1+=1
+					v=None
+		else:
+			m=i+size
+			e=min(i+size*2,self.l)
+			off=0
+			i1=i
+			yield (READ,i1,0)
+			v1=self.v
+			i2=m
+			yield (READ,i2,0)
+			v2=self.v
+			while True:
+				if v1>v2:
+					yield (INSERT,i2,i1+off,0)
+					off+=1
+					i2+=1
+					if i2==e:
+						break
+					yield (READ,i2,0)
+					v2=self.v
+				else:
+					i1+=1
+					if i1==m:
+						break
+					yield (READ,i1+off,0)
+					v1=self.v
 
 class NaturalMergeSort(BaseAlgorithm):
 	name="Natural Merge Sort"
 	desc="Uses presorted sections to its advantage.\nMerges buckets until sorted."
 	opts={
-		"oop":(bool,False,"Out-of-Place","In-Place")
+		"oop":(bool,False,"Out-of-Place","In-Place"),
+		"conc":(bool,False,"Concurrent","Seperate")
 	}
 	def gen(self):
+		conc=self.vals["conc"]
 		oop=self.vals["oop"]
+		noop=not oop
 		sects=[]
 		yield (READ,0,0)
 		v=self.v
@@ -187,58 +211,30 @@ class NaturalMergeSort(BaseAlgorithm):
 			yield (NEW_BUCK,)
 		while len(sects)>1:
 			_i=0
+			merges=[]
 			for j in range(0,len(sects)-1,2):
 				m=sects[j]
 				e=sects[j+1]
-				_v=None
-				v=None
-				j1=0
-				j2=0
-				if oop:
-					for i in range(m,e):
-						yield (BUCKINSERT,m,0,0,2)
-					for i in range(_i,m):
-						yield (BUCKINSERT,_i,0,0,1)
-					for i in range(_i,e):
-						if v==None and j1<m-_i:
-							yield (READ,0,1)
-							v=self.v
-						if _v==None and j2<e-m:
-							yield (READ,0,2)
-							_v=self.v
-						if v==None:
-							yield (BUCKINSERT,0,2,_i,0)
-						elif _v==None:
-							yield (BUCKINSERT,0,1,_i,0)
-						elif v<_v:
-							yield (BUCKINSERT,0,2,_i,0)
-							_v=None
-							j2+=1
-						else:
-							yield (BUCKINSERT,0,1,_i,0)
-							v=None
-							j1+=1
-				else:
-					off=0
-					for i in range(m,e):
-						yield (READ,i,0)
-						v=self.v
-						while True:
-							if _v==None:
-								yield (READ,_i+off,0)
-								_v=self.v
-							if _v>v:
-								yield (INSERT,i,_i+off,0)
-								off+=1
-								break
-							else:
-								_i+=1
-								_v=None
-								if _i==m:
-									break
-						if _v==None:
-							break
+				merges.append(self.merge(_i,m,e,oop))
 				_i=e
+			if conc and noop:
+				merge=None
+				while len(merges)>0:
+					if merge==None:
+						merge=random.choice(merges)
+					try:
+						act=next(merge)
+					except StopIteration:
+						merges.remove(merge)
+						merge=None
+					else:
+						if act[0]!=READ:
+							merge=None
+						yield act
+			else:
+				for merge in merges:
+					for act in merge:
+						yield act
 			if len(sects)%2==1:
 				sects=[*sects[1::2],sects[-1]]
 			else:
@@ -246,13 +242,63 @@ class NaturalMergeSort(BaseAlgorithm):
 		if oop:
 			yield (DEL_BUCK,1)
 			yield (DEL_BUCK,1)
+	def merge(self,_i,m,e,oop):
+		_v=None
+		v=None
+		j1=0
+		j2=0
+		if oop:
+			for i in range(m,e):
+				yield (BUCKINSERT,m,0,0,2)
+			for i in range(_i,m):
+				yield (BUCKINSERT,_i,0,0,1)
+			for i in range(_i,e):
+				if v==None and j1<m-_i:
+					yield (READ,0,1)
+					v=self.v
+				if _v==None and j2<e-m:
+					yield (READ,0,2)
+					_v=self.v
+				if v==None:
+					yield (BUCKINSERT,0,2,_i,0)
+				elif _v==None:
+					yield (BUCKINSERT,0,1,_i,0)
+				elif v<_v:
+					yield (BUCKINSERT,0,2,_i,0)
+					_v=None
+					j2+=1
+				else:
+					yield (BUCKINSERT,0,1,_i,0)
+					v=None
+					j1+=1
+		else:
+			off=0
+			for i in range(m,e):
+				yield (READ,i,0)
+				v=self.v
+				while True:
+					if _v==None:
+						yield (READ,_i+off,0)
+						_v=self.v
+					if _v>v:
+						yield (INSERT,i,_i+off,0)
+						off+=1
+						break
+					else:
+						_i+=1
+						_v=None
+						if _i==m:
+							break
+				if _v==None:
+					break
 
 class MergeSortOPT(BaseAlgorithm):
 	name="Merge Sort"
-	desc="Merges buckets until sorted"
+	desc="Merges buckets until sorted\nNote: concurrent mode only works In-Place"
 	opts={
 		"oop":(bool,False,"Out-of-Place","In-Place"),
-		"vrs":(list,0,("Normal","Natural"),"%s")
+		"vrs":(list,0,("Normal","Natural"),"%s"),
+		"conc":(bool,False,"Concurrent","Seperate")
 	}
 	def __new__(cls,l):
 		if cls.vals["vrs"]==0:
