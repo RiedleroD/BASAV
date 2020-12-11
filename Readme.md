@@ -8,7 +8,10 @@ All Algorithms work via a sort-of-API that consists of 8 different statements. O
 - NEW_BUCK creates a new bucket and CAN transfer one item from another bucket to it
 - BUCKSWAP swaps an item from one bucket to another item from another bucket
 - BUCKINSERT inserts an item from one bucket to an index in another bucket
-- DEL_BUCK deletes a bucket. If the bucket is not empty, nothing happens.
+- DEL_BUCK deletes a bucket. If the bucket is not empty, nothing happens
+- PULL pulls an item from the end of a bucket into the variable space
+- PUSH pushes an item from the variable space onto a bucket
+- PULSH pulls an item from one bucket and onto another one
 - FIN ends the sorting
 
 The Algorithms only have access to unlimited variable space, the length of the initial array and these statements.
