@@ -13,6 +13,10 @@ BUCKSWAP=4
 BUCKINSERT=5
 DEL_BUCK=6
 FIN=7
+#added in a162885
+PULL=8
+PUSH=9
+PULSH=10
 
 class BaseAlgorithm():
 	name="Base Algorithm"
@@ -23,15 +27,18 @@ class BaseAlgorithm():
 	def __init__(self,l):
 		self.l=l#array length
 	#gen yields a tuple that tells the main program what to do each iteration - it doesn't have access to the list. Read values get stored in self.v.
-	#None		→ does nothing
-	#(READ,x,i)	→ reads value of item x in bucket i and puts it into the value param next cycle; None means there is no item at this index
-	#(SWAP,x,y,i)	→ swaps item x with item y in bucket i
-	#(INSERT,x,y,i)	→ inserts item x at index y and pushes all items between one index to the old index
-	#(NEW_BUCK,)	→ creates a new bucket
-	#(BUCKSWAP,x,i,y,j)→ swaps item x in bucket i to index y in bucket j
+	#None				→ does nothing
+	#(READ,x,i)			→ reads value of item x in bucket i and puts it into the value param next cycle; None means there is no item at this index
+	#(SWAP,x,y,i)		→ swaps item x with item y in bucket i
+	#(INSERT,x,y,i)		→ inserts item x at index y and pushes all items between one index to the old index
+	#(NEW_BUCK,)		→ creates a new bucket
+	#(BUCKSWAP,x,i,y,j)	→ swaps item x in bucket i to index y in bucket j
 	#(BUCKINSERT,x,i,y,j)→inserts item x in bucket i at index y in bucket j
 	#(DEL_BUCK,i)		→ destroys bucket i (only empty buckets can be destroyed)
-	#(FIN,)		→ finish (not necessary anymore, StopIteration finishes too)
+	#(FIN,)				→ finish (not necessary anymore, StopIteration finishes too)
+	#(PULL,i)			→ pulls item from bucket i into a one-item variable space
+	#(PUSH,i)			→ pushes item from the one-item variable space onto bucket i
+	#(PULSH,i,j)		→ pulls item from bucket i and pushes it onto bucket j
 	gen=None
 
 print("  defining algorithms…")
