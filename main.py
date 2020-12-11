@@ -155,9 +155,21 @@ class MainLogic():
 		self.curalg=self.curalg(BUCKLEN)
 		self.avgupscc.reset()
 		self.avgfpscc.reset()
-		self.gen=self.curalg.gen()
+		self.gen=self.wrap_around_gen(self.curalg.gen())
 		self.stats=[0,0,0,0,0]
 		self.btns[0].press()
+	def wrap_around_gen(self,gen):
+		for act in gen:
+			if self.btns[6].pressed:
+				if act[0]==INSERT:
+					for a in self.banish_insert(act):
+						yield a
+					continue
+				elif act[0]==BUCKINSERT:
+					for a in self.banish_buckinsert(act):
+						yield a
+					continue
+			yield act
 	def squash_bucks(self):
 		if len(self.bucks)>1:
 			for buck in range(1,len(self.bucks)):
@@ -474,6 +486,37 @@ class MainLogic():
 		else:
 			print(f"{self.curalg.name}: Invalid act: {act}")
 			return False
+	def banish_insert(self,act):
+		if len(act)!=4:
+			print(f"{self.curalg.name}: INSERT: incorrect act length {len(act)}: only length of 4 is allowed")
+		elif act[3]>=len(self.bucks) or act[3]<0:
+			print(f"{self.curalg.name}: INSERT: Bucket {act[3]} does not exist, max is {len(self.bucks)-1}")
+		else:
+			typ,x,y,buck=act
+			if x<y:
+				for i in range(x,y):
+					yield (SWAP,i,i+1,buck)
+			else:
+				for i in range(x,y,-1):
+					yield (SWAP,i-1,i,buck)
+	def banish_buckinsert(self,act):
+		if len(act)!=5:
+			print(f"{self.curalg.name}: BUCKINSERT: incorrect act length {len(act)}: only length of 5 is allowed")
+		elif act[2]>=len(self.bucks) or act[2]<0:
+			print(f"{self.curalg.name}: BUCKINSERT: Bucket {act[2]} does not exist, max is {len(self.bucks)-1}")
+		elif act[4]>=len(self.bucks) or act[4]<0:
+			print(f"{self.curalg.name}: BUCKINSERT: Bucket {act[4]} does not exist, max is {len(self.bucks)-1}")
+		else:
+			typ,x,bx,y,by=act
+			if bx==by:
+				for a in self.banish_insert((INSERT,x,y,bx)):
+					yield a
+			else:
+				for a in self.banish_insert((INSERT,x,self.bucks[bx].itemc-1,bx)):
+					yield a
+				yield (PULSH,bx,by)
+				for a in self.banish_insert((INSERT,self.bucks[by].itemc-1,y,by)):
+					yield a
 	def on_draw(self):
 		self.fpscc.checkpoint()#updates dt and tc and waits for next checkpoint
 		self.avgfpscc.checkpoint()
