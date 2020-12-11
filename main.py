@@ -53,7 +53,7 @@ class MainLogic():
 		self.gen=None
 		self.aconcur=0
 		self.playing=True
-		self.stats=[0,0,0,0,0]
+		self.stats=[0,0,0,0,0,0,0]
 		self.labels=[]
 		self.btns=[]
 		self.rads=[]
@@ -86,7 +86,7 @@ class MainLogic():
 						if previ>i:
 							randomness+=previ-i
 						previ=i
-			self.labels[7].setText("Randomness:%02i"%randomness)
+			self.labels[9].setText("Randomness:%02i"%randomness)
 			self.upscc.reset()
 		if not self.edits[1].pressed:
 			self.set_fps(self.edits[1].getNum())
@@ -130,6 +130,8 @@ class MainLogic():
 		self.labels[4].setText("Insert:%02i"%self.stats[2])
 		self.labels[5].setText("Bucket:%02i"%self.stats[3])
 		self.labels[6].setText("Pass:%02i"%self.stats[4])
+		self.labels[7].setText("Pull:%02i"%self.stats[5])
+		self.labels[8].setText("Push:%02i"%self.stats[6])
 		self.check_apls()
 		self.play_all()
 	def stop_algorithm(self,reset_buck0=True):
@@ -156,7 +158,7 @@ class MainLogic():
 		self.avgupscc.reset()
 		self.avgfpscc.reset()
 		self.gen=self.wrap_around_gen(self.curalg.gen())
-		self.stats=[0,0,0,0,0]
+		self.stats=[0,0,0,0,0,0,0]
 		self.btns[0].press()
 	def wrap_around_gen(self,gen):
 		for act in gen:
@@ -319,6 +321,8 @@ class MainLogic():
 		else:
 			rv,var=self.bucks[act[1]].pull_item()
 			self.play(var)
+			self.stats[5]+=1
+			self.stats[6]+=1
 			if rv:
 				return self.bucks[act[2]].push_item(var)
 			else:
@@ -339,6 +343,7 @@ class MainLogic():
 		else:
 			rv,var=self.bucks[act[1]].pull_item()
 			self.play(var)
+			self.stats[5]+=1
 			if rv:
 				self.varspace=var
 			return rv
@@ -355,6 +360,7 @@ class MainLogic():
 		else:
 			rv=self.bucks[act[1]].push_item(self.varspace)
 			self.play(self.varspace)
+			self.stats[6]+=1
 			if rv:
 				self.varspace=None
 			return rv
@@ -548,7 +554,9 @@ logic.labels=[	Label(WIDTH2,HEIGHT,0,0,"FPS:00",logic.batch,6),
 				Label(WIDTH2,HEIGHT-75,0,0,"Insert:00",logic.batch,6),
 				Label(WIDTH2,HEIGHT-90,0,0,"Bucket:00",logic.batch,6),
 				Label(WIDTH2,HEIGHT-105,0,0,"Pass:00",logic.batch,6),
-				Label(WIDTH2,HEIGHT-120,0,0,"Randomness:00",logic.batch,6),
+				Label(WIDTH2,HEIGHT-120,0,0,"Pull:00",logic.batch,6),
+				Label(WIDTH2,HEIGHT-135,0,0,"Push:00",logic.batch,6),
+				Label(WIDTH2,HEIGHT-150,0,0,"Randomness:00",logic.batch,6),
 				LabelMultiline(WIDTH2,0,0,0,"Sorting\nalgorithm\nDescription",logic.batch,0)]
 logic.btns=[	ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",logic.batch,8,pressedText="Stop"),
 				Button(WIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Shuffle",logic.batch,8),
