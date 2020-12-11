@@ -532,6 +532,33 @@ class Bucket(Entity):
 	def getvalue(self,i):
 		self.racts.add(i)
 		return self._getvalue(i)
+	def pull_item(self):
+		if self.itemc==0:
+			print(f"out-of-bounds call to PULL: Bucket empty")
+			return False,None
+		else:
+			self.itemc-=1
+			#shit code bc slicing doesn't work with deques
+			self.colors[6*self.itemc]=10
+			for i in range(6*self.itemc+1,6*self.itemc+6):
+				self.colors[i]=0
+			#it's just this→ self.colors[6*self.itemc,6*self.itemc+6]=10,0,0,0,0,0
+			self.wacts.add(self.itemc)
+			return True,self.items.pop()
+	def push_item(self,item):
+		if self.itemc==self.maxic:
+			print(f"out-of-bounds call to PUSH: Bucket full")
+			return False
+		else:
+			self.itemc+=1
+			#again fuck deques
+			cl=colorlamb(item/self.maxic)
+			for i in range(0,6):
+				self.colors[6*self.itemc+i-6]=cl[i]
+			#self.colors[6*self.itemc-6:6*self.itemc]=colorlamb(item/self.maxic)
+			self.wacts.add(self.itemc-1)
+			self.items.append(item)
+			return True
 	def swapitems(self,x,y):
 		if x>=self.itemc or x<0 or y>=self.itemc or y<0:
 			print(f"out-of-bounds call to SWAP: {x},{y} not in buck[{self.itemc}]")

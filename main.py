@@ -35,6 +35,7 @@ print("defining main logic…")
 
 class MainLogic():
 	spd=20
+	varspace=None
 	def __init__(self,win):
 		self.window=win
 		self.window.push_handlers(KP)
@@ -287,6 +288,64 @@ class MainLogic():
 		self.toplay.append(item)
 	def play_index(self,b,i):
 		return self.play(self.bucks[b]._getvalue(i)[1])
+	def act_pulsh(self,act):
+		if len(act)!=3:
+			print(f"{self.curalg.name}: PULSH: incorrect act length {len(act)}: only length of 3 is allowed")
+			return False
+		elif act[1]>=len(self.bucks) or act[1]<0:
+			print(f"{self.curalg.name}: PULSH: Bucket {act[1]} does not exist, max is {len(self.bucks)-1}")
+			return False
+		elif act[2]>=len(self.bucks) or act[2]<0:
+			print(f"{self.curalg.name}: PULSH: Bucket {act[2]} does not exist, max is {len(self.bucks)-1}")
+			return False
+		elif self.varspace:
+			print(f"{self.curalg.name}: PULSH: Variable Space is already full")
+			return False
+		elif self.bucks[act[1]].itemc==0:
+			print(f"{self.curalg.name}: PULSH: bucket {act[1]} is empty")
+			return False
+		else:
+			rv,var=self.bucks[act[1]].pull_item()
+			self.play(var)
+			if rv:
+				return self.bucks[act[2]].push_item(var)
+			else:
+				return rv
+	def act_pull(self,act):
+		if len(act)!=2:
+			print(f"{self.curalg.name}: PULL: incorrect act length {len(act)}: only length of 2 is allowed")
+			return False
+		elif act[1]>=len(self.bucks) or act[1]<0:
+			print(f"{self.curalg.name}: PULL: Bucket {act[1]} does not exist, max is {len(self.bucks)-1}")
+			return False
+		elif self.varspace!=None:
+			print(f"{self.curalg.name}: PULL: Variable Space is already full")
+			return False
+		elif self.bucks[act[1]].itemc==0:
+			print(f"{self.curalg.name}: PULL: bucket {act[1]} is empty")
+			return False
+		else:
+			rv,var=self.bucks[act[1]].pull_item()
+			self.play(var)
+			if rv:
+				self.varspace=var
+			return rv
+	def act_push(self,act):
+		if len(act)!=2:
+			print(f"{self.curalg.name}: PUSH: incorrect act length {len(act)}: only length of 2 is allowed")
+			return False
+		elif act[1]>=len(self.bucks) or act[1]<0:
+			print(f"{self.curalg.name}: PUSH: Bucket {act[1]} does not exist, max is {len(self.bucks)-1}")
+			return False
+		elif self.varspace==None:
+			print(f"{self.curalg.name}: PUSH: Variable Space is empty")
+			return False
+		else:
+			rv=self.bucks[act[1]].push_item(self.varspace)
+			self.play(self.varspace)
+			if rv:
+				self.varspace=None
+			return rv
 	def act_read(self,act):
 		if len(act)!=3:
 			print(f"{self.curalg.name}: READ: incorrect act length {len(act)}: only length of 3 is allowed")
@@ -403,6 +462,12 @@ class MainLogic():
 			return self.act_buckinsert(act)
 		elif act[0]==DEL_BUCK:#delete bucket
 			return self.act_del_buck(act)
+		elif act[0]==PULL:
+			return self.act_pull(act)
+		elif act[0]==PUSH:
+			return self.act_push(act)
+		elif act[0]==PULSH:
+			return self.act_pulsh(act)
 		elif act[0]==FIN:#finished
 			print(f"{self.curalg.name}: finished with average fps {self.avgfpscc.getHz():.0f} and ups {self.avgupscc.getHz():.0f}")
 			return False
