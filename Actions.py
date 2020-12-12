@@ -263,7 +263,7 @@ class PULSH(BaseAction):
 			print(f"{logic.curalg.name}: PULSH: varspace isn't empty")
 			return False
 		elif not logic.bucks[self.bx].itemc:
-			print(f"{logic.curalg.name}: PULL: bx={self.bx} targets a non-empty bucket with {logic.bucks[self.b].itemc} items left")
+			print(f"{logic.curalg.name}: PULL: bx={self.bx} targets a non-empty bucket with {logic.bucks[self.bx].itemc} items left")
 			return False
 		else:
 			return True
