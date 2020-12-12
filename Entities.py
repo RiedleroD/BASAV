@@ -473,6 +473,7 @@ class RadioListPaged(RadioList):
 class Bucket(Entity):
 	ravl=None
 	wavl=None
+	mod_colors=True
 	def __init__(self,x,y,w,h,itemc,batch,anch=0,maxps=None):
 		super().__init__(x,y,w,h,batch,anch)
 		self.maxic=abs(itemc)
@@ -544,6 +545,7 @@ class Bucket(Entity):
 				self.colors[i]=0
 			#it's just this→ self.colors[6*self.itemc,6*self.itemc+6]=10,0,0,0,0,0
 			self.wacts.add(self.itemc)
+			self.mod_colors=True
 			return True,self.items.pop()
 	def push_item(self,item):
 		if self.itemc==self.maxic:
@@ -558,6 +560,7 @@ class Bucket(Entity):
 			#self.colors[6*self.itemc-6:6*self.itemc]=colorlamb(item/self.maxic)
 			self.wacts.add(self.itemc-1)
 			self.items.append(item)
+			self.mod_colors=True
 			return True
 	def swapitems(self,x,y):
 		if x>=self.itemc or x<0 or y>=self.itemc or y<0:
@@ -569,6 +572,7 @@ class Bucket(Entity):
 				self.colors[6*x+j],self.colors[6*y+j]=self.colors[6*y+j],self.colors[6*x+j]
 			self.wacts.add(x)
 			self.wacts.add(y)
+			self.mod_colors=True
 			return True
 	def insertitem(self,x,i):
 		if x>=self.itemc or x<0 or i>self.itemc or i<0:
@@ -588,9 +592,12 @@ class Bucket(Entity):
 				self.colors.insert(6*i+j,self.colors.pop(6*x+j))
 			self.wacts.add(i)
 		self.wacts.add(x)
+		self.mod_colors=True
 		return True
 	def swap_from(self,x,y,other):
 		if x>=0 and y>=0 and other.itemc>x and self.itemc>y:
+			self.mod_colors=other.mod_colors=True
+			
 			self.items[x],other.items[y]=other.items[y],self.items[x]
 			for j in range(6):
 				self.colors[6*x+j],other.colors[6*y+j]=other.colors[6*y+j],self.colors[6*x+j]
@@ -602,6 +609,7 @@ class Bucket(Entity):
 			return False
 	def insert_from(self,x,y,other):
 		if other.itemc>x>=0 and self.itemc>=y>=0:
+			self.mod_colors=other.mod_colors=True
 			self.items[y:y]=other.items.pop(x),
 			for j in range(6):
 				self.colors.insert(y*6+j,other.colors.pop(x*6))
@@ -625,12 +633,14 @@ class Bucket(Entity):
 		self.rendered=True
 	def generate_colors(self):
 		return [col for i in range(self.maxic) for col in colorlamb(i/self.maxic)]
-	def draw(self):
+	def draw(self):#!!!almost all of the time here is spent in vl.colors
 		if not self.rendered:
 			self.render()
 		if self.itemc>self.maxic:
 			raise ValueError("Bucket: itemc is larger than maxic")
-		self.vl.colors=self.colors
+		if self.mod_colors:
+			self.vl.colors=self.colors
+			self.mod_colors=False
 		for i,num in enumerate(self.wacts):
 			if i>=self.maxps:
 				break

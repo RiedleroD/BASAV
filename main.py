@@ -320,20 +320,20 @@ class MainLogic():
 		if self.fpscc.dt>=0.1:
 			self.labels[0].setText("FPS:%02i/%02i"%(round(self.fpscc.getHz()),self.fps))
 			self.fpscc.reset()
-		for item in self.labels:#2000µs–5000µs
+		for item in self.labels:
 			item.draw()
-		for item in self.btns:	#100µs
+		for item in self.btns:
 			item.draw()
-		for item in self.rads:	#300µs
+		for item in self.rads:
 			item.draw()
 		self.labels[-1].setText(algs[self.rads[0].getSelected()].desc)
-		for item in self.edits:	#40µs
+		for item in self.edits:
 			item.draw()
 		for item in self.algui.values():
 			item.draw()
-		for item in self.bucks:	#1000µs–1500µs depending on how much inserting (heavy) vs swapping (light) vs reading (ultra light) is done and how many buckets are present
+		for item in self.bucks:#!!!!almost half of the total time is spent in this function!!!
 			item.draw()
-		self.batch.draw()		#1500µs–2000µs
+		self.batch.draw()
 		pyglet.clock.tick()
 
 logic=MainLogic(window)
