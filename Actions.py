@@ -4,6 +4,8 @@ class BaseAction:
 		pass
 	def validate(self):
 		return True
+	def act(self):
+		return True
 	def __str__(self):
 		return "BaseAction()"
 	def __repr__(self):
@@ -26,6 +28,12 @@ class READ(BaseAction):
 			return False
 		else:
 			return True
+	def act(self):
+		rv,logic.curval=logic.bucks[self.b].getvalue(self.x)
+		logic.stats[0]+=1
+		logic.curalg.v=logic.curval
+		logic.play(logic.curval)
+		return rv
 	def __str__(self):
 		return f"READ(x={self.x},b={self.b})"
 #SWAP(x,y,b)			→ swaps item x with item y in bucket b
@@ -46,6 +54,11 @@ class SWAP(BaseAction):
 			return False
 		else:
 			return True
+	def act(self):
+		logic.stats[1]+=1
+		logic.play_index(self.b,self.x)
+		logic.play_index(self.b,self.y)
+		return logic.bucks[self.b].swapitems(self.x,self.y)
 	def __str__(self):
 		return f"SWAP(x={self.x},y={self.y},b={self.b})"
 #INSERT(x,y,b)			→ inserts item x at index y and pushes all items between one index to the old index
@@ -66,6 +79,10 @@ class INSERT(BaseAction):
 			return False
 		else:
 			return True
+	def act(self):
+		logic.stats[2]+=1
+		logic.play_index(self.b,self.x)
+		return logic.bucks[self.b].insertitem(self.x,self.y)
 	def insertless(self):
 		if self.x<self.y:
 			for i in range(self.x,self.y):
@@ -77,6 +94,14 @@ class INSERT(BaseAction):
 		return f"INSERT(x={self.x},y={self.y},b={self.b})"
 #NEW_BUCK()				→ creates a new bucket
 class NEW_BUCK(BaseAction):
+	def act(self):
+		chunksize=logic.window.width/((len(logic.bucks)+1)*2)
+		for i,buck in enumerate(logic.bucks):
+			buck.set_pos(chunksize*i,0)
+			buck.set_size(chunksize,logic.window.height)
+		logic.bucks.append(Bucket(logic.window.width/2-chunksize,0,chunksize,logic.window.height,-logic.bucks[0].maxic,logic.batch,maxps=logic.edits[0].getNum()))
+		logic.stats[3]+=1
+		return True
 	def __str__(self):
 		return "NEW_BUCK()"
 #BUCKSWAP(x,bx,y,by)	→ swaps item x in bucket bx to index y in bucket by
@@ -101,6 +126,11 @@ class BUCKSWAP(BaseAction):
 			return False
 		else:
 			return True
+	def act(self):
+		logic.stats[1]+=1
+		logic.play_index(self.bx,self.x)
+		logic.play_index(self.by,self.y)
+		return logic.bucks[self.by].swap_from(self.x,self.y,logic.bucks[self.bx])
 	def __str__(self):
 		return f"BUCKSWAP(x={self.x},bx={self.bx},y={self.y},by={self.by})"
 #BUCKINSERT(x,bx,y,by)	→ inserts item x in bucket bx at index y in bucket by
@@ -125,6 +155,10 @@ class BUCKINSERT(BaseAction):
 			return False
 		else:
 			return True
+	def act(self):
+		logic.stats[2]+=1
+		logic.play_index(self.bx,self.x)
+		return logic.bucks[self.by].insert_from(self.x,self.y,logic.bucks[self.bx])
 	def insertless(self):
 		if self.bx==self.by:
 			for a in INSERT(self.x,self.y,self.bx).insertless():
@@ -150,10 +184,20 @@ class DEL_BUCK(BaseAction):
 			return False
 		else:
 			return True
+	def act(self):
+		del logic.bucks[self.b]
+		chunksize=logic.window.width/(len(logic.bucks)*2)
+		for i,buck in enumerate(logic.bucks):
+			buck.set_size(chunksize,logic.window.height)
+			buck.set_pos(chunksize*i,0)
+		logic.stats[3]+=1
+		return True
 	def __str__(self):
 		return f"DEL_BUCK(b={self.b})"
 #FIN()					→ finish (not necessary anymore, StopIteration finishes too)
 class FIN(BaseAction):
+	def act(self):
+		return False
 	def __str__(self):
 		return "FIN()"
 #PULL(b)				→ pulls item from bucket b into a one-item variable space
@@ -172,6 +216,13 @@ class PULL(BaseAction):
 			return False
 		else:
 			return True
+	def act(self):
+		rv,var=logic.bucks[self.b].pull_item()
+		logic.play(var)
+		logic.stats[5]+=1
+		if rv:
+			logic.varspace=var
+		return rv
 	def __str__(self):
 		return f"PULL(b={self.b})"
 #PUSH(b)				→ pushes item from the one-item variable space onto bucket b
@@ -187,6 +238,13 @@ class PUSH(BaseAction):
 			return False
 		else:
 			return True
+	def act(self):
+		rv=logic.bucks[self.b].push_item(logic.varspace)
+		logic.play(logic.varspace)
+		logic.stats[6]+=1
+		if rv:
+			logic.varspace=None
+		return rv
 	def __str__(self):
 		return f"PUSH(b={self.b})"
 #PULSH(bx,by)			→ pulls item from bucket bx and pushes it onto bucket by
@@ -209,5 +267,14 @@ class PULSH(BaseAction):
 			return False
 		else:
 			return True
+	def act(self):
+		rv,var=logic.bucks[self.bx].pull_item()
+		logic.play(var)
+		logic.stats[5]+=1
+		logic.stats[6]+=1
+		if rv:
+			return logic.bucks[self.by].push_item(var)
+		else:
+			return rv
 	def __str__(self):
 		return f"PULSH(bx={self.bx},by={self.by})"

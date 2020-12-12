@@ -67,20 +67,6 @@ class MainLogic():
 		self.toplay=deque()
 		self.apls=[]#audio players
 		self.batch=pyglet.graphics.Batch()
-		self.actfuncs={#functions that execute actions
-			PASS:self.act_pass,
-			READ:self.act_read,
-			SWAP:self.act_swap,
-			INSERT:self.act_insert,
-			NEW_BUCK:self.act_new_buck,
-			BUCKSWAP:self.act_buckswap,
-			BUCKINSERT:self.act_buckinsert,
-			DEL_BUCK:self.act_del_buck,
-			PULL:self.act_pull,
-			PUSH:self.act_push,
-			PULSH:self.act_pulsh,
-			FIN:self.act_fin
-		}
 	def set_fps(self,fps):
 		if fps!=self.fps and fps>0:
 			self.fps=fps
@@ -319,74 +305,6 @@ class MainLogic():
 		self.toplay.append(item)
 	def play_index(self,b,i):
 		return self.play(self.bucks[b]._getvalue(i)[1])
-	def act_pass(self,act):
-		return True
-	def act_fin(self,act):
-		return False
-	def act_pulsh(self,act):
-		rv,var=self.bucks[act.bx].pull_item()
-		self.play(var)
-		self.stats[5]+=1
-		self.stats[6]+=1
-		if rv:
-			return self.bucks[act.by].push_item(var)
-		else:
-			return rv
-	def act_pull(self,act):
-		rv,var=self.bucks[act.b].pull_item()
-		self.play(var)
-		self.stats[5]+=1
-		if rv:
-			self.varspace=var
-		return rv
-	def act_push(self,act):
-		rv=self.bucks[act.b].push_item(self.varspace)
-		self.play(self.varspace)
-		self.stats[6]+=1
-		if rv:
-			self.varspace=None
-		return rv
-	def act_read(self,act):
-		rv,self.curval=self.bucks[act.b].getvalue(act.x)
-		self.stats[0]+=1
-		if self.curalg.gen:
-			self.curalg.v=self.curval
-		self.play(self.curval)
-		return rv
-	def act_swap(self,act):
-		self.stats[1]+=1
-		self.play_index(act.b,act.x)
-		self.play_index(act.b,act.y)
-		return self.bucks[act.b].swapitems(act.x,act.y)
-	def act_insert(self,act):
-		self.stats[2]+=1
-		self.play_index(act.b,act.x)
-		return self.bucks[act.b].insertitem(act.x,act.y)
-	def act_new_buck(self,act):
-		chunksize=WIDTH2/(len(self.bucks)+1)
-		for i,buck in enumerate(self.bucks):
-			buck.set_pos(chunksize*i,0)
-			buck.set_size(chunksize,HEIGHT)
-		self.bucks.append(Bucket(WIDTH2-chunksize,0,chunksize,HEIGHT,-BUCKLEN,self.batch,maxps=self.edits[0].getNum()))
-		self.stats[3]+=1
-		return True
-	def act_buckswap(self,act):
-		self.stats[1]+=1
-		self.play_index(act.bx,act.x)
-		self.play_index(act.by,act.y)
-		return self.bucks[act.by].swap_from(act.x,act.y,self.bucks[act.bx])
-	def act_buckinsert(self,act):
-		self.stats[2]+=1
-		self.play_index(act.bx,act.x)
-		return self.bucks[act.by].insert_from(act.x,act.y,self.bucks[act.bx])
-	def act_del_buck(self,act):
-		del self.bucks[act.b]
-		chunksize=WIDTH2/len(self.bucks)
-		for i,buck in enumerate(self.bucks):
-			buck.set_size(chunksize,HEIGHT)
-			buck.set_pos(chunksize*i,0)
-		self.stats[3]+=1
-		return True
 	def procact(self,act):
 		if not isinstance(act,BaseAction):
 			print(f"{self.curalg.name}: Invalid act type: {type(act)}, only children of BaseAction are allowed")
@@ -395,7 +313,7 @@ class MainLogic():
 			return False
 		if VERBOSE:
 			print(f"{self.curalg.name}: {act}")
-		return self.actfuncs[type(act)](act)
+		return act.act()
 	def on_draw(self):
 		self.fpscc.checkpoint()#updates dt and tc and waits for next checkpoint
 		self.avgfpscc.checkpoint()
@@ -450,6 +368,7 @@ logic.btns[4].press()
 
 print("exposing logic to actions…")
 Actions.logic=logic
+Actions.Bucket=Bucket#because of one specific action needing that
 print("starting main app…")
 try:
 	pyglet.app.run()
