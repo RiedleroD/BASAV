@@ -1,6 +1,9 @@
 #!/usr/bin/python3
 print("importing entities…")
 from Entities import *
+print("importing actions")
+import Actions
+from Actions import *
 print("importing algorithms…")
 from Algs import *
 print("importing various other libraries…")
@@ -64,6 +67,20 @@ class MainLogic():
 		self.toplay=deque()
 		self.apls=[]#audio players
 		self.batch=pyglet.graphics.Batch()
+		self.actfuncs={#functions that execute actions
+			PASS:self.act_pass,
+			READ:self.act_read,
+			SWAP:self.act_swap,
+			INSERT:self.act_insert,
+			NEW_BUCK:self.act_new_buck,
+			BUCKSWAP:self.act_buckswap,
+			BUCKINSERT:self.act_buckinsert,
+			DEL_BUCK:self.act_del_buck,
+			PULL:self.act_pull,
+			PUSH:self.act_push,
+			PULSH:self.act_pulsh,
+			FIN:self.act_fin
+		}
 	def set_fps(self,fps):
 		if fps!=self.fps and fps>0:
 			self.fps=fps
@@ -114,11 +131,11 @@ class MainLogic():
 				try:
 					act=next(self.gen)
 				except StopIteration:
-					act=(FIN,)
+					act=FIN()
 				except Exception as e:
 					tbe.print_tb(e.__traceback__)
 					print(f"{self.curalg.name}: {e}")
-					act=(FIN,)
+					act=FIN()
 				if not self.procact(act):
 					self.stop_algorithm()
 					break
@@ -163,12 +180,12 @@ class MainLogic():
 	def wrap_around_gen(self,gen):
 		for act in gen:
 			if self.btns[6].pressed:
-				if act[0]==INSERT:
-					for a in self.banish_insert(act):
+				if type(act)==INSERT:
+					for a in act.insertless():
 						yield a
 					continue
-				elif act[0]==BUCKINSERT:
-					for a in self.banish_buckinsert(act):
+				elif type(act)==BUCKINSERT:
+					for a in act.insertless():
 						yield a
 					continue
 			yield act
@@ -302,227 +319,83 @@ class MainLogic():
 		self.toplay.append(item)
 	def play_index(self,b,i):
 		return self.play(self.bucks[b]._getvalue(i)[1])
+	def act_pass(self,act):
+		return True
+	def act_fin(self,act):
+		return False
 	def act_pulsh(self,act):
-		if len(act)!=3:
-			print(f"{self.curalg.name}: PULSH: incorrect act length {len(act)}: only length of 3 is allowed")
-			return False
-		elif act[1]>=len(self.bucks) or act[1]<0:
-			print(f"{self.curalg.name}: PULSH: Bucket {act[1]} does not exist, max is {len(self.bucks)-1}")
-			return False
-		elif act[2]>=len(self.bucks) or act[2]<0:
-			print(f"{self.curalg.name}: PULSH: Bucket {act[2]} does not exist, max is {len(self.bucks)-1}")
-			return False
-		elif self.varspace:
-			print(f"{self.curalg.name}: PULSH: Variable Space is already full")
-			return False
-		elif self.bucks[act[1]].itemc==0:
-			print(f"{self.curalg.name}: PULSH: bucket {act[1]} is empty")
-			return False
+		rv,var=self.bucks[act.bx].pull_item()
+		self.play(var)
+		self.stats[5]+=1
+		self.stats[6]+=1
+		if rv:
+			return self.bucks[act.by].push_item(var)
 		else:
-			rv,var=self.bucks[act[1]].pull_item()
-			self.play(var)
-			self.stats[5]+=1
-			self.stats[6]+=1
-			if rv:
-				return self.bucks[act[2]].push_item(var)
-			else:
-				return rv
+			return rv
 	def act_pull(self,act):
-		if len(act)!=2:
-			print(f"{self.curalg.name}: PULL: incorrect act length {len(act)}: only length of 2 is allowed")
-			return False
-		elif act[1]>=len(self.bucks) or act[1]<0:
-			print(f"{self.curalg.name}: PULL: Bucket {act[1]} does not exist, max is {len(self.bucks)-1}")
-			return False
-		elif self.varspace!=None:
-			print(f"{self.curalg.name}: PULL: Variable Space is already full")
-			return False
-		elif self.bucks[act[1]].itemc==0:
-			print(f"{self.curalg.name}: PULL: bucket {act[1]} is empty")
-			return False
-		else:
-			rv,var=self.bucks[act[1]].pull_item()
-			self.play(var)
-			self.stats[5]+=1
-			if rv:
-				self.varspace=var
-			return rv
+		rv,var=self.bucks[act.b].pull_item()
+		self.play(var)
+		self.stats[5]+=1
+		if rv:
+			self.varspace=var
+		return rv
 	def act_push(self,act):
-		if len(act)!=2:
-			print(f"{self.curalg.name}: PUSH: incorrect act length {len(act)}: only length of 2 is allowed")
-			return False
-		elif act[1]>=len(self.bucks) or act[1]<0:
-			print(f"{self.curalg.name}: PUSH: Bucket {act[1]} does not exist, max is {len(self.bucks)-1}")
-			return False
-		elif self.varspace==None:
-			print(f"{self.curalg.name}: PUSH: Variable Space is empty")
-			return False
-		else:
-			rv=self.bucks[act[1]].push_item(self.varspace)
-			self.play(self.varspace)
-			self.stats[6]+=1
-			if rv:
-				self.varspace=None
-			return rv
+		rv=self.bucks[act.b].push_item(self.varspace)
+		self.play(self.varspace)
+		self.stats[6]+=1
+		if rv:
+			self.varspace=None
+		return rv
 	def act_read(self,act):
-		if len(act)!=3:
-			print(f"{self.curalg.name}: READ: incorrect act length {len(act)}: only length of 3 is allowed")
-			return False
-		elif act[2]>=len(self.bucks) or act[2]<0:
-			print(f"{self.curalg.name}: READ: Bucket {act[2]} does not exist, max is {len(self.bucks)-1}")
-			return False
-		else:
-			rv,self.curval=self.bucks[act[2]].getvalue(act[1])
-			self.stats[0]+=1
-			if self.curalg.gen:
-				self.curalg.v=self.curval
-			self.play(self.curval)
-			return rv
+		rv,self.curval=self.bucks[act.b].getvalue(act.x)
+		self.stats[0]+=1
+		if self.curalg.gen:
+			self.curalg.v=self.curval
+		self.play(self.curval)
+		return rv
 	def act_swap(self,act):
-		if len(act)!=4:
-			print(f"{self.curalg.name}: SWAP: incorrect act length {len(act)}: only length of 4 is allowed")
-			return False
-		elif act[3]>=len(self.bucks) or act[3]<0:
-			print(f"{self.curalg.name}: SWAP: Bucket {act[3]} does not exist, max is {len(self.bucks)-1}")
-			return False
-		else:
-			self.stats[1]+=1
-			self.play_index(act[3],act[1])
-			self.play_index(act[3],act[2])
-			return self.bucks[act[3]].swapitems(act[1],act[2])
+		self.stats[1]+=1
+		self.play_index(act.b,act.x)
+		self.play_index(act.b,act.y)
+		return self.bucks[act.b].swapitems(act.x,act.y)
 	def act_insert(self,act):
-		if len(act)!=4:
-			print(f"{self.curalg.name}: INSERT: incorrect act length {len(act)}: only length of 4 is allowed")
-			return False
-		elif act[3]>=len(self.bucks) or act[3]<0:
-			print(f"{self.curalg.name}: INSERT: Bucket {act[3]} does not exist, max is {len(self.bucks)-1}")
-			return False
-		else:
-			self.stats[2]+=1
-			self.play_index(act[3],act[1])
-			return self.bucks[act[3]].insertitem(act[1],act[2])
+		self.stats[2]+=1
+		self.play_index(act.b,act.x)
+		return self.bucks[act.b].insertitem(act.x,act.y)
 	def act_new_buck(self,act):
-		if len(act) not in (1,3):
-			print(f"{self.curalg.name}: NEW_BUCK: incorrect act length {len(act)}: only length of 1 or 3 is allowed")
-			return False
-		else:
-			chunksize=WIDTH2/(len(self.bucks)+1)
-			for i,buck in enumerate(self.bucks):
-				buck.set_pos(chunksize*i,0)
-				buck.set_size(chunksize,HEIGHT)
-			self.bucks.append(Bucket(WIDTH2-chunksize,0,chunksize,HEIGHT,-BUCKLEN,self.batch,maxps=self.edits[0].getNum()))
-			self.stats[3]+=1
-			return True
+		chunksize=WIDTH2/(len(self.bucks)+1)
+		for i,buck in enumerate(self.bucks):
+			buck.set_pos(chunksize*i,0)
+			buck.set_size(chunksize,HEIGHT)
+		self.bucks.append(Bucket(WIDTH2-chunksize,0,chunksize,HEIGHT,-BUCKLEN,self.batch,maxps=self.edits[0].getNum()))
+		self.stats[3]+=1
+		return True
 	def act_buckswap(self,act):
-		if len(act)!=5:
-			print(f"{self.curalg.name}: BUCKSWAP: incorrect act length {len(act)}: only length of 5 is allowed")
-			return False
-		elif act[2]>=len(self.bucks) or act[2]<0:
-			print(f"{self.curalg.name}: BUCKSWAP: Bucket {act[2]} does not exist, max is {len(self.bucks)-1}")
-			return False
-		elif act[4]>=len(self.bucks) or act[4]<0:
-			print(f"{self.curalg.name}: BUCKSWAP: Bucket {act[4]} does not exist, max is {len(self.bucks)-1}")
-			return False
-		else:
-			self.stats[1]+=1
-			self.play_index(act[2],act[1])
-			self.play_index(act[4],act[3])
-			return self.bucks[act[4]].swap_from(act[1],act[3],self.bucks[act[2]])
+		self.stats[1]+=1
+		self.play_index(act.bx,act.x)
+		self.play_index(act.by,act.y)
+		return self.bucks[act.by].swap_from(act.x,act.y,self.bucks[act.bx])
 	def act_buckinsert(self,act):
-		if len(act)!=5:
-			print(f"{self.curalg.name}: BUCKINSERT: incorrect act length {len(act)}: only length of 5 is allowed")
-			return False
-		elif act[2]>=len(self.bucks) or act[2]<0:
-			print(f"{self.curalg.name}: BUCKINSERT: Bucket {act[2]} does not exist, max is {len(self.bucks)-1}")
-			return False
-		elif act[4]>=len(self.bucks) or act[4]<0:
-			print(f"{self.curalg.name}: BUCKINSERT: Bucket {act[4]} does not exist, max is {len(self.bucks)-1}")
-			return False
-		else:
-			self.stats[2]+=1
-			self.play_index(act[2],act[1])
-			return self.bucks[act[4]].insert_from(act[1],act[3],self.bucks[act[2]])
+		self.stats[2]+=1
+		self.play_index(act.bx,act.x)
+		return self.bucks[act.by].insert_from(act.x,act.y,self.bucks[act.bx])
 	def act_del_buck(self,act):
-		if len(act)!=2:
-			print(f"{self.curalg.name}: DEL_BUCK: incorrect act length {len(act)}: only length of 2 is allowed")
-			return False
-		elif self.bucks[act[1]].itemc!=0:
-			print(f"{self.curalg.name}: DEL_BUCK on non-empty bucket {act[1]} with {self.bucks[act[1]].itemc} items")
-			return False
-		else:
-			del self.bucks[act[1]]
-			chunksize=WIDTH2/len(self.bucks)
-			for i,buck in enumerate(self.bucks):
-				buck.set_size(chunksize,HEIGHT)
-				buck.set_pos(chunksize*i,0)
-			self.stats[3]+=1
-			return True
+		del self.bucks[act.b]
+		chunksize=WIDTH2/len(self.bucks)
+		for i,buck in enumerate(self.bucks):
+			buck.set_size(chunksize,HEIGHT)
+			buck.set_pos(chunksize*i,0)
+		self.stats[3]+=1
+		return True
 	def procact(self,act):
-		if act!=PASS and type(act)!=tuple:
-			print(f"{self.curalg.name}: Invalid act type: {type(act)}, only tuples and PASS are allowed")
+		if not isinstance(act,BaseAction):
+			print(f"{self.curalg.name}: Invalid act type: {type(act)}, only children of BaseAction are allowed")
+			return False
+		if not act.validate():
 			return False
 		if VERBOSE:
 			print(f"{self.curalg.name}: {act}")
-		if act==PASS or act[0]==PASS:#pass
-			self.stats[4]+=1
-			return True
-		elif act[0]==READ:#read value
-			return self.act_read(act)
-		elif act[0]==SWAP:#swap items
-			return self.act_swap(act)
-		elif act[0]==INSERT:#insert item to index
-			return self.act_insert(act)
-		elif act[0]==NEW_BUCK:#create new empty bucket
-			return self.act_new_buck(act)
-		elif act[0]==BUCKSWAP:#swap from bucket into another
-			return self.act_buckswap(act)
-		elif act[0]==BUCKINSERT:#insert from bucket into another
-			return self.act_buckinsert(act)
-		elif act[0]==DEL_BUCK:#delete bucket
-			return self.act_del_buck(act)
-		elif act[0]==PULL:
-			return self.act_pull(act)
-		elif act[0]==PUSH:
-			return self.act_push(act)
-		elif act[0]==PULSH:
-			return self.act_pulsh(act)
-		elif act[0]==FIN:#finished
-			print(f"{self.curalg.name}: finished with average fps {self.avgfpscc.getHz():.0f} and ups {self.avgupscc.getHz():.0f}")
-			return False
-		else:
-			print(f"{self.curalg.name}: Invalid act: {act}")
-			return False
-	def banish_insert(self,act):
-		if len(act)!=4:
-			print(f"{self.curalg.name}: INSERT: incorrect act length {len(act)}: only length of 4 is allowed")
-		elif act[3]>=len(self.bucks) or act[3]<0:
-			print(f"{self.curalg.name}: INSERT: Bucket {act[3]} does not exist, max is {len(self.bucks)-1}")
-		else:
-			typ,x,y,buck=act
-			if x<y:
-				for i in range(x,y):
-					yield (SWAP,i,i+1,buck)
-			else:
-				for i in range(x,y,-1):
-					yield (SWAP,i-1,i,buck)
-	def banish_buckinsert(self,act):
-		if len(act)!=5:
-			print(f"{self.curalg.name}: BUCKINSERT: incorrect act length {len(act)}: only length of 5 is allowed")
-		elif act[2]>=len(self.bucks) or act[2]<0:
-			print(f"{self.curalg.name}: BUCKINSERT: Bucket {act[2]} does not exist, max is {len(self.bucks)-1}")
-		elif act[4]>=len(self.bucks) or act[4]<0:
-			print(f"{self.curalg.name}: BUCKINSERT: Bucket {act[4]} does not exist, max is {len(self.bucks)-1}")
-		else:
-			typ,x,bx,y,by=act
-			if bx==by:
-				for a in self.banish_insert((INSERT,x,y,bx)):
-					yield a
-			else:
-				for a in self.banish_insert((INSERT,x,self.bucks[bx].itemc-1,bx)):
-					yield a
-				yield (PULSH,bx,by)
-				for a in self.banish_insert((INSERT,self.bucks[by].itemc-1,y,by)):
-					yield a
+		return self.actfuncs[type(act)](act)
 	def on_draw(self):
 		self.fpscc.checkpoint()#updates dt and tc and waits for next checkpoint
 		self.avgfpscc.checkpoint()
@@ -575,10 +448,12 @@ logic.bucks=[	Bucket(0,0,WIDTH2,HEIGHT,BUCKLEN,logic.batch,maxps=logic.edits[0].
 
 logic.btns[4].press()
 
+print("exposing logic to actions…")
+Actions.logic=logic
+print("starting main app…")
 try:
-	print("starting main app…")
 	pyglet.app.run()
 finally:
 	if profs:
 		print(*tuple(t.get() for t in profs))
-	print("goodbye")
+print("goodbye")
