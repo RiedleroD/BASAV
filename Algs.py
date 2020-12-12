@@ -544,16 +544,16 @@ class RadixLSD(BaseAlgorithm):
 				curb*=b
 			if oop:
 				for j in range(l):
-					yield READ(0,0)
+					yield READ(l-1-j,0)
 					v=self.v
 					while v>maxb:
 						maxb*=b
 					digit=b-(v//curb)%b
 					i[digit-1]+=1
-					yield BUCKINSERT(0,0,0,digit)
-				for j,x in enumerate(i):
+					yield PULSH(0,digit)
+				for j,x in reversed(list(enumerate(i))):
 					for y in range(x):
-						yield BUCKINSERT(0,j+1,0,0)
+						yield PULSH(j+1,0)
 				curb*=b
 			else:
 				if curb>=maxb:
