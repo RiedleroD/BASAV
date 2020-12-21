@@ -99,7 +99,7 @@ class NEW_BUCK(BaseAction):
 		for i,buck in enumerate(logic.bucks):
 			buck.set_pos(chunksize*i,0)
 			buck.set_size(chunksize,logic.window.height)
-		logic.bucks.append(Bucket(logic.window.width/2-chunksize,0,chunksize,logic.window.height,-logic.bucks[0].maxic,logic.batch,maxps=logic.edits[0].getNum()))
+		logic.bucks.append(Bucket(logic.window.width/2-chunksize,0,chunksize,logic.window.height,-logic.bucks[0].maxic,logic.batch,maxps=logic.edits[0].get_num()))
 		logic.stats[3]+=1
 		return True
 	def __str__(self):

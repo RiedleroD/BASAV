@@ -77,7 +77,7 @@ class MainLogic():
 		self.avgupscc.cycle(dt)
 		if self.upscc.dt>=0.1:
 			#update ups counter
-			self.labels[1].setText("UPS:%02i/%02i"%(round(self.upscc.getHz()),self.fps))
+			self.labels[1].set_text("UPS:%02i/%02i"%(round(self.upscc.getHz()),self.fps))
 			#update randomness counter
 			randomness=0
 			for buck in self.bucks:
@@ -89,10 +89,10 @@ class MainLogic():
 						if previ>i:
 							randomness+=previ-i
 						previ=i
-			self.labels[9].setText("Randomness:%02i"%randomness)
+			self.labels[9].set_text("Randomness:%02i"%randomness)
 			self.upscc.reset()
 		if not self.edits[1].pressed:
-			self.set_fps(self.edits[1].getNum())
+			self.set_fps(self.edits[1].get_num())
 		if self.btns[-1].pressed:
 			self.btns[3].release()
 			sys.exit(0)
@@ -104,15 +104,15 @@ class MainLogic():
 			self.start_algorithm(Reverser)
 		if self.btns[1].pressed:
 			self.btns[1].release()
-			Shuffler.vals["q"]=self.btns[3].getCurval()
+			Shuffler.vals["q"]=self.btns[3].get_curval()
 			self.start_algorithm(Shuffler,False)
 		if not self.edits[0].pressed:
-			self.set_speed(self.edits[0].getNum())
+			self.set_speed(self.edits[0].get_num())
 		self.check_itemc()
 		self.process_alg_opts()
 		if self.btns[0].pressed:
 			if self.curalg==None:
-				self.start_algorithm(algs[self.rads[0].getSelected()])
+				self.start_algorithm(algs[self.rads[0].get_selected()])
 			for x in range(self.spd):
 				try:
 					act=next(self.gen)
@@ -126,15 +126,14 @@ class MainLogic():
 					self.stop_algorithm()
 					break
 		elif self.curalg!=None:
-			self.curalg=None
-			self.gen=None
-		self.labels[2].setText("Read:%02i"%self.stats[0])
-		self.labels[3].setText("Swap:%02i"%self.stats[1])
-		self.labels[4].setText("Insert:%02i"%self.stats[2])
-		self.labels[5].setText("Bucket:%02i"%self.stats[3])
-		self.labels[6].setText("Pass:%02i"%self.stats[4])
-		self.labels[7].setText("Pull:%02i"%self.stats[5])
-		self.labels[8].setText("Push:%02i"%self.stats[6])
+			self.stop_algorithm()
+		self.labels[2].set_text("Read:%02i"%self.stats[0])
+		self.labels[3].set_text("Swap:%02i"%self.stats[1])
+		self.labels[4].set_text("Insert:%02i"%self.stats[2])
+		self.labels[5].set_text("Bucket:%02i"%self.stats[3])
+		self.labels[6].set_text("Pass:%02i"%self.stats[4])
+		self.labels[7].set_text("Pull:%02i"%self.stats[5])
+		self.labels[8].set_text("Push:%02i"%self.stats[6])
 		self.check_apls()
 		self.play_all()
 	def stop_algorithm(self,reset_buck0=True):
@@ -142,20 +141,19 @@ class MainLogic():
 		self.curalg=None
 		self.gen=None
 		if reset_buck0:
+			self.squash_bucks()
 			self.bucks[0].racts.clear()
 			self.bucks[0].wacts.clear()
-			self.bucks[0].rendered=False
 	def start_algorithm(self,alg,procopts=True):
 		self.curalg=alg
-		self.squash_bucks()
 		if procopts:
 			for name,element in self.algui.items():
 				if type(element)==IntEdit:
-					val=element.getNum()
+					val=element.get_num()
 				elif type(element)==ButtonSwitch:
 					val=element.pressed
 				elif type(element)==ButtonFlipthrough:
-					val=element.getCurIndex()
+					val=element.get_curindex()
 				self.curalg.vals[name]=val
 		self.curalg=self.curalg(BUCKLEN)
 		self.avgupscc.reset()
@@ -186,7 +184,7 @@ class MainLogic():
 	def reset(self):
 		self.stop_algorithm(False)
 		self.bucks.clear()
-		self.bucks.append(Bucket(0,0,WIDTH2,HEIGHT,BUCKLEN,self.batch,maxps=self.edits[0].getNum()))
+		self.bucks.append(Bucket(0,0,WIDTH2,HEIGHT,BUCKLEN,self.batch,maxps=self.edits[0].get_num()))
 	def set_speed(self,spd):
 		if spd!=self.spd:
 			self.spd=spd
@@ -194,13 +192,13 @@ class MainLogic():
 				buck.setmaxps(spd)
 	def check_itemc(self):
 		global BUCKLEN,COLORS
-		itemc=self.edits[3].getNum()
+		itemc=self.edits[3].get_num()
 		if itemc!=BUCKLEN:
 			BUCKLEN=itemc
 			COLORS=[color for i in range(BUCKLEN) for color in colorlamb(i/BUCKLEN)]
 			self.reset()
 	def process_alg_opts(self):
-		selalg=self.rads[0].getSelected()
+		selalg=self.rads[0].get_selected()
 		if selalg!=self.selalg:
 			self.selalg=selalg
 			self.algui.clear()
@@ -244,7 +242,7 @@ class MainLogic():
 						print(f"{curalg.name}: option {name} with type bool doesn't match pattern (type,bool,str,str)")
 						curalg.vals[name]=None
 					else:
-						self.algui[name]=ButtonSwitch(WIDTH-BTNWIDTH*(2+x),HEIGHT-BTNHEIGHT*(y+6),BTNWIDTH,BTNHEIGHT,opt[3],batch=self.batch,anch=8,pressedText=opt[2])
+						self.algui[name]=ButtonSwitch(WIDTH-BTNWIDTH*(2+x),HEIGHT-BTNHEIGHT*(y+6),BTNWIDTH,BTNHEIGHT,opt[3],batch=self.batch,anch=8,pressed_text=opt[2])
 						y+=1
 				elif opt[0]==list:
 					if len(opt)!=4 or \
@@ -267,7 +265,7 @@ class MainLogic():
 						self.algui[name]=ButtonFlipthrough(WIDTH-BTNWIDTH*(2+x),HEIGHT-BTNHEIGHT*(y+6),BTNWIDTH,BTNHEIGHT,opt[3],opt[2],batch=self.batch,anch=8,default=opt[1])
 						y+=1
 	def check_apls(self):
-		aconcur=self.edits[2].getNum()-self.aconcur
+		aconcur=self.edits[2].get_num()-self.aconcur
 		self.aconcur+=aconcur
 		if aconcur>0:
 			for i in range(aconcur):
@@ -318,7 +316,7 @@ class MainLogic():
 		self.fpscc.checkpoint()#updates dt and tc and waits for next checkpoint
 		self.avgfpscc.checkpoint()
 		if self.fpscc.dt>=0.1:
-			self.labels[0].setText("FPS:%02i/%02i"%(round(self.fpscc.getHz()),self.fps))
+			self.labels[0].set_text("FPS:%02i/%02i"%(round(self.fpscc.getHz()),self.fps))
 			self.fpscc.reset()
 		for item in self.labels:
 			item.draw()
@@ -326,7 +324,7 @@ class MainLogic():
 			item.draw()
 		for item in self.rads:
 			item.draw()
-		self.labels[-1].setText(algs[self.rads[0].getSelected()].desc)
+		self.labels[-1].set_text(algs[self.rads[0].get_selected()].desc)
 		for item in self.edits:
 			item.draw()
 		for item in self.algui.values():
@@ -349,20 +347,20 @@ logic.labels=[	Label(WIDTH2,HEIGHT,0,0,"FPS:00",logic.batch,6),
 				Label(WIDTH2,HEIGHT-135,0,0,"Push:00",logic.batch,6),
 				Label(WIDTH2,HEIGHT-150,0,0,"Randomness:00",logic.batch,6),
 				LabelMultiline(WIDTH2,0,0,0,"Sorting\nalgorithm\nDescription",logic.batch,0)]
-logic.btns=[	ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",logic.batch,8,pressedText="Stop"),
+logic.btns=[	ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",logic.batch,8,pressed_text="Stop"),
 				Button(WIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Shuffle",logic.batch,8),
 				Button(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Reverse",logic.batch,8),
 				ButtonFlipthrough(WIDTH,HEIGHT-BTNHEIGHT*2,BTNWIDTH,BTNHEIGHT,"Randomness: %i",[3,0,1,2],logic.batch,8),
-				ButtonSwitch(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"Audio: OFF",logic.batch,8,pressedText="Audio: ON"),
+				ButtonSwitch(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"Audio: OFF",logic.batch,8,pressed_text="Audio: ON"),
 				Button(WIDTH-BTNWIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Reset",logic.batch,8),
-				ButtonSwitch(WIDTH-BTNWIDTH*2,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"No-Inserts: OFF",logic.batch,8,pressedText="No-Inserts: ON"),
+				ButtonSwitch(WIDTH-BTNWIDTH*2,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"No-Inserts: OFF",logic.batch,8,pressed_text="No-Inserts: ON"),
 				Button(WIDTH,0,BTNWIDTH,BTNHEIGHT,"Quit",logic.batch,2,pgw.key.ESCAPE)]
 logic.rads=[	RadioListPaged(WIDTH,HEIGHT-BTNHEIGHT*6,BTNWIDTH*2,BTNHEIGHT*12,[alg.name for alg in algs],11,logic.batch,8,selected=0)]
 logic.edits=[	IntEdit(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"Speed",f"{logic.spd}",logic.batch,8,numrange=(1,None)),
 				IntEdit(WIDTH,HEIGHT-BTNHEIGHT*3,BTNWIDTH,BTNHEIGHT,"FPS/UPS","60",logic.batch,8,numrange=(1,None)),
 				IntEdit(WIDTH,HEIGHT-BTNHEIGHT*4,BTNWIDTH,BTNHEIGHT,"Audio Concurrency","32",logic.batch,8,numrange=(0,None)),
 				IntEdit(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT*2,BTNWIDTH,BTNHEIGHT,"Item count",f"{BUCKLEN}",logic.batch,8,numrange=(2,None))]
-logic.bucks=[	Bucket(0,0,WIDTH2,HEIGHT,BUCKLEN,logic.batch,maxps=logic.edits[0].getNum())]
+logic.bucks=[	Bucket(0,0,WIDTH2,HEIGHT,BUCKLEN,logic.batch,maxps=logic.edits[0].get_num())]
 
 logic.btns[4].press()
 

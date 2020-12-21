@@ -5,6 +5,15 @@ print("  importing other libs…")
 from random import shuffle
 from collections import deque as _deque
 
+#SOME HELP IS HERE
+
+#anchor:
+#______
+#|6 7 8|
+#|3 4 5|
+#|0 1 2|
+#——————
+
 class deque(_deque):
 	def pop(self,index=None):
 		if index:
@@ -21,62 +30,94 @@ print("  defining entities…")
 
 class Entity:
 	vl=None
-	def __init__(self,x,y,w,h,batch,anch=0,bgcolor=(255,255,255)):
-		self.w=w
-		self.h=h
-		self.set_pos(x,y,anch)
-		self.setBgColor(bgcolor)
-		self.rendered=False
+	todo=32#binary representation of what has to be rerendered
+	#1  - x
+	#2  - y
+	#4  - cx,_x
+	#8  - cy,_y
+	#16 - vertices
+	#32 - vertexlist
+	#64 - bgcolor
+	w=0
+	h=0
+	basex=0
+	basey=0
+	anch=None
+	bgcolor=None
+	def __init__(self,x,y,w,h,batch,anch=0,bgcolor=(255,255,255),group=GRmp):
+		self.group=group
+		self.set_size(w,h)
+		self.set_pos(x,y)
+		self.set_anch(anch)
+		self.set_bgcolor(bgcolor)
 		self.batch=batch
-	def set_pos(self,x,y,anch=0):
-		self.anch=anch
-		#anchor:
-		#______
-		#|6 7 8|
-		#|3 4 5|
-		#|0 1 2|
-		#——————
+	def set_pos(self,basex,basey):
+		self.basex=basex
+		self.basey=basey
+		self.todo|=31#1+2+4+8+16
+	def set_anch(self,anch):
 		if not 0<=anch<=8:
-			raise ValueError("Entity initialized with invalid position anchor: %i"%anch)
-		if anch%3==0:
-			self.x=x
-		elif anch%3==1:
-			self.x=x-self.w/2
-		else:
-			self.x=x-self.w
-		if anch//3==0:
-			self.y=y
-		elif anch//3==1:
-			self.y=y-self.h/2
-		else:
-			self.y=y-self.h
-		self.set_deriv()
-	def setBgColor(self,color):
-		self.cquad=("c3B/dynamic",color*4)
+			raise ValueError(f"Invalid position anchor: {anch}")
+		elif anch!=self.anch:
+			self.anch=anch
+			self.todo|=31#1+2+4+8+16
 	def set_size(self,w,h):
-		self.w=w
-		self.h=h
-		self.set_deriv()
-	def set_deriv(self):
-		self.cx=self.x+self.w/2
-		self.cy=self.y+self.h/2
-		self._x=self.x+self.w
-		self._y=self.y+self.h
-		self.rendered=False
-	def render(self):
-		self.quad=('v2f/dynamic',(self.x,self.y,self._x,self.y,self._x,self._y,self.x,self._y))
-		self.rendered=True
+		if self.w!=w:
+			self.w=w
+			self.todo|=11#1+4+16
+		if self.h!=h:
+			self.h=h
+			self.todo|=26#2+8+16
 	def move(self,x,y):
-		self.x+=x
-		self.y+=y
-		self.cx+=x
-		self.cy+=y
-		self._x+=x
-		self._y+=y
-		self.rendered=False
-	def doesPointCollide(self,x,y):
+		if x:
+			self.basex+=x
+			self.todo|=11#1+4+16
+		if y:
+			self.basey+=y
+			self.todo|=26#2+8+16
+	def set_bgcolor(self,color):
+		if self.bgcolor!=color:
+			self.bgcolor=color
+			self.todo|=64
+	def update_cx_x(self):
+		self.cx=self.x+self.w/2
+		self._x=self.x+self.w
+		self.todo&=~4
+	def update_cy_y(self):
+		self.cy=self.y+self.h/2
+		self._y=self.y+self.h
+		self.todo&=~8
+	def update_x(self):
+		if self.anch%3==0:
+			self.x=self.basex
+		elif self.anch%3==1:
+			self.x=self.basex-self.w/2
+		else:
+			self.x=self.basex-self.w
+		self.todo&=~1
+	def update_y(self):
+		if self.anch//3==0:
+			self.y=self.basey
+		elif self.anch//3==1:
+			self.y=self.basey-self.h/2
+		else:
+			self.y=self.basey-self.h
+		self.todo&=~2
+	def update_vl(self):
+		if self.quad and self.bgcolor:#can't update if those are missing
+			self.vl=self.batch.add(4,pyglet.gl.GL_QUADS,self.group,('v2f',self.quad),('c3B',self.bgcolor*4))
+			self.todo&=~32
+	def update_vertices(self):
+		self.quad=(self.x,self.y,self._x,self.y,self._x,self._y,self.x,self._y)
+		if self.vl:
+			self.vl.vertices=self.quad
+		self.todo&=~16
+	def update_bgcolor(self):
+		self.vl.colors=self.bgcolor*4
+		self.todo&=~64
+	def does_point_collide(self,x,y):
 		return x>=self.x and y>=self.y and x<=self._x and y<=self._y
-	def checkPointCollision(self,x,y):
+	def check_point_collision(self,x,y):
 		if self.doesPointCollide(x,y):
 			if x>=self.cx:
 				if y>=self.cy:
@@ -91,162 +132,227 @@ class Entity:
 		else:
 			return (0,0)
 	def draw(self):
-		if not self.rendered:
-			self.render()
-		if not self.vl:
-			self.vl=self.batch.add(4,pyglet.gl.GL_QUADS,GRmp,self.quad,self.cquad)
-		else:
-			self.vl.vertices=self.quad[1]
-			self.vl.colors=self.cquad[1]
+		if self.todo & 31:
+			if self.todo & 1:
+				self.update_x()
+			if self.todo & 2:
+				self.update_y()
+			if self.todo & 4:
+				self.update_cx_x()
+			if self.todo & 8:
+				self.update_cy_y()
+			if self.todo & 16:
+				self.update_vertices()
+		if self.todo & 32:
+			self.update_vl()
+		if self.todo & 64:
+			self.update_bgcolor()
 	def __del__(self):
 		if self.vl:
 			self.vl.delete()
 
 class Label(Entity):
 	label=None
-	def __init__(self,x,y,w,h,text,batch,anch=0,color=(255,255,255),bgcolor=(0,0,0),size=12):
-		self.label=pyglet.text.Label(text,x=0,y=y-size,color=color+(255,),font_size=size,batch=batch,group=GRfg)
+	todo=1312#32+1024
+	#1		- x
+	#2		- y
+	#4		- cx,_x
+	#8		- cy,_y
+	#16		- quad
+	#32		- bgvertexlist
+	#64		- bgcolor
+	#128	- text
+	#256	- kerning
+	#512	- textcolor
+	#1024	- textanchor
+	#2048	- label x
+	#4096	- label y
+	def __init__(self,x,y,w,h,text,batch,anch=0,color=(255,255,255),bgcolor=(0,0,0),size=12,txtgroup=GRfg,bggroup=GRmp):
+		self.label=pyglet.text.Label(text,x=0,y=y-size,color=(color if len(color)==4 else color+(255,)),font_size=size,batch=batch,group=txtgroup)
 		self.size=size
-		super().__init__(x,y,w,h,batch,anch=anch,bgcolor=bgcolor)
-		self.setText(text)
-		self.setColor(color)
-	def setColor(self,color):
+		self.set_text(text,False)
+		self.set_color(color,False)
+		super().__init__(x,y,w,h,batch,anch=anch,bgcolor=bgcolor,group=bggroup)
+	def set_color(self,color,push_to_label=True):
+		colorlen=len(color)
+		if colorlen==4:
+			pass
+		elif colorlen==3:
+			color=color+(255,)
+		else:
+			raise ValueError("Text color has to be 3 verteces long")
 		self.color=color
-		self.label.color=self.color+(255,)
-	def setText(self,text):
+		if push_to_label:
+			self.todo|=512
+	def set_text(self,text,push_to_label=True):
 		self.text=text
-		self.label.text=text
-		self.adjust_kerning()
-	def adjust_kerning(self):
+		if push_to_label:
+			self.todo|=128
+	def set_anchor(self,anch):
+		super().set_anchor(anch)
+		self.todo|=1024
+	def update_color(self):
+		self.label.color=self.color
+		self.todo&=~512
+	def update_x(self):
+		super().update_x()
+		self.todo|=2048
+	def update_y(self):
+		super().update_y()
+		self.todo|=4096
+	def update_label_x(self):
+		if self.w>0 and self.w>0:
+			self.label.x=self.cx
+		else:
+			self.label.x=self.x
+		self.todo&=~2048
+	def update_label_y(self):
+		if self.w>0 and self.w>0:
+			self.label.y=self.cy
+		else:
+			self.label.y=self.y
+		self.todo&=~4096
+	def update_textanchor(self):
+		if self.w>0 and self.h>0:
+			self.label.anchor_x=ANCHORSx[1]
+			self.label.anchor_y=ANCHORSy[1]
+		else:
+			self.label.anchor_x=ANCHORSx[self.anch%3]
+			self.label.anchor_y=ANCHORSy[self.anch//3]
+		self.todo&=~1024
+	def update_text(self):
+		self.label.text=self.text
+		self.todo&=~128
+		self.todo|=256
+	def update_kerning(self):
 		if self.w:
 			kern=0
-			self.set_kerning(kern)
+			self._set_kerning(kern)
 			while self.label.content_width>self.w:
 				kern-=0.1
 				if kern<-1.5:
 					self.size-=0.1
 					kern=0
 					self.label.document.set_style(0,-1,{"font_size":self.size})
-				self.set_kerning(kern)
-	def set_kerning(self,kern):
+				self._set_kerning(kern)
+		self.todo&=~256
+	def _set_kerning(self,kern):
 		self.label.document.set_style(0,-1,{"kerning":kern})
-	def render(self):
-		if self.w>0 and self.h>0:
-			self.quad=('v2f/static',(self.x,self.y,self._x,self.y,self._x,self._y,self.x,self._y))
-			self.label.begin_update()
-			self.label.x=self.cx
-			self.label.y=self.cy
-			self.label.anchor_x=ANCHORSx[1]
-			self.label.anchor_y=ANCHORSy[1]
-			self.label.end_update()
-		else:
-			self.label.begin_update()
-			self.label.x=self.x
-			self.label.y=self.y
-			self.label.anchor_x=ANCHORSx[self.anch%3]
-			self.label.anchor_y=ANCHORSy[self.anch//3]
-			self.label.end_update()
-		self.rendered=True
 	def draw(self):
-		if not self.rendered:
-			self.render()
-		if self.w>0 and self.h>0:
-			if self.vl:
-				self.vl.vertices[:]=self.quad[1]
-				self.vl.colors[:]=self.cquad[1]
-			else:
-				self.vl=self.batch.add(4,pyglet.gl.GL_QUADS,GRmp,self.quad,self.cquad)
+		if self.todo & 63:#1+2+4+8+16+32
+			if self.todo & 1:
+				self.update_x()
+			if self.todo & 2:
+				self.update_y()
+			if self.todo & 4:
+				self.update_cx_x()
+			if self.todo & 8:
+				self.update_cy_y()
+			if self.todo & 16:
+				self.update_vertices()
+		if self.todo & 32:
+			self.update_vl()
+		if self.todo & 64:
+			self.update_bgcolor()
+		if self.todo & 8064:#128+256+512+1024+2048+4096:
+			self.label.begin_update()
+			if self.todo & 128:
+				self.update_text()
+			if self.todo & 512:
+				self.update_color()#text color
+			if self.todo & 1024:
+				self.update_textanchor()
+			if self.todo & 2048:
+				self.update_label_x()
+			if self.todo & 4096:
+				self.update_label_y()
+			self.label.end_update()
+			#has to be done outside of label update function since it depends on instantaneous label content width updates
+			if self.todo & 256:
+				self.update_kerning()
 	def __del__(self):
 		if self.label:
 			self.label.delete()
 		if self.vl:
 			self.vl.delete()
 
-class LabelMultiline(Label):
-	def __init__(self,x,y,w,h,text,batch,anch=0,color=(255,255,255),bgcolor=(0,0,0),size=12):
-		self.labels=[pyglet.text.Label(line,x=0,y=-size*1.5,color=color+(255,),font_size=size,batch=batch,group=GRfg) for line in text.split("\n")]
-		super().__init__(x,y,w,h,text,batch,anch,color,bgcolor,size)
-		del self.label
-	def setColor(self,color):
+class LabelMultiline(Entity):
+	def __init__(self,x,y,w,h,text,batch,anch=0,color=(255,255,255),size=12):
+		texts=text.split("\n")
+		self.labels=[Label(x,y-size*1.5*(i-len(texts)),0,0,line,anch=anch,size=size,batch=batch) for i,line in enumerate(texts)]
+		self.size=size
+		self.set_color(color)
+		super().__init__(x,y,w,h,batch,anch)
+		self.set_color(color)
+	def set_color(self,color):
 		self.color=color
 		for label in self.labels:
-			label.color=self.color+(255,)
-	def setText(self,text):
+			label.set_color(color)
+	def set_text(self,text):
 		self.text=text
-		text=text.split("\n")
+		self.todo|=128
+	def update_text(self):
+		text=self.text.split("\n")
 		labels=self.labels.copy()
+		y=self.y
 		for txt in reversed(text):
 			if labels:
 				label=labels.pop()
-				label.text=txt
+				label.set_text(txt)
 			else:
-				label=pyglet.text.Label(txt,x=0,y=-self.size*1.5,color=self.color+(255,),font_size=self.size,batch=self.batch,group=GRfg)
+				label=Label(self.x,y,0,0,text=txt,anch=self.anch,color=self.color,size=self.size,batch=self.batch)
 				self.labels.append(label)
-				self.rendered=False
+			y-=self.size*1.5
 		for remaining in labels:
 			remaining.text=""
-	def render(self):
-		if self.w>0 and self.h>0:
-			self.quad=('v2f/static',(self.x,self.y,self._x,self.y,self._x,self._y,self.x,self._y))
-			for i,label in enumerate(self.labels):
-				label.begin_update()
-				label.x=self.cx
-				label.y=self.cy+self.size*(len(self.labels)-i-1)*1.5
-				label.anchor_x=ANCHORSx[1]
-				label.anchor_y=ANCHORSy[1]
-				label.end_update()
-		else:
-			for i,label in enumerate(self.labels):
-				label.begin_update()
-				label.x=self.x
-				label.y=self.y+self.size*(len(self.labels)-i-1)*1.5
-				label.anchor_x=ANCHORSx[self.anch%3]
-				label.anchor_y=ANCHORSy[self.anch//3]
-				label.end_update()
-		self.rendered=True
+	def draw(self):
+		for label in self.labels:
+			label.draw()
+		super().draw()
+		if self.todo & 128:
+			self.update_text()
 	def __del__(self):
 		if self.vl:
 			self.vl.delete()
-		for label in self.labels:
-			label.delete()
 
 class Button(Label):
-	def __init__(self,x,y,w,h,text,batch,anch=0,key=None,size=12,pressedText=None):
+	def __init__(self,x,y,w,h,text,batch,anch=0,key=None,size=12,pressed_text=None,txtgroup=GRfg,bggroup=GRmp):
 		self.pressed=False
 		self.key=key
-		if pressedText:
-			self.pressedText=pressedText
-			self.unpressedText=text
+		if pressed_text:
+			self.pressed_text=pressed_text
+			self.unpressed_text=text
 		else:
-			self.pressedText=self.unpressedText=text
-		super().__init__(x,y,w,h,text,batch,anch,(0,0,0),(255,255,255),size)
-	def setBgColor(self,color):
+			self.pressed_text=self.unpressed_text=text
+		super().__init__(x,y,w,h,text,batch,anch,(0,0,0),(255,255,255),size,txtgroup,bggroup)
+	def update_bgcolor(self):
 		if self.pressed:
-			self.cquad=("c3B/dynamic",(*color,*color,128,128,128,128,128,128))
+			self.vl.colors=(*self.bgcolor,*self.bgcolor,128,128,128,128,128,128)
 		else:
-			self.cquad=("c3B/dynamic",(128,128,128,128,128,128,*color,*color))
-	def checkpress(self,x,y):
-		if self.doesPointCollide(x,y):
+			self.vl.colors=(128,128,128,128,128,128,*self.bgcolor,*self.bgcolor)
+		self.todo&=~64
+	def check_press(self,x,y):
+		if self.does_point_collide(x,y):
 			return self.press()
-	def checkKey(self,key):
+	def check_key(self,key):
 		if self.key!=None and key==self.key:
 			return self.press()
 	def press(self):
 		if not self.pressed:
 			self.pressed=True
-			self.setText(self.pressedText)
-			self.setBgColor((255,255,255))
+			self.set_text(self.pressed_text)
+			self.todo|=64
 			return pyglet.event.EVENT_HANDLED
 	def release(self):
 		if self.pressed:
 			self.pressed=False
-			self.setText(self.unpressedText)
-			self.setBgColor((255,255,255))
+			self.set_text(self.unpressed_text)
+			self.todo|=64
 			return pyglet.event.EVENT_HANDLED
 
 class ButtonSwitch(Button):
-	def checkpress(self,x,y):
-		if self.doesPointCollide(x,y):
+	def check_press(self,x,y):
+		if self.does_point_collide(x,y):
 			if self.pressed:
 				self.release()
 			else:
@@ -256,19 +362,15 @@ class ButtonFlipthrough(Button):
 	def __init__(self,x,y,w,h,text,values,batch,anch=0,key=None,size=12,default=0):
 		self.vals=values
 		self.i=default
-		self.text=text
+		self._text=text
 		super().__init__(x,y,w,h,text%values[default],batch,anch,key,size)
-	def setText(self,text):
-		self.label.text=text
-		self.adjust_kerning()
-	def getCurval(self):
+	def get_curval(self):
 		return self.vals[self.i]
-	def getCurIndex(self):
+	def get_curindex(self):
 		return self.i
 	def press(self):
-		self.i+=1
-		self.i%=len(self.vals)
-		self.setText(self.text%self.getCurval())
+		self.i=(self.i+1)%len(self.vals)
+		self.set_text(self._text%self.get_curval())
 		return pyglet.event.EVENT_HANDLED
 
 class TextEdit(Button):#also unused
@@ -278,11 +380,11 @@ class TextEdit(Button):#also unused
 		self.value=self.cache=value
 		self.alchrs=allowed_chars
 		super().__init__(x,y,w,h,desc,batch,anch,key,size)
-	def checkKey(self,key):
+	def check_key(self,key):
 		if self.pressed:
 			if key==pgw.key.BACKSPACE:
 				self.cache=self.cache[:-1]
-				self.setText(f"[{self.cache}]")
+				self.set_text(f"[{self.cache}]")
 			elif key in (pgw.key.RETURN,pgw.key.ESCAPE):
 				if self.valid_input(self.cache):
 					self.release()
@@ -293,7 +395,7 @@ class TextEdit(Button):#also unused
 					return None
 				if self.valid_key(char):
 					self.cache+=char
-					self.setText(f"[{self.cache}]")
+					self.set_text(f"[{self.cache}]")
 			return pyglet.event.EVENT_HANDLED
 		elif self.key!=None and key==self.key:
 			return self.press()
@@ -301,20 +403,20 @@ class TextEdit(Button):#also unused
 		return self.alchrs==None or key in self.alchrs
 	def valid_input(self,inpot):
 		return True
-	def getVal(self):
+	def get_val(self):
 		return self.value
 	def press(self):
 		if not self.pressed:
 			self.pressed=True
-			self.setText(f"[{self.cache}]")
-			self.setBgColor((255,255,255))
+			self.set_text(f"[{self.cache}]")
+			self.todo|=64
 			return pyglet.event.EVENT_HANDLED
 	def release(self):
 		if self.pressed:
 			self.value=self.cache
 			self.pressed=False
-			self.setText(self.desc)
-			self.setBgColor((255,255,255))
+			self.set_text(self.desc)
+			self.todo|=64
 			return pyglet.event.EVENT_HANDLED
 
 class IntEdit(TextEdit):
@@ -331,25 +433,25 @@ class IntEdit(TextEdit):
 			return False
 		else:
 			return (self.minnum==None or self.minnum<=i) and (self.maxnum==None or self.maxnum>i)
-	def getNum(self):
+	def get_num(self):
 		return int(self.value)
 
 class RadioList(Entity):
-	def __init__(self,x,y,w,h,texts,batch,anch=0,keys=None,pressedTexts=None,selected=None,size=12):
+	def __init__(self,x,y,w,h,texts,batch,anch=0,keys=None,pressed_texts=None,selected=None,size=12):
 		btnc=len(texts)
-		if keys==None:
-			keys=[None for i in range(btnc)]
-		if pressedTexts==None:
-			pressedTexts=[None for i in range(btnc)]
-		self.btns=[Button(x,y-i*h/btnc,w,h/btnc,text,batch,anch,keys[i],size,pressedTexts[i]) for i,text in enumerate(texts)]
-		self.setBgColor((192,192,192))#average color in btns
+		if self.btns==None:
+			if keys==None:
+				keys=[None for i in range(btnc)]
+			if pressed_texts==None:
+				pressed_texts=[None for i in range(btnc)]
+			self.btns=[Button(x,y-i*h/btnc,w,h/btnc,text,batch,anch,keys[i],size,pressed_texts[i]) for i,text in enumerate(texts)]
 		if selected!=None:
 			self.btns[selected].press()
-		super().__init__(x,y,w,h,batch,anch)
-	def checkpress(self,x,y):
+		super().__init__(x,y,w,h,batch,anch,bgcolor=(192,192,192),group=GRbg)
+	def check_press(self,x,y):
 		prsd=None
 		for i,btn in enumerate(self.btns):
-			prsd=btn.checkpress(x,y)
+			prsd=btn.check_press(x,y)
 			if prsd:
 				prsd=i
 				break
@@ -358,9 +460,9 @@ class RadioList(Entity):
 				if i!=prsd and btn.pressed:
 					btn.release()
 			return pyglet.event.EVENT_HANDLED
-	def checkKey(self,key):
+	def check_key(self,key):
 		for i,btn in enumerate(self.btns):
-			prsd=btn.checkKey(key)
+			prsd=btn.check_key(key)
 			if prsd:
 				prsd=i
 				break
@@ -370,97 +472,81 @@ class RadioList(Entity):
 					btn.release()
 			return pyglet.event.EVENT_HANDLED
 	def draw(self):
-		if not self.rendered:
-			self.render()
-		if not self.vl:
-			self.vl=self.batch.add(4,pyglet.gl.GL_QUADS,GRbg,self.quad,self.cquad)
-		else:
-			self.vl.vertices=self.quad[1]
-			self.vl.colors=self.cquad[1]
+		super().draw()
 		for btn in self.btns:
 			btn.draw()
-	def getSelected(self):
+	def get_selected(self):
 		for i,btn in enumerate(self.btns):
 			if btn.pressed:
 				return i
 
 class RadioListPaged(RadioList):
-	def __init__(self,x,y,w,h,texts,pageic,batch,anch=0,keys=None,pressedTexts=None,selected=None,size=12):
+	def __init__(self,x,y,w,h,texts,pageic,batch,anch=0,keys=None,selected=None,size=12):
 		self.pageic=pageic
 		self.page=0
 		btnc=len(texts)
 		btnh=h/(pageic+1)
-		super().__init__(x,y,w,h,texts,batch,anch,keys,pressedTexts,selected,size)
-		onscr=self.btns[self.page*self.pageic:(self.page+1)*self.pageic]#get buttons which should be on screen
-		for i,btn in enumerate(self.btns):#correct btn position and height based on pages and set label text to none
-			btn.set_size(w,btnh)
-			btn.set_pos(x,y-btnh*(i%self.pageic),anch)
-			if btn not in onscr:
-				btn.label.text=""
-				if btn.vl:
-					btn.vl.delete()
-					btn.vl=None
-		self.next=Button(x,y-btnh*pageic,w/2,btnh,"→",batch,anch,None,size)
-		self.prev=Button(x-w/2,y-btnh*pageic,w/2,btnh,"←",batch,anch,None,size)
-	def checkpress(self,x,y):
-		if self.prev.checkpress(x,y):
+		self.groups=[]
+		self.btns=[]
+		for page in range(-(-btnc//pageic)):
+			groupfg=pyglet.graphics.Group(GRfg)
+			groupbg=pyglet.graphics.Group(GRmp)
+			self.groups.append((groupfg,groupbg))
+			if page!=0:
+				groupfg.visible=groupbg.visible=False
+			for i in range(pageic):
+				j=page*pageic+i
+				if j>=len(texts):
+					break
+				self.btns.append(Button(x,y-i*btnh,w,btnh,texts[j],batch,anch,size=size,txtgroup=groupfg,bggroup=groupbg))
+		super().__init__(x,y,w,h,texts,batch,anch,keys,None,selected,size)
+		self.next=Button(x,y-btnh*pageic,w/2,btnh,"→",batch,anch,size=size)
+		self.prev=Button(x-w/2,y-btnh*pageic,w/2,btnh,"←",batch,anch,size=size)
+	def check_press(self,x,y):
+		if self.prev.check_press(x,y):
 			prsd=-1
-		elif self.next.checkpress(x,y):
+		elif self.next.check_press(x,y):
 			prsd=1
 		else:
 			prsd=None
 		if prsd:
+			#hide old page
+			for group in self.groups[self.page]:
+				group.visible=False
+			#next/previous page
 			self.page+=prsd
 			#make sure that self.page wraps around if too big
 			self.page%=-(-len(self.btns)//self.pageic)#ceiling division
-		onscr=self.btns[self.page*self.pageic:(self.page+1)*self.pageic]#get buttons which should be on screen
-		if prsd:
-			#remove text from all buttons that shouldn't be on screen (because the labels get rendered in batch)
-			#re-add text from all buttons that should be on screen
-			for btn in self.btns:
-				if btn in onscr:
-					btn.label.text=btn.text
-				else:
-					btn.label.text=""
-					if btn.vl:
-						btn.vl.delete()
-						btn.vl=None
-			prsd=None
-		for btn in onscr:
-			prsd=btn.checkpress(x,y)
-			if prsd:
-				prsd=btn
-				break
-		if prsd!=None:
-			for btn in self.btns:
-				if btn is not prsd and btn.pressed:
-					btn.release()
-					if btn not in onscr:
-						btn.label.text=""
+			#unhide new page
+			for group in self.groups[self.page]:
+				group.visible=True
 			return pyglet.event.EVENT_HANDLED
-	def checkKey(self,key):
-		for i,btn in enumerate(self.btns):
-			prsd=btn.checkKey(key)
+		else:
+			for btn in self.btns[self.page*self.pageic:(self.page+1)*self.pageic]:#checking buttons that are on screen
+				prsd=btn.check_press(x,y)
+				if prsd:
+					prsd=btn
+					break
+			if prsd!=None:#releasing all other buttons (because this is a *radio* list)
+				for btn in self.btns:
+					if btn is not prsd and btn.pressed:
+						btn.release()
+				return pyglet.event.EVENT_HANDLED
+	def check_key(self,key):
+		for i,btn in enumerate(self.btns):#checking all buttons, not just the ones on screen
+			prsd=btn.check_key(key)
 			if prsd:
 				prsd=i
 				break
-		if prsd!=None:
+		if prsd!=None:#unchecking all other buttons
 			for i,btn in enumerate(self.btns):
 				if i!=prsd:
 					btn.release()
 			return pyglet.event.EVENT_HANDLED
 	def draw(self):
-		if not self.rendered:
-			self.render()
-		onscr=self.btns[self.page*self.pageic:(self.page+1)*self.pageic]#get buttons which should be on screen
-		#draw the background plane
-		if self.vl:
-			self.vl.vertices[:]=self.quad[1]
-			self.vl.colors[:]=self.cquad[1]
-		else:
-			self.vl=self.batch.add(4,pyglet.gl.GL_QUADS,GRbg,self.quad,self.cquad)
-		#draw the buttons in the current page plus prev and next
-		for btn in onscr:
+		super().draw()
+		#draw buttons plus prev and next
+		for btn in self.btns:
 			btn.draw()
 		self.prev.draw()
 		self.next.draw()
@@ -473,46 +559,53 @@ class RadioListPaged(RadioList):
 class Bucket(Entity):
 	ravl=None
 	wavl=None
-	mod_colors=True
+	todo=32
+	#1		- x
+	#2		- y
+	#4		- cx,_x
+	#8		- cy,_y
+	#16		- vertices
+	#32		- vertexlist
+	#64		- colors
+	#128	- ravl verteces
+	#256	- wavl verteces
+	#512	- colors (regenerate)
 	def __init__(self,x,y,w,h,itemc,batch,anch=0,maxps=None):
 		super().__init__(x,y,w,h,batch,anch)
 		self.maxic=abs(itemc)
 		blanc=self.blanc=[0,0,0]*self.maxic*2
-		if itemc<0:
+		if itemc<0:#don't fill, just set maxic
 			self.itemc=0
 			colors=blanc.copy()
-		else:
+		else:#fill and set maxic
 			self.itemc=itemc
 			colors=self.generate_colors()
 		self.items=[i for i in range(self.itemc)]
 		self.racts=set()
 		self.wacts=set()
+		self.prevracts=set()
+		self.prevwacts=set()
 		if (not maxps) or maxps>self.maxic:
 			maxps=self.maxic
 		self.setmaxps(maxps)#also sets ravl and wavl
 		self.colors=deque(colors)
-		self.vl=batch.add(
-			self.maxic*2,GL_LINES,GRmp,
-			('v2f/dynamic',[pos for i in range(self.maxic) for pos in self._getline(i)]),
-			('c3B/stream',colors)
-		)
-	def setmaxps(self,maxps):
+	def setmaxps(self,maxps):#happens too rarely to add to todo
 		self.maxps=maxps
 		if self.ravl:
 			self.ravl.delete()
 		self.ravl=self.batch.add(
 			maxps*2,GL_LINES,GRmp,
-			('v2f/dynamic',[0,0,0,0]*maxps),
-			('c3B/stream',(0,255,0,0,255,0)*maxps)
+			('v2f/stream',[-1,-1,-1,-1]*maxps),
+			('c3B/static',(0,255,0,0,255,0)*maxps)
 		)
 		if self.wavl:
 			self.wavl.delete()
 		self.wavl=self.batch.add(
 			maxps*2,GL_LINES,GRmp,
-			('v2f/dynamic',[0,0,0,0]*maxps),
-			('c3B/stream',(255,0,0,255,0,0)*maxps)
+			('v2f/stream',[-1,-1,-1,-1]*maxps),
+			('c3B/static',(255,0,0,255,0,0)*maxps)
 		)
-		self.rendered=False
+		self.todo|=384#128+256
 	def _getyfromi(self,i):
 		return self.y+self.h*(i+1)/self.maxic
 	def _getline(self,i):
@@ -545,7 +638,7 @@ class Bucket(Entity):
 				self.colors[i]=0
 			#it's just this→ self.colors[6*self.itemc,6*self.itemc+6]=10,0,0,0,0,0
 			self.wacts.add(self.itemc)
-			self.mod_colors=True
+			self.todo|=64
 			return True,self.items.pop()
 	def push_item(self,item):
 		if self.itemc==self.maxic:
@@ -560,7 +653,7 @@ class Bucket(Entity):
 			#self.colors[6*self.itemc-6:6*self.itemc]=colorlamb(item/self.maxic)
 			self.wacts.add(self.itemc-1)
 			self.items.append(item)
-			self.mod_colors=True
+			self.todo|=64
 			return True
 	def swapitems(self,x,y):
 		if x>=self.itemc or x<0 or y>=self.itemc or y<0:
@@ -572,7 +665,7 @@ class Bucket(Entity):
 				self.colors[6*x+j],self.colors[6*y+j]=self.colors[6*y+j],self.colors[6*x+j]
 			self.wacts.add(x)
 			self.wacts.add(y)
-			self.mod_colors=True
+			self.todo|=64
 			return True
 	def insertitem(self,x,i):
 		if x>=self.itemc or x<0 or i>self.itemc or i<0:
@@ -592,12 +685,12 @@ class Bucket(Entity):
 				self.colors.insert(6*i+j,self.colors.pop(6*x+j))
 			self.wacts.add(i)
 		self.wacts.add(x)
-		self.mod_colors=True
+		self.todo|=64
 		return True
 	def swap_from(self,x,y,other):
 		if x>=0 and y>=0 and other.itemc>x and self.itemc>y:
-			self.mod_colors=other.mod_colors=True
-			
+			self.todo|=64
+			other.todo|=64
 			self.items[x],other.items[y]=other.items[y],self.items[x]
 			for j in range(6):
 				self.colors[6*x+j],other.colors[6*y+j]=other.colors[6*y+j],self.colors[6*x+j]
@@ -609,7 +702,8 @@ class Bucket(Entity):
 			return False
 	def insert_from(self,x,y,other):
 		if other.itemc>x>=0 and self.itemc>=y>=0:
-			self.mod_colors=other.mod_colors=True
+			self.todo|=64
+			other.todo|=64
 			self.items[y:y]=other.items.pop(x),
 			for j in range(6):
 				self.colors.insert(y*6+j,other.colors.pop(x*6))
@@ -622,43 +716,84 @@ class Bucket(Entity):
 		else:
 			print(f"out-of-bounds call to BUCKINSERT: from {x} at buck[{other.itemc}] to {y} at buck[{self.itemc}]")
 			return False
-	def render(self):
-		self.vl.vertices[:]=[pos for i in range(self.maxic) for pos in self._getline(i)]
+	def update_vl(self):
+		self.vl=self.batch.add(
+			self.maxic*2,GL_LINES,GRmp,
+			('v2f/dynamic',[pos for i in range(self.maxic) for pos in self._getline(i)]),
+			('c3B/stream',self.colors)
+		)
+		self.todo&=~32
+	def update_vertices(self):
+		if self.vl:
+			self.vl.vertices=[pos for i in range(self.maxic) for pos in self._getline(i)]
+			self.todo&=~16
+	def update_wavl(self):
 		wvs=self._getwact(0)
-		wvs=[wvs[0],0,wvs[2],0]*self.maxps
+		wvs=[wvs[0],-1,wvs[2],-1]*self.maxps
 		self.wavl.vertices[:]=wvs
+		self.todo&=~256
+	def update_ravl(self):
 		rvs=self._getract(0)
-		rvs=[rvs[0],0,rvs[2],0]*self.maxps
+		rvs=[rvs[0],-1,rvs[2],-1]*self.maxps
 		self.ravl.vertices[:]=rvs
-		self.rendered=True
+		self.todo&=~128
+	def update_acts(self):
+		if self.racts:
+			for i,num in enumerate(self.racts):
+				if i>=self.maxps:
+					break
+				self.ravl.vertices[1+i*4]=self.ravl.vertices[3+i*4]=self._getyfromi(num)
+			rl=len(self.racts)
+			for i in range(rl,self.maxps):
+				self.ravl.vertices[1+i*4]=self.ravl.vertices[3+i*4]=-1
+			self.prevracts,self.racts=self.racts,self.prevracts
+			self.racts.clear()
+		elif self.prevracts:
+			for i in range(min(len(self.prevracts),self.maxps)):
+				self.ravl.vertices[1+i*4]=self.ravl.vertices[3+i*4]=-1
+		if self.wacts:
+			for i,num in enumerate(self.wacts):
+				if i>=self.maxps:
+					break
+				self.wavl.vertices[1+i*4]=self.wavl.vertices[3+i*4]=self._getyfromi(num)
+			wl=len(self.wacts)
+			for i in range(wl,self.maxps):
+				self.wavl.vertices[1+i*4]=self.wavl.vertices[3+i*4]=-1
+			self.prevwacts,self.wacts=self.wacts,self.prevwacts
+			self.wacts.clear()
+		elif self.prevwacts:
+			for i in range(min(len(self.prevwacts),self.maxps)):
+				self.wavl.vertices[1+i*4]=self.wavl.vertices[3+i*4]=-1
+	def render_colors(self):
+		self.colors=[col for i in self.items for col in colorlamb(i/self.maxic)]
+		self.todo&=~64
 	def generate_colors(self):
 		return [col for i in range(self.maxic) for col in colorlamb(i/self.maxic)]
-	def draw(self):#!!!almost all of the time here is spent in vl.colors
-		if not self.rendered:
-			self.render()
+	def draw(self):
+		if self.todo & 63:
+			if self.todo & 1:
+				self.update_x()
+			if self.todo & 2:
+				self.update_y()
+			if self.todo & 4:
+				self.update_cx_x()
+			if self.todo & 8:
+				self.update_cy_y()
+			if self.todo & 32:
+				self.update_vl()
+			if self.todo & 16:
+				self.update_vertices()
+				self.todo|=384#128+256
+		if self.todo & 64:
+			self.vl.colors=self.colors
+			self.todo&=~64
+		if self.todo & 128:
+			self.update_ravl()
+		if self.todo & 256:
+			self.update_wavl()
+		self.update_acts()
 		if self.itemc>self.maxic:
 			raise ValueError("Bucket: itemc is larger than maxic")
-		if self.mod_colors:
-			self.vl.colors=self.colors
-			self.mod_colors=False
-		for i,num in enumerate(self.wacts):
-			if i>=self.maxps:
-				break
-			self.wavl.vertices[1+i*4]=self.wavl.vertices[3+i*4]=self._getyfromi(num)
-		wl=len(self.wacts)
-		for i in range(wl,self.maxps):
-			self.wavl.vertices[1+i*4]=self.wavl.vertices[3+i*4]=-1
-		for i,num in enumerate(self.racts):
-			if i>=self.maxps:
-				break
-			self.ravl.vertices[1+i*4]=self.ravl.vertices[3+i*4]=self._getyfromi(num)
-		rl=len(self.racts)
-		for i in range(rl,self.maxps):
-			self.ravl.vertices[1+i*4]=self.ravl.vertices[3+i*4]=-1
-		if self.wacts:
-			self.wacts.clear()
-		if self.racts:
-			self.racts.clear()
 	def __del__(self):
 		if self.wavl:
 			self.wavl.delete()

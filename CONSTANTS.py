@@ -73,7 +73,7 @@ class MainWin(pyglet.window.Window):
 		if button==pgw.mouse.LEFT:
 			if self.logic:
 				for item in self.logic.btns+self.logic.rads+self.logic.edits+list(self.logic.algui.values()):
-					ret=item.checkpress(x,y)
+					ret=item.check_press(x,y)
 					if ret:
 						return ret
 		elif button==pgw.mouse.RIGHT:
@@ -85,7 +85,7 @@ class MainWin(pyglet.window.Window):
 	def on_key_press(self,symbol,modifiers):
 		if self.logic:
 			for item in self.logic.edits+self.logic.btns+self.logic.rads+list(self.logic.algui.values()):
-				ret=item.checkKey(symbol)
+				ret=item.check_key(symbol)
 				if ret:
 					return ret
 
