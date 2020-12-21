@@ -78,6 +78,14 @@ class MainLogic():
 		if self.upscc.dt>=0.1:
 			#update ups counter
 			self.labels[1].set_text("UPS:%02i/%02i"%(round(self.upscc.getHz()),self.fps))
+			#update stats
+			self.labels[2].set_text("Read:%02i"%self.stats[0])
+			self.labels[3].set_text("Swap:%02i"%self.stats[1])
+			self.labels[4].set_text("Insert:%02i"%self.stats[2])
+			self.labels[5].set_text("Bucket:%02i"%self.stats[3])
+			self.labels[6].set_text("Pass:%02i"%self.stats[4])
+			self.labels[7].set_text("Pull:%02i"%self.stats[5])
+			self.labels[8].set_text("Push:%02i"%self.stats[6])
 			#update randomness counter
 			randomness=0
 			for buck in self.bucks:
@@ -127,13 +135,6 @@ class MainLogic():
 					break
 		elif self.curalg!=None:
 			self.stop_algorithm()
-		self.labels[2].set_text("Read:%02i"%self.stats[0])
-		self.labels[3].set_text("Swap:%02i"%self.stats[1])
-		self.labels[4].set_text("Insert:%02i"%self.stats[2])
-		self.labels[5].set_text("Bucket:%02i"%self.stats[3])
-		self.labels[6].set_text("Pass:%02i"%self.stats[4])
-		self.labels[7].set_text("Pull:%02i"%self.stats[5])
-		self.labels[8].set_text("Push:%02i"%self.stats[6])
 		self.check_apls()
 		self.play_all()
 	def stop_algorithm(self,reset_buck0=True):
@@ -312,7 +313,7 @@ class MainLogic():
 		if VERBOSE:
 			print(f"{self.curalg.name}: {act}")
 		return act.act()
-	def on_draw(self):
+	def on_draw(self):#28/43 of time
 		self.fpscc.checkpoint()#updates dt and tc and waits for next checkpoint
 		self.avgfpscc.checkpoint()
 		if self.fpscc.dt>=0.1:
@@ -329,7 +330,7 @@ class MainLogic():
 			item.draw()
 		for item in self.algui.values():
 			item.draw()
-		for item in self.bucks:#!!!!almost half of the total time is spent in this function!!!
+		for item in self.bucks:#15/43 of time
 			item.draw()
 		self.batch.draw()
 		pyglet.clock.tick()

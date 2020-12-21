@@ -49,6 +49,8 @@ colorlamb=lambda perc:[int(SCOLOR[x]*(1-perc)+ECOLOR[x]*perc) for x in range(len
 KP=pgw.key.KeyStateHandler()	#a dict with the key states inside
 MP={pgw.mouse.LEFT:False,pgw.mouse.RIGHT:False,pgw.mouse.MIDDLE:False}
 
+TXTCACHE={}
+
 GRbg=pyglet.graphics.OrderedGroup(0)#background – radiolist backgrounds
 GRmp=pyglet.graphics.OrderedGroup(1)#midpoint – button backgrounds & buckets
 GRfg=pyglet.graphics.OrderedGroup(2)#foreground – labels

@@ -225,51 +225,55 @@ class Label(Entity):
 		self.todo&=~128
 		self.todo|=256
 	def update_kerning(self):
-		if self.w:
-			kern=0
-			self._set_kerning(kern)
-			while self.label.content_width>self.w:
-				kern-=0.1
-				if kern<-1.5:
-					self.size-=0.1
-					kern=0
-					self.label.document.set_style(0,-1,{"font_size":self.size})
-				self._set_kerning(kern)
 		self.todo&=~256
-	def _set_kerning(self,kern):
+		if self.w in TXTCACHE:
+			if self.text in TXTCACHE[self.w]:
+				self.label.document.set_style(0,-1,TXTCACHE[self.w][self.text])
+				return
+		else:
+			TXTCACHE[self.w]={}
+		kern=0
 		self.label.document.set_style(0,-1,{"kerning":kern})
-	def draw(self):
-		if self.todo & 63:#1+2+4+8+16+32
-			if self.todo & 1:
-				self.update_x()
-			if self.todo & 2:
-				self.update_y()
-			if self.todo & 4:
-				self.update_cx_x()
-			if self.todo & 8:
-				self.update_cy_y()
-			if self.todo & 16:
-				self.update_vertices()
-		if self.todo & 32:
-			self.update_vl()
-		if self.todo & 64:
-			self.update_bgcolor()
-		if self.todo & 8064:#128+256+512+1024+2048+4096:
-			self.label.begin_update()
-			if self.todo & 128:
-				self.update_text()
-			if self.todo & 512:
-				self.update_color()#text color
-			if self.todo & 1024:
-				self.update_textanchor()
-			if self.todo & 2048:
-				self.update_label_x()
-			if self.todo & 4096:
-				self.update_label_y()
-			self.label.end_update()
-			#has to be done outside of label update function since it depends on instantaneous label content width updates
-			if self.todo & 256:
-				self.update_kerning()
+		while self.label.content_width>self.w:
+			kern-=0.1
+			if kern<-1.5:
+				self.size-=0.1
+				kern=0
+			self.label.document.set_style(0,-1,{"kerning":kern,"font_size":self.size})
+		TXTCACHE[self.w][self.text]={"kerning":kern,"font_size":self.size}
+	def draw(self):#26.7% of time
+		if self.todo:
+			if self.todo & 63:#1+2+4+8+16+32
+				if self.todo & 1:
+					self.update_x()
+				if self.todo & 2:
+					self.update_y()
+				if self.todo & 4:
+					self.update_cx_x()
+				if self.todo & 8:
+					self.update_cy_y()
+				if self.todo & 16:
+					self.update_vertices()
+			if self.todo & 32:
+				self.update_vl()
+			if self.todo & 64:
+				self.update_bgcolor()
+			if self.todo & 8064:#128+256+512+1024+2048+4096:
+				self.label.begin_update()
+				if self.todo & 128:
+					self.update_text()
+				if self.todo & 512:
+					self.update_color()#text color
+				if self.todo & 1024:
+					self.update_textanchor()
+				if self.todo & 2048:
+					self.update_label_x()
+				if self.todo & 4096:
+					self.update_label_y()
+				self.label.end_update()
+				#has to be done outside of label update function since it depends on instantaneous label content width updates
+				if self.w and self.todo & 256:
+					self.update_kerning()
 	def __del__(self):
 		if self.label:
 			self.label.delete()
@@ -277,6 +281,15 @@ class Label(Entity):
 			self.vl.delete()
 
 class LabelMultiline(Entity):
+	#1  - x
+	#2  - y
+	#4  - cx,_x
+	#8  - cy,_y
+	#16 - vertices
+	#32 - vertexlist
+	#64 - bgcolor
+	#128- text
+	#256- label.draw()
 	def __init__(self,x,y,w,h,text,batch,anch=0,color=(255,255,255),size=12):
 		texts=text.split("\n")
 		self.labels=[Label(x,y-size*1.5*(i-len(texts)),0,0,line,anch=anch,size=size,batch=batch) for i,line in enumerate(texts)]
@@ -288,6 +301,7 @@ class LabelMultiline(Entity):
 		self.color=color
 		for label in self.labels:
 			label.set_color(color)
+		self.todo|=256
 	def set_text(self,text):
 		self.text=text
 		self.todo|=128
@@ -305,12 +319,15 @@ class LabelMultiline(Entity):
 			y-=self.size*1.5
 		for remaining in labels:
 			remaining.text=""
-	def draw(self):
-		for label in self.labels:
-			label.draw()
+		self.todo&=~128
+		self.todo|=256
+	def draw(self):#14.2% of time (contributes to Label.draw())
 		super().draw()
 		if self.todo & 128:
 			self.update_text()
+		if self.todo & 256:
+			for label in self.labels:
+				label.draw()
 	def __del__(self):
 		if self.vl:
 			self.vl.delete()
@@ -769,7 +786,7 @@ class Bucket(Entity):
 		self.todo&=~64
 	def generate_colors(self):
 		return [col for i in range(self.maxic) for col in colorlamb(i/self.maxic)]
-	def draw(self):
+	def draw(self):#9.1% of time
 		if self.todo & 63:
 			if self.todo & 1:
 				self.update_x()
