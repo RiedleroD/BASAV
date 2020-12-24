@@ -227,7 +227,7 @@ class Label(Entity):
 	def update_kerning(self):
 		self.todo&=~256
 		if self.w in TXTCACHE:
-			if self.text in TXTCACHE[self.w]:
+			if len(self.text) in TXTCACHE[self.w]:
 				self.label.document.set_style(0,-1,TXTCACHE[self.w][len(self.text)])
 				return
 		else:
@@ -242,7 +242,7 @@ class Label(Entity):
 				kern=0
 			self.label.document.set_style(0,-1,{"kerning":kern,"font_size":self.size})
 		TXTCACHE[self.w][len(self.text)]={"kerning":kern,"font_size":self.size}
-	def draw(self):#32% of time
+	def draw(self):#11.5% of time
 		if self.todo:
 			if self.todo & 63:#1+2+4+8+16+32
 				if self.todo & 1:
@@ -274,6 +274,8 @@ class Label(Entity):
 				#has to be done outside of label update function since it depends on instantaneous label content width updates
 				if self.w and self.todo & 256:
 					self.update_kerning()
+				else:
+					self.todo&=~256
 				self.label.end_update()
 	def __del__(self):
 		if self.label:
@@ -323,7 +325,7 @@ class LabelMultiline(Entity):
 		for remaining in labels:
 			remaining.set_text("")
 		self.todo&=~128
-	def draw(self):#14.2% of time (contributes to Label.draw())
+	def draw(self):
 		super().draw()
 		if self.todo & 128:
 			self.update_text()
@@ -793,7 +795,7 @@ class Bucket(Entity):
 		self.todo&=~64
 	def generate_colors(self):
 		return [col for i in range(self.maxic) for col in colorlamb(i/self.maxic)]
-	def draw(self):#9.1% of time
+	def draw(self):#19.9% of time
 		if self.todo & 63:
 			if self.todo & 1:
 				self.update_x()
