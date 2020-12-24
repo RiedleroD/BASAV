@@ -228,20 +228,21 @@ class Label(Entity):
 		self.todo&=~256
 		if self.w in TXTCACHE:
 			if self.text in TXTCACHE[self.w]:
-				self.label.document.set_style(0,-1,TXTCACHE[self.w][self.text])
+				self.label.document.set_style(0,-1,TXTCACHE[self.w][len(self.text)])
 				return
 		else:
 			TXTCACHE[self.w]={}
 		kern=0
 		self.label.document.set_style(0,-1,{"kerning":kern})
+		self.label.end_update()#instant updates are needed from here
 		while self.label.content_width>self.w:
 			kern-=0.1
 			if kern<-1.5:
 				self.size-=0.1
 				kern=0
 			self.label.document.set_style(0,-1,{"kerning":kern,"font_size":self.size})
-		TXTCACHE[self.w][self.text]={"kerning":kern,"font_size":self.size}
-	def draw(self):#26.7% of time
+		TXTCACHE[self.w][len(self.text)]={"kerning":kern,"font_size":self.size}
+	def draw(self):#32% of time
 		if self.todo:
 			if self.todo & 63:#1+2+4+8+16+32
 				if self.todo & 1:
@@ -270,10 +271,10 @@ class Label(Entity):
 					self.update_label_x()
 				if self.todo & 4096:
 					self.update_label_y()
-				self.label.end_update()
 				#has to be done outside of label update function since it depends on instantaneous label content width updates
 				if self.w and self.todo & 256:
 					self.update_kerning()
+				self.label.end_update()
 	def __del__(self):
 		if self.label:
 			self.label.delete()
@@ -289,7 +290,7 @@ class LabelMultiline(Entity):
 	#32 - vertexlist
 	#64 - bgcolor
 	#128- text
-	#256- label.draw()
+	text=None
 	def __init__(self,x,y,w,h,text,batch,anch=0,color=(255,255,255),size=12):
 		texts=text.split("\n")
 		self.labels=[Label(x,y-size*1.5*(i-len(texts)),0,0,line,anch=anch,size=size,batch=batch) for i,line in enumerate(texts)]
@@ -301,10 +302,10 @@ class LabelMultiline(Entity):
 		self.color=color
 		for label in self.labels:
 			label.set_color(color)
-		self.todo|=256
 	def set_text(self,text):
-		self.text=text
-		self.todo|=128
+		if text!=self.text:
+			self.text=text
+			self.todo|=128
 	def update_text(self):
 		text=self.text.split("\n")
 		labels=self.labels.copy()
@@ -320,14 +321,12 @@ class LabelMultiline(Entity):
 		for remaining in labels:
 			remaining.text=""
 		self.todo&=~128
-		self.todo|=256
 	def draw(self):#14.2% of time (contributes to Label.draw())
 		super().draw()
 		if self.todo & 128:
 			self.update_text()
-		if self.todo & 256:
-			for label in self.labels:
-				label.draw()
+		for label in self.labels:
+			label.draw()
 	def __del__(self):
 		if self.vl:
 			self.vl.delete()
@@ -605,7 +604,7 @@ class Bucket(Entity):
 		if (not maxps) or maxps>self.maxic:
 			maxps=self.maxic
 		self.setmaxps(maxps)#also sets ravl and wavl
-		self.colors=deque(colors)
+		self.colors=colors
 	def setmaxps(self,maxps):#happens too rarely to add to todo
 		self.maxps=maxps
 		if self.ravl:
@@ -733,16 +732,22 @@ class Bucket(Entity):
 		else:
 			print(f"out-of-bounds call to BUCKINSERT: from {x} at buck[{other.itemc}] to {y} at buck[{self.itemc}]")
 			return False
+	def generate_vl(self,j):
+		colors=self.colors[6*j*PARTLEN:min(6*(j+1)*PARTLEN,6*BUCKLEN)]
+		if sum(colors)==0:#lazily create vertexlists if items are at a high enough index
+			return None
+		else:
+			amount=min(PARTLEN,BUCKLEN//(j+1))*2
+			verteces=[pos for i in range(j*PARTLEN,min((j+1)*PARTLEN,BUCKLEN)) for pos in self._getline(i)]
+			return self.batch.add(amount,GL_LINES,GRmp,('v2f/dynamic',verteces),('c3B/stream',colors))
 	def update_vl(self):
-		self.vl=self.batch.add(
-			self.maxic*2,GL_LINES,GRmp,
-			('v2f/dynamic',[pos for i in range(self.maxic) for pos in self._getline(i)]),
-			('c3B/stream',self.colors)
-		)
+		self.vls=[self.generate_vl(j) for j in range(-(-self.maxic//PARTLEN))]
 		self.todo&=~32
 	def update_vertices(self):
-		if self.vl:
-			self.vl.vertices=[pos for i in range(self.maxic) for pos in self._getline(i)]
+		if self.vls:
+			for j,vl in enumerate(self.vls):
+				if vl:
+					vl.vertices=[pos for i in range(len(vl.vertices)//4) for pos in self._getline(i+PARTLEN*j)]
 			self.todo&=~16
 	def update_wavl(self):
 		wvs=self._getwact(0)
@@ -802,7 +807,14 @@ class Bucket(Entity):
 				self.update_vertices()
 				self.todo|=384#128+256
 		if self.todo & 64:
-			self.vl.colors=self.colors
+			for j,vl in enumerate(self.vls):
+				colorpart=self.colors[6*j*PARTLEN:6*(j+1)*PARTLEN]
+				if not vl:
+					self.vls[j]=vl=self.generate_vl(j)#gets assigned to 0 if only black again
+					if vl:
+						vl.colors=colorpart
+				else:
+					vl.colors=colorpart
 			self.todo&=~64
 		if self.todo & 128:
 			self.update_ravl()
@@ -816,5 +828,7 @@ class Bucket(Entity):
 			self.wavl.delete()
 		if self.ravl:
 			self.ravl.delete()
-		if self.vl:
-			self.vl.delete()
+		if self.vls:
+			for vl in self.vls:
+				if vl:
+					vl.delete()

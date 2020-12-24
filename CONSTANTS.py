@@ -24,6 +24,7 @@ ANCHORSy=("bottom","center","top")
 ANCHORSx=("left","center","right")
 
 BUCKLEN=2000
+PARTLEN=100#splitting the buckets into several vertexlists for performance reasons
 SCOLOR=(0,255,255)
 ECOLOR=(255,0,0)
 
