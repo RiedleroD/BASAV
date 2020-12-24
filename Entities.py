@@ -291,6 +291,7 @@ class LabelMultiline(Entity):
 	#64 - bgcolor
 	#128- text
 	text=None
+	color=None
 	def __init__(self,x,y,w,h,text,batch,anch=0,color=(255,255,255),size=12):
 		texts=text.split("\n")
 		self.labels=[Label(x,y-size*1.5*(i-len(texts)),0,0,line,anch=anch,size=size,batch=batch) for i,line in enumerate(texts)]
@@ -299,9 +300,10 @@ class LabelMultiline(Entity):
 		super().__init__(x,y,w,h,batch,anch)
 		self.set_color(color)
 	def set_color(self,color):
-		self.color=color
-		for label in self.labels:
-			label.set_color(color)
+		if color!=self.color:
+			self.color=color
+			for label in self.labels:
+				label.set_color(color)
 	def set_text(self,text):
 		if text!=self.text:
 			self.text=text
@@ -319,7 +321,7 @@ class LabelMultiline(Entity):
 				self.labels.append(label)
 			y-=self.size*1.5
 		for remaining in labels:
-			remaining.text=""
+			remaining.set_text("")
 		self.todo&=~128
 	def draw(self):#14.2% of time (contributes to Label.draw())
 		super().draw()
