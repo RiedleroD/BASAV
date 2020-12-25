@@ -77,7 +77,7 @@ class MainLogic():
 		self.avgupscc.cycle(dt)
 		if self.upscc.tc>=10:
 			#update ups counter
-			self.labels[1].set_nums(round(self.upscc.getHz()),self.fps)
+			self.labels[1].set_num(round(self.upscc.getHz()))
 			#update stats
 			self.labels[2].set_num(self.stats[0])
 			self.labels[3].set_num(self.stats[1])
@@ -99,6 +99,7 @@ class MainLogic():
 						previ=i
 			self.labels[9].set_num(randomness)
 			self.upscc.reset()
+		self.labels[-1].set_text(algs[self.rads[0].get_selected()].desc)
 		if not self.edits[1].pressed:
 			self.set_fps(self.edits[1].get_num())
 		if self.btns[-1].pressed:
@@ -319,19 +320,11 @@ class MainLogic():
 		if self.fpscc.tc>=10:
 			self.labels[0].set_num(round(self.fpscc.getHz()))
 			self.fpscc.reset()
-		for item in self.labels:
-			item.draw()
-		for item in self.btns:
-			item.draw()
-		for item in self.rads:
-			item.draw()
-		self.labels[-1].set_text(algs[self.rads[0].get_selected()].desc)
-		for item in self.edits:
-			item.draw()
-		for item in self.algui.values():
-			item.draw()
-		for item in self.bucks:#15/43 of time
-			item.draw()
+		for item in (*self.labels,*self.btns,*self.rads,*self.edits,*self.algui.values()):
+			if item.todo:
+				item.draw()
+		for buck in self.bucks:
+			buck.draw()
 		self.batch.draw()
 		pyglet.clock.tick()
 

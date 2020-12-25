@@ -243,41 +243,45 @@ class Label(Entity):
 				kern=0
 			self.label.document.set_style(0,-1,{"kerning":kern,"font_size":self.size})
 		TXTCACHE[self.w][len(self.text)]={"kerning":kern,"font_size":self.size}
-	def draw(self):#11.5% of time
-		if self.todo:
-			if self.todo & 63:#1+2+4+8+16+32
-				if self.todo & 1:
-					self.update_x()
-				if self.todo & 2:
-					self.update_y()
-				if self.todo & 4:
-					self.update_cx_x()
-				if self.todo & 8:
-					self.update_cy_y()
-				if self.todo & 16:
-					self.update_vertices()
-			if self.todo & 32:
-				self.update_vl()
-			if self.todo & 64:
-				self.update_bgcolor()
-			if self.todo & 8064:#128+256+512+1024+2048+4096:
-				self.label.begin_update()
-				if self.todo & 128:
-					self.update_text()
-				if self.todo & 512:
-					self.update_color()#text color
-				if self.todo & 1024:
-					self.update_textanchor()
-				if self.todo & 2048:
-					self.update_label_x()
-				if self.todo & 4096:
-					self.update_label_y()
-				#has to be done outside of label update function since it depends on instantaneous label content width updates
-				if self.w and self.todo & 256:
-					self.update_kerning()
-				else:
-					self.todo&=~256
-				self.label.end_update()
+	def other_label_updates(self):
+		pass
+	def label_todo(self):
+		return self.todo & 8064#128 to 4096
+	def draw(self):#16% of time
+		if self.todo & 31:#1+2+4+8+16
+			if self.todo & 1:
+				self.update_x()
+			if self.todo & 2:
+				self.update_y()
+			if self.todo & 4:
+				self.update_cx_x()
+			if self.todo & 8:
+				self.update_cy_y()
+			if self.todo & 16:
+				self.update_vertices()
+		if self.todo & 32:
+			self.update_vl()
+		if self.todo & 64:
+			self.update_bgcolor()
+		if self.label_todo():
+			self.label.begin_update()
+			if self.todo & 128:
+				self.update_text()
+			if self.todo & 512:
+				self.update_color()#text color
+			if self.todo & 1024:
+				self.update_textanchor()
+			if self.todo & 2048:
+				self.update_label_x()
+			if self.todo & 4096:
+				self.update_label_y()
+			self.other_label_updates()
+			#has to be done outside of label update function since it depends on instantaneous label content width updates
+			if self.w and self.todo & 256:
+				self.update_kerning()
+			else:
+				self.todo&=~256
+			self.label.end_update()
 	def __del__(self):
 		if self.label:
 			self.label.delete()
@@ -316,24 +320,19 @@ class LabelNum(Label):
 				raise TypeError(f"LabelNum.set_num(num) expected {type(0)}, got {type(num)} containing {num} instead")
 			self.num=num
 			self.todo|=8192
-	def set_nums(self,num1,num2):
-		self.set_num(num1)
 	def update_number(self):
 		numtext=str(self.num).zfill(self.numlen)
 		textlen=len(self.label.text)
-		start_pos=textlen-self.numtxtlen
+		start_pos=textlen-self.numtxtlen#maybe check differences and then update only those
 		self.label.document.delete_text(start_pos,textlen)
 		self.label.document.insert_text(start_pos,numtext)
 		self.numtxtlen=len(numtext)
-	def update_textanchor(self):
-		self.label.anchor_x=ANCHORSx[self.anch%3]
-		self.label.anchor_y=ANCHORSy[self.anch//3]
-		self.todo&=~1024
-	def draw(self):
-		if self.todo & 8191:
-			super().draw()
+		self.todo&=~8192
+	def other_label_updates(self):
 		if self.todo & 8192:
 			self.update_number()
+	def label_todo(self):
+		return self.todo & 16256 # 128 to 8192
 
 class Button(Label):
 	def __init__(self,x,y,w,h,text,batch,anch=0,key=None,size=12,pressed_text=None,txtgroup=GRfg,bggroup=GRmp):
@@ -763,7 +762,7 @@ class Bucket(Entity):
 		rvs=[rvs[0],-1,rvs[2],-1]*self.maxps
 		self.ravl.vertices[:]=rvs
 		self.todo&=~128
-	def update_acts(self):
+	def update_acts(self):#7.4% of time
 		if self.racts:
 			for i,num in enumerate(self.racts):
 				if i>=self.maxps:
@@ -795,7 +794,7 @@ class Bucket(Entity):
 		self.todo&=~64
 	def generate_colors(self):
 		return [col for i in range(self.maxic) for col in colorlamb(i/self.maxic)]
-	def draw(self):#19.9% of time
+	def draw(self):#21% of time
 		if self.todo & 63:
 			if self.todo & 1:
 				self.update_x()
