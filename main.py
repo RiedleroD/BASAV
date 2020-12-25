@@ -75,17 +75,17 @@ class MainLogic():
 	def update(self,dt):
 		self.upscc.cycle(dt)
 		self.avgupscc.cycle(dt)
-		if self.upscc.dt>=0.1:
+		if self.upscc.tc>=10:
 			#update ups counter
-			self.labels[1].set_text("UPS:%02i/%02i"%(round(self.upscc.getHz()),self.fps))
+			self.labels[1].set_nums(round(self.upscc.getHz()),self.fps)
 			#update stats
-			self.labels[2].set_text("Read:%02i"%self.stats[0])
-			self.labels[3].set_text("Swap:%02i"%self.stats[1])
-			self.labels[4].set_text("Insert:%02i"%self.stats[2])
-			self.labels[5].set_text("Bucket:%02i"%self.stats[3])
-			self.labels[6].set_text("Pass:%02i"%self.stats[4])
-			self.labels[7].set_text("Pull:%02i"%self.stats[5])
-			self.labels[8].set_text("Push:%02i"%self.stats[6])
+			self.labels[2].set_num(self.stats[0])
+			self.labels[3].set_num(self.stats[1])
+			self.labels[4].set_num(self.stats[2])
+			self.labels[5].set_num(self.stats[3])
+			self.labels[6].set_num(self.stats[4])
+			self.labels[7].set_num(self.stats[5])
+			self.labels[8].set_num(self.stats[6])
 			#update randomness counter
 			randomness=0
 			for buck in self.bucks:
@@ -97,7 +97,7 @@ class MainLogic():
 						if previ>i:
 							randomness+=previ-i
 						previ=i
-			self.labels[9].set_text("Randomness:%02i"%randomness)
+			self.labels[9].set_num(randomness)
 			self.upscc.reset()
 		if not self.edits[1].pressed:
 			self.set_fps(self.edits[1].get_num())
@@ -316,8 +316,8 @@ class MainLogic():
 	def on_draw(self):#28/43 of time
 		self.fpscc.checkpoint()#updates dt and tc and waits for next checkpoint
 		self.avgfpscc.checkpoint()
-		if self.fpscc.dt>=0.1:
-			self.labels[0].set_text("FPS:%02i/%02i"%(round(self.fpscc.getHz()),self.fps))
+		if self.fpscc.tc>=10:
+			self.labels[0].set_num(round(self.fpscc.getHz()))
 			self.fpscc.reset()
 		for item in self.labels:
 			item.draw()
@@ -337,17 +337,17 @@ class MainLogic():
 
 logic=MainLogic(window)
 
-logic.labels=[	Label(WIDTH2,HEIGHT,0,0,"FPS:00",logic.batch,6),
-				Label(WIDTH2,HEIGHT-15,0,0,"UPS:00/60",logic.batch,6),
-				Label(WIDTH2,HEIGHT-45,0,0,"Read:00",logic.batch,6),
-				Label(WIDTH2,HEIGHT-60,0,0,"Swap:00",logic.batch,6),
-				Label(WIDTH2,HEIGHT-75,0,0,"Insert:00",logic.batch,6),
-				Label(WIDTH2,HEIGHT-90,0,0,"Bucket:00",logic.batch,6),
-				Label(WIDTH2,HEIGHT-105,0,0,"Pass:00",logic.batch,6),
-				Label(WIDTH2,HEIGHT-120,0,0,"Pull:00",logic.batch,6),
-				Label(WIDTH2,HEIGHT-135,0,0,"Push:00",logic.batch,6),
-				Label(WIDTH2,HEIGHT-150,0,0,"Randomness:00",logic.batch,6),
-				LabelMultiline(WIDTH2,0,0,0,"Sorting\nalgorithm\nDescription",logic.batch,0)]
+logic.labels=[	LabelNum(WIDTH2,HEIGHT,"FPS:00",logic.batch,6,numlen=2),
+				LabelNum(WIDTH2,HEIGHT-15,"UPS:00",logic.batch,6,numlen=2),
+				LabelNum(WIDTH2,HEIGHT-45,"Read:00",logic.batch,6,numlen=2),
+				LabelNum(WIDTH2,HEIGHT-60,"Swap:00",logic.batch,6,numlen=2),
+				LabelNum(WIDTH2,HEIGHT-75,"Insert:00",logic.batch,6,numlen=2),
+				LabelNum(WIDTH2,HEIGHT-90,"Bucket:00",logic.batch,6,numlen=2),
+				LabelNum(WIDTH2,HEIGHT-105,"Pass:00",logic.batch,6,numlen=2),
+				LabelNum(WIDTH2,HEIGHT-120,"Pull:00",logic.batch,6,numlen=2),
+				LabelNum(WIDTH2,HEIGHT-135,"Push:00",logic.batch,6,numlen=2),
+				LabelNum(WIDTH2,HEIGHT-150,"Randomness:0000",logic.batch,6,numlen=4),
+				LabelMultiline(WIDTH2,0,BTNWIDTH*2,0,"Sorting\nalgorithm\nDescription",logic.batch,0)]
 logic.btns=[	ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",logic.batch,8,pressed_text="Stop"),
 				Button(WIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Shuffle",logic.batch,8),
 				Button(WIDTH-BTNWIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Reverse",logic.batch,8),

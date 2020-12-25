@@ -167,8 +167,9 @@ class Label(Entity):
 	#1024	- textanchor
 	#2048	- label x
 	#4096	- label y
-	def __init__(self,x,y,w,h,text,batch,anch=0,color=(255,255,255),bgcolor=(0,0,0),size=12,txtgroup=GRfg,bggroup=GRmp):
-		self.label=pyglet.text.Label(text,x=0,y=y-size,color=(color if len(color)==4 else color+(255,)),font_size=size,batch=batch,group=txtgroup)
+	def __init__(self,x,y,w,h,text,batch,anch=0,color=(255,255,255),bgcolor=(0,0,0),size=12,txtgroup=GRfg,bggroup=GRmp,**kwargs):
+		self.txtgroup=txtgroup
+		self.label=pyglet.text.Label(text,x=0,y=y-size,color=(color if len(color)==4 else color+(255,)),font_size=size,batch=batch,group=txtgroup,**kwargs)
 		self.size=size
 		self.set_text(text,False)
 		self.set_color(color,False)
@@ -283,57 +284,56 @@ class Label(Entity):
 		if self.vl:
 			self.vl.delete()
 
-class LabelMultiline(Entity):
-	#1  - x
-	#2  - y
-	#4  - cx,_x
-	#8  - cy,_y
-	#16 - vertices
-	#32 - vertexlist
-	#64 - bgcolor
-	#128- text
+class LabelMultiline(Label):
 	text=None
 	color=None
 	def __init__(self,x,y,w,h,text,batch,anch=0,color=(255,255,255),size=12):
-		texts=text.split("\n")
-		self.labels=[Label(x,y-size*1.5*(i-len(texts)),0,0,line,anch=anch,size=size,batch=batch) for i,line in enumerate(texts)]
-		self.size=size
-		self.set_color(color)
-		super().__init__(x,y,w,h,batch,anch)
-		self.set_color(color)
-	def set_color(self,color):
-		if color!=self.color:
-			self.color=color
-			for label in self.labels:
-				label.set_color(color)
-	def set_text(self,text):
-		if text!=self.text:
-			self.text=text
-			self.todo|=128
-	def update_text(self):
-		text=self.text.split("\n")
-		labels=self.labels.copy()
-		y=self.y
-		for txt in reversed(text):
-			if labels:
-				label=labels.pop()
-				label.set_text(txt)
-			else:
-				label=Label(self.x,y,0,0,text=txt,anch=self.anch,color=self.color,size=self.size,batch=self.batch)
-				self.labels.append(label)
-			y-=self.size*1.5
-		for remaining in labels:
-			remaining.set_text("")
-		self.todo&=~128
+		super().__init__(x,y,0,0,text,batch,anch,color,size=size,multiline=True,width=w)
+
+class LabelNum(Label):
+	num=None
+	#1		- x
+	#2		- y
+	#4		- cx,_x
+	#8		- cy,_y
+	#16		- quad
+	#32		- bgvertexlist
+	#64		- bgcolor
+	#128	- text
+	#256	- kerning
+	#512	- textcolor
+	#1024	- textanchor
+	#2048	- label x
+	#4096	- label y
+	#8192	- number
+	def __init__(self,x,y,text,batch,anch=0,color=(255,255,255,255),bgcolor=(0,0,0),size=12,txtgroup=GRfg,bggroup=GRmp,num=0,numlen=1):
+		self.numlen=self.numtxtlen=numlen
+		self.set_num(num)
+		super().__init__(x,y,0,0,text,batch,anch,color,bgcolor,size,txtgroup,bggroup)
+	def set_num(self,num:int):
+		if num!=self.num:
+			if type(num)!=int:
+				raise TypeError(f"LabelNum.set_num(num) expected {type(0)}, got {type(num)} containing {num} instead")
+			self.num=num
+			self.todo|=8192
+	def set_nums(self,num1,num2):
+		self.set_num(num1)
+	def update_number(self):
+		numtext=str(self.num).zfill(self.numlen)
+		textlen=len(self.label.text)
+		start_pos=textlen-self.numtxtlen
+		self.label.document.delete_text(start_pos,textlen)
+		self.label.document.insert_text(start_pos,numtext)
+		self.numtxtlen=len(numtext)
+	def update_textanchor(self):
+		self.label.anchor_x=ANCHORSx[self.anch%3]
+		self.label.anchor_y=ANCHORSy[self.anch//3]
+		self.todo&=~1024
 	def draw(self):
-		super().draw()
-		if self.todo & 128:
-			self.update_text()
-		for label in self.labels:
-			label.draw()
-	def __del__(self):
-		if self.vl:
-			self.vl.delete()
+		if self.todo & 8191:
+			super().draw()
+		if self.todo & 8192:
+			self.update_number()
 
 class Button(Label):
 	def __init__(self,x,y,w,h,text,batch,anch=0,key=None,size=12,pressed_text=None,txtgroup=GRfg,bggroup=GRmp):
