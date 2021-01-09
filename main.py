@@ -330,16 +330,16 @@ class MainLogic():
 
 logic=MainLogic(window)
 
-logic.labels=[	LabelNum(WIDTH2,HEIGHT,"FPS:00",logic.batch,6,numlen=2),
-				LabelNum(WIDTH2,HEIGHT-15,"UPS:00",logic.batch,6,numlen=2),
-				LabelNum(WIDTH2,HEIGHT-45,"Read:00",logic.batch,6,numlen=2),
-				LabelNum(WIDTH2,HEIGHT-60,"Swap:00",logic.batch,6,numlen=2),
-				LabelNum(WIDTH2,HEIGHT-75,"Insert:00",logic.batch,6,numlen=2),
-				LabelNum(WIDTH2,HEIGHT-90,"Bucket:00",logic.batch,6,numlen=2),
-				LabelNum(WIDTH2,HEIGHT-105,"Pass:00",logic.batch,6,numlen=2),
-				LabelNum(WIDTH2,HEIGHT-120,"Pull:00",logic.batch,6,numlen=2),
-				LabelNum(WIDTH2,HEIGHT-135,"Push:00",logic.batch,6,numlen=2),
-				LabelNum(WIDTH2,HEIGHT-150,"Randomness:0000",logic.batch,6,numlen=4),
+logic.labels=[	LabelNum(WIDTH2,HEIGHT,"FPS:",logic.batch,6,numlen=2),
+				LabelNum(WIDTH2,HEIGHT-15,"UPS:",logic.batch,6,numlen=2),
+				LabelNum(WIDTH2,HEIGHT-45,"Read:",logic.batch,6,numlen=2),
+				LabelNum(WIDTH2,HEIGHT-60,"Swap:",logic.batch,6,numlen=2),
+				LabelNum(WIDTH2,HEIGHT-75,"Insert:",logic.batch,6,numlen=2),
+				LabelNum(WIDTH2,HEIGHT-90,"Bucket:",logic.batch,6,numlen=2),
+				LabelNum(WIDTH2,HEIGHT-105,"Pass:",logic.batch,6,numlen=2),
+				LabelNum(WIDTH2,HEIGHT-120,"Pull:",logic.batch,6,numlen=2),
+				LabelNum(WIDTH2,HEIGHT-135,"Push:",logic.batch,6,numlen=2),
+				LabelNum(WIDTH2,HEIGHT-150,"Randomness:",logic.batch,6,numlen=4),
 				LabelMultiline(WIDTH2,0,BTNWIDTH*2,0,"Sorting\nalgorithm\nDescription",logic.batch,0)]
 logic.btns=[	ButtonSwitch(WIDTH,HEIGHT,BTNWIDTH,BTNHEIGHT,"Sort",logic.batch,8,pressed_text="Stop"),
 				Button(WIDTH,HEIGHT-BTNHEIGHT,BTNWIDTH,BTNHEIGHT,"Shuffle",logic.batch,8),

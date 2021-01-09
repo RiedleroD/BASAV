@@ -4,9 +4,7 @@ import os,sys
 import random
 print("  importing actions")
 from Actions import *
-
 print("  defining bases…")
-
 class BaseAlgorithm():
 	name="Base Algorithm"
 	desc="This is the Base algorithm,\nit doesn't sort, but lays the foundation\nfor other algorithms."
@@ -29,9 +27,7 @@ class BaseAlgorithm():
 	#PUSH(i)			→ pushes item from the one-item variable space onto bucket i
 	#PULSH(i,j)			→ pulls item from bucket i and pushes it onto bucket j
 	gen=None
-
 print("  defining algorithms…")
-
 class BubbleSort(BaseAlgorithm):
 	name="Bubble Sort"
 	desc="Bubble Sort checks two adjacent items.\nIf the first is greater, swap them.\nThen do this for each index in the list, until the list is sorted"
@@ -52,7 +48,6 @@ class BubbleSort(BaseAlgorithm):
 				else:
 					v1=v2
 			i-=1
-
 class CocktailShaker(BaseAlgorithm):
 	name="Cocktail Shaker"
 	desc="Like Bubble Sort, but changes directions every cycle"
@@ -83,7 +78,6 @@ class CocktailShaker(BaseAlgorithm):
 				else:
 					v1=v2
 			i-=1
-
 class NormalMergeSort(BaseAlgorithm):
 	name="Merge Sort"
 	desc="Merges sections until sorted"
@@ -181,7 +175,6 @@ class NormalMergeSort(BaseAlgorithm):
 						break
 					yield READ(i1+off,0)
 					v1=self.v
-
 class NaturalMergeSort(BaseAlgorithm):
 	name="Natural Merge Sort"
 	desc="Uses presorted sections to its advantage.\nMerges buckets until sorted."
@@ -287,7 +280,6 @@ class NaturalMergeSort(BaseAlgorithm):
 							break
 				if _v==None:
 					break
-
 class MergeSortOPT(BaseAlgorithm):
 	name="Merge Sort"
 	desc="Merges buckets until sorted\nNote: concurrent mode only works In-Place"
@@ -303,7 +295,6 @@ class MergeSortOPT(BaseAlgorithm):
 			alg=NaturalMergeSort
 		alg.vals=cls.vals
 		return alg(l)
-
 #implemented from https://en.wikipedia.org/wiki/Stooge_sort
 class StoogeSort(BaseAlgorithm):
 	name="Stooge Sort"
@@ -323,7 +314,6 @@ class StoogeSort(BaseAlgorithm):
 			for args in ((i,j-t),(i+t,j),(i,j-t)):
 				for act in self.stooge(*args):
 					yield act
-
 class InsertionSort(BaseAlgorithm):
 	name="InsertionSort"
 	desc="Inserts first unsorted item into sorted subarray\nuntil no unsorted items remain"
@@ -351,7 +341,6 @@ class InsertionSort(BaseAlgorithm):
 				yield INSERT(z,i,0)
 		if oop:
 			yield DEL_BUCK(0)
-
 class SelectionSort(BaseAlgorithm):
 	name="SelectionSort"
 	desc="Swaps the smalles unsorted item with the first unsorted item\nuntil the list is sorted."
@@ -437,7 +426,6 @@ class SelectionSort(BaseAlgorithm):
 						sn=v
 						si=j
 				yield SWAP(si,i,0)
-
 class OddEvenSort(BaseAlgorithm):
 	name="Odd-Even Sort"
 	desc="Like bubble sort, but parallelalizable.\nToo bad that's not possible here."
@@ -459,7 +447,6 @@ class OddEvenSort(BaseAlgorithm):
 					yield SWAP(i,i+1,0)
 					fin=False
 			odd=not odd
-
 class RadixMSD(BaseAlgorithm):
 	name="Radix MSD"
 	desc="Sorts from most to least significant digit"
@@ -516,7 +503,6 @@ class RadixMSD(BaseAlgorithm):
 		if oop:
 			for i in range(b):
 				yield DEL_BUCK(1)
-
 class RadixLSD(BaseAlgorithm):
 	name="Radix LSD"
 	desc="Sorts from least to most significant digit"
@@ -571,7 +557,6 @@ class RadixLSD(BaseAlgorithm):
 		if oop:
 			for x in range(b):
 				yield DEL_BUCK(1)
-
 class Quicksort(BaseAlgorithm):
 	name="Quicksort"
 	desc="Recursively picks a pivot and partitions all items around it\nuntil list is sorted.\nHilariously bad at sorted and reversed lists."
@@ -640,7 +625,6 @@ class Quicksort(BaseAlgorithm):
 				self.p=(j,j+1)
 				break
 			yield SWAP(i,j,0)
-
 #implementation of https://en.wikipedia.org/wiki/Heapsort#Pseudocode
 class HeapSort(BaseAlgorithm):
 	name="Heap Sort"
@@ -700,7 +684,6 @@ class HeapSort(BaseAlgorithm):
 				child=parent
 			else:
 				break
-
 #implementation of https://www.dangermouse.net/esoteric/demonsort.html with a few assumptions,
 #e.g. how to check if all lower values are in the lower partition.
 class DemonSort(BaseAlgorithm):
@@ -787,14 +770,12 @@ class DemonSort(BaseAlgorithm):
 					for act in self.deso(m,e):
 						yield act
 				break
-
 class Reverser(BaseAlgorithm):
 	name="Reverser"
 	desc="reverses the set"
 	def gen(self):
 		for i in range(self.l//2):
 			yield SWAP(i,self.l-i-1,0)
-
 class Shuffler(BaseAlgorithm):
 	name="Shuffler"
 	desc="Shuffles the list"
@@ -805,7 +786,6 @@ class Shuffler(BaseAlgorithm):
 		q=self.vals["q"]
 		for i in range(self.l if q!=2 else self.l-1):
 			yield (SWAP if q in (2,3) else INSERT)(i,random.randrange([i,0,i+1,0][q],self.l-1),0)
-
 class BogoSort(BaseAlgorithm):
 	name="Bogo Sort"
 	desc="Shuffles the whole array, then checks if it's sorted.\nRepeat until success."

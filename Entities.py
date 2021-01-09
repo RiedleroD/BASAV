@@ -169,7 +169,8 @@ class Label(Entity):
 	#4096	- label y
 	def __init__(self,x,y,w,h,text,batch,anch=0,color=(255,255,255),bgcolor=(0,0,0),size=12,txtgroup=GRfg,bggroup=GRmp,**kwargs):
 		self.txtgroup=txtgroup
-		self.label=pyglet.text.Label(text,x=0,y=y-size,color=(color if len(color)==4 else color+(255,)),font_size=size,batch=batch,group=txtgroup,**kwargs)
+		if not self.label:
+			self.label=pyglet.text.Label(text,x=0,y=y-size,color=(color if len(color)==4 else color+(255,)),font_size=size,batch=batch,group=txtgroup,**kwargs)
 		self.size=size
 		self.set_text(text,False)
 		self.set_color(color,False)
@@ -247,7 +248,7 @@ class Label(Entity):
 		pass
 	def label_todo(self):
 		return self.todo & 8064#128 to 4096
-	def draw(self):#16% of time
+	def draw(self):#23.7% of time
 		if self.todo & 31:#1+2+4+8+16
 			if self.todo & 1:
 				self.update_x()
@@ -313,20 +314,21 @@ class LabelNum(Label):
 	def __init__(self,x,y,text,batch,anch=0,color=(255,255,255,255),bgcolor=(0,0,0),size=12,txtgroup=GRfg,bggroup=GRmp,num=0,numlen=1):
 		self.numlen=self.numtxtlen=numlen
 		self.set_num(num)
+		self.document=pyglet.text.decode_text(text)
+		self.label=pyglet.text.layout.IncrementalTextLayout(self.document,WIDTH,size,batch=batch,group=txtgroup,multiline=False)
 		super().__init__(x,y,0,0,text,batch,anch,color,bgcolor,size,txtgroup,bggroup)
+		self.todo|=512
 	def set_num(self,num:int):
 		if num!=self.num:
 			if type(num)!=int:
 				raise TypeError(f"LabelNum.set_num(num) expected {type(0)}, got {type(num)} containing {num} instead")
 			self.num=num
 			self.todo|=8192
+	def update_color(self):
+		self.document.set_style(0,-1,{"color":self.color})
+		self.todo&=~512
 	def update_number(self):
-		numtext=str(self.num).zfill(self.numlen)
-		textlen=len(self.label.text)
-		start_pos=textlen-self.numtxtlen#maybe check differences and then update only those
-		self.label.document.delete_text(start_pos,textlen)
-		self.label.document.insert_text(start_pos,numtext)
-		self.numtxtlen=len(numtext)
+		self.document.text=self.text+str(self.num).zfill(self.numlen)
 		self.todo&=~8192
 	def other_label_updates(self):
 		if self.todo & 8192:
@@ -456,6 +458,14 @@ class IntEdit(TextEdit):
 		return int(self.value)
 
 class RadioList(Entity):
+	#1  - x
+	#2  - y
+	#4  - cx,_x
+	#8  - cy,_y
+	#16 - vertices
+	#32 - vertexlist
+	#64 - bgcolor
+	#128- buttons
 	def __init__(self,x,y,w,h,texts,batch,anch=0,keys=None,pressed_texts=None,selected=None,size=12):
 		btnc=len(texts)
 		if self.btns==None:
@@ -468,32 +478,26 @@ class RadioList(Entity):
 			self.btns[selected].press()
 		super().__init__(x,y,w,h,batch,anch,bgcolor=(192,192,192),group=GRbg)
 	def check_press(self,x,y):
-		prsd=None
-		for i,btn in enumerate(self.btns):
-			prsd=btn.check_press(x,y)
-			if prsd:
-				prsd=i
-				break
-		if prsd!=None:
-			for i,btn in enumerate(self.btns):
-				if i!=prsd and btn.pressed:
-					btn.release()
-			return pyglet.event.EVENT_HANDLED
+		for btn in self.btns:
+			if btn.check_press(x,y):	#if a button has been pressed,
+				for _btn in self.btns:	#all buttons
+					if btn!=_btn:		#*other* than the one that just got pressed
+						_btn.release()	#get released
+				self.todo|=128
+				return pyglet.event.EVENT_HANDLED
 	def check_key(self,key):
-		for i,btn in enumerate(self.btns):
-			prsd=btn.check_key(key)
-			if prsd:
-				prsd=i
-				break
-		if prsd!=None:
-			for i,btn in enumerate(self.btns):
-				if i!=prsd:
-					btn.release()
-			return pyglet.event.EVENT_HANDLED
+		for btn in self.btns:			#same as above
+			if btn.check_key(key):		#just with key strokes instead of mouse presses
+				for _btn in self.btns:
+					if btn!=_btn:
+						_btn.release()
+				self.todo|=128
+				return pyglet.event.EVENT_HANDLED
 	def draw(self):
 		super().draw()
 		for btn in self.btns:
 			btn.draw()
+		self.todo&=~128
 	def get_selected(self):
 		for i,btn in enumerate(self.btns):
 			if btn.pressed:
@@ -539,29 +543,18 @@ class RadioListPaged(RadioList):
 			#unhide new page
 			for group in self.groups[self.page]:
 				group.visible=True
+			self.todo|=128
 			return pyglet.event.EVENT_HANDLED
 		else:
-			for btn in self.btns[self.page*self.pageic:(self.page+1)*self.pageic]:#checking buttons that are on screen
-				prsd=btn.check_press(x,y)
-				if prsd:
-					prsd=btn
-					break
-			if prsd!=None:#releasing all other buttons (because this is a *radio* list)
-				for btn in self.btns:
-					if btn is not prsd and btn.pressed:
-						btn.release()
-				return pyglet.event.EVENT_HANDLED
-	def check_key(self,key):
-		for i,btn in enumerate(self.btns):#checking all buttons, not just the ones on screen
-			prsd=btn.check_key(key)
-			if prsd:
-				prsd=i
-				break
-		if prsd!=None:#unchecking all other buttons
-			for i,btn in enumerate(self.btns):
-				if i!=prsd:
-					btn.release()
-			return pyglet.event.EVENT_HANDLED
+			onscreen=self.btns[self.page*self.pageic:(self.page+1)*self.pageic]
+			for btn in onscreen:#see the original implementation of check_press in the RadioList class
+				if btn.check_press(x,y):
+					for _btn in self.btns:
+						if btn!=_btn:
+							_btn.release()
+					self.todo|=128
+					return pyglet.event.EVENT_HANDLED
+	#check_key is being inherited because keystrokes should also target buttons that aren't on screen right now
 	def draw(self):
 		super().draw()
 		#draw buttons plus prev and next
@@ -570,10 +563,13 @@ class RadioListPaged(RadioList):
 		self.prev.draw()
 		self.next.draw()
 		#releasing next & previous buttons only after drawing to show single-frame click
-		if self.prev.pressed:
+		if self.prev.pressed or self.next.pressed:
 			self.prev.release()
-		if self.next.pressed:
 			self.next.release()
+		else:
+			#finishing todo only after not having to release either next or prev buttons
+			#to let another call to self.draw() happen so the buttons won't get stuck pressed (visually)
+			self.todo&=~128
 
 class Bucket(Entity):
 	ravl=None
