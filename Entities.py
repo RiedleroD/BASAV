@@ -566,10 +566,7 @@ class RadioListPaged(RadioList):
 		if self.prev.pressed or self.next.pressed:
 			self.prev.release()
 			self.next.release()
-		else:
-			#finishing todo only after not having to release either next or prev buttons
-			#to let another call to self.draw() happen so the buttons won't get stuck pressed (visually)
-			self.todo&=~128
+			self.todo|=128#gotta draw that too
 
 class Bucket(Entity):
 	ravl=None
