@@ -466,6 +466,7 @@ class RadioList(Entity):
 	#32 - vertexlist
 	#64 - bgcolor
 	#128- buttons
+	todo=Entity.todo | 128
 	def __init__(self,x,y,w,h,texts,batch,anch=0,keys=None,pressed_texts=None,selected=None,size=12):
 		btnc=len(texts)
 		if self.btns==None:
@@ -495,9 +496,10 @@ class RadioList(Entity):
 				return pyglet.event.EVENT_HANDLED
 	def draw(self):
 		super().draw()
-		for btn in self.btns:
-			btn.draw()
-		self.todo&=~128
+		if self.todo & 128:
+			for btn in self.btns:
+				btn.draw()
+			self.todo&=~128
 	def get_selected(self):
 		for i,btn in enumerate(self.btns):
 			if btn.pressed:
@@ -556,12 +558,10 @@ class RadioListPaged(RadioList):
 					return pyglet.event.EVENT_HANDLED
 	#check_key is being inherited because keystrokes should also target buttons that aren't on screen right now
 	def draw(self):
+		if self.todo & 128:
+			self.prev.draw()
+			self.next.draw()
 		super().draw()
-		#draw buttons plus prev and next
-		for btn in self.btns:
-			btn.draw()
-		self.prev.draw()
-		self.next.draw()
 		#releasing next & previous buttons only after drawing to show single-frame click
 		if self.prev.pressed or self.next.pressed:
 			self.prev.release()
