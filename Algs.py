@@ -452,12 +452,15 @@ class RadixMSD(BaseAlgorithm):
 	desc="Sorts from most to least significant digit"
 	opts={
 		"oop":(bool,False,"Out-of-Place","In-Place"),
-		"b":(int,2,2,None,"Base")
+		"b":(int,2,2,None,"Base"),
+		"hop":(list,1,("Insert","Swap"),"Hop: %s")
 	}
 	def gen(self):
 		b=self.vals["b"]
+		bless1=b-1#b less 1
 		oop=self.vals["oop"]
 		noop=not oop
+		hop=self.vals["hop"]
 		l=self.l
 		maxnum=0#negative numbers hate this one weird trick
 		#go through the whole list to find the largest number
@@ -476,33 +479,62 @@ class RadixMSD(BaseAlgorithm):
 		if oop:
 			for i in range(b):
 				yield NEW_BUCK()
+		arrange_i_for_base=self.arrange_i_for_base_oop if oop else self.arrange_i_for_base_ip
 		for curb in curbs:
-			for i in ii:
-				if i[-1]-i[0]<2:
-					continue
-				_j=i[0]
-				for j in range(i[0],i[-1]):
-					yield READ(_j if oop else j,0)
-					digit=(self.v//curb)%b
-					for x in range(digit,b-1):
-						i[x]+=1
-					if oop:
-						yield BUCKINSERT(_j,0,0,digit+1)
-					else:
-						if digit==b-1:
-							continue
-						else:
-							yield INSERT(j,i[digit]-1,0)
-				if oop:
-					for digit in range(b):
-						for j in range(i[digit-1] if digit>0 else _j,i[digit]):
-							yield BUCKINSERT(0,digit+1,j,0)
+			yield from arrange_i_for_base(curb,ii,b,hop)
 			ii=[j for i in ii for j in i]
 			ii.insert(0,0)#at index 0, insert 0 (because the lists beginning would be lost otherwise)
 			ii=[[ii[i]]*(b-1)+[ii[i+1]] for i in range(len(ii)-1) if ii[i+1]-ii[i]>1]
 		if oop:
 			for i in range(b):
 				yield DEL_BUCK(1)
+	def arrange_i_for_base_ip(self,curb,ii,b,hop):
+		for i in ii:
+			bless1=b-1
+			if i[-1]-i[0]<2:
+				return
+			for j in range(i[0],i[-1]):
+				yield READ(j,0)
+				digit=(self.v//curb)%b
+				if digit!=bless1:
+					if hop:
+						yield SWAP(j,i[b-2],0)
+						for z in range(b-2,digit,-1):
+							yield SWAP(i[z],i[z-1],0)
+					else:
+						yield INSERT(j,i[digit],0)
+				for x in range(digit,bless1):
+					i[x]+=1
+	def arrange_i_for_base_oop(self,curb,ii,b,hop):
+		lii=len(ii)
+		for index_ffs,i in enumerate(ii):
+			bless1=b-1
+			if i[-1]-i[0]<2:
+				return
+			_j=i[0]
+			_j_=0
+			j_=[0]*b
+			for j in range(i[-1]-1,i[0]-1,-1):
+				yield READ(j,0)
+				digit=(self.v//curb)%b
+				if hop:
+					_j_+=1
+					yield SWAP(j,ii[-1][-1]-_j_,0)
+					yield PULSH(0,digit+1)
+				else:
+					yield BUCKINSERT(j,0,j_[digit],digit+1)
+				j_[digit]+=1
+				for x in range(digit,bless1):
+					i[x]+=1
+			for digit in range(b):
+				for j in range(i[digit-1] if digit>0 else _j,i[digit]):
+					if hop:
+						yield PULSH(digit+1,0)
+						yield SWAP(ii[-1][-1]-_j_,j,0)
+						_j_-=1
+					else:
+						j_[digit]-=1
+						yield BUCKINSERT(j_[digit],digit+1,j,0)
 class RadixLSD(BaseAlgorithm):
 	name="Radix LSD"
 	desc="Sorts from least to most significant digit"
