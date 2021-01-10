@@ -722,12 +722,28 @@ class DemonSort(BaseAlgorithm):
 	name="Demon Sort"
 	desc="Divides the array into 2 sections.\nThen gets largest item i from the first\nand lowest j from the second subarray. If j>i, apply motion,\nswap the center values or move section by 1 if necessary and repeat the check.\nthen apply this recursively if j<=i."
 	opts={
+		"conc":(bool,False,"Concurrent","Separate"),
 		"mot":(list,0,("Rollout","Rollin","Randswap"),"Motion: %s"),
 		"r":(list,0,("Inwards","Outwards"),"Checking: %s")
 	}
+	queue=None
 	def gen(self):
-		for act in self.deso(0,self.l):
-			yield act
+		self.conc=self.vals["conc"]
+		deso=self.deso(0,self.l)
+		if self.conc:
+			self.queue=[iter(deso)]
+		else:
+			yield from deso
+		while self.queue:
+			deso=random.choice(self.queue)
+			try:
+				act=next(deso)
+				yield act
+				while isinstance(act,READ):
+					act=next(deso)
+					yield act
+			except StopIteration:
+				self.queue.remove(deso)
 	def deso(self,s,e):
 		thresh=(s+e)/2
 		m=round(thresh)
@@ -795,12 +811,18 @@ class DemonSort(BaseAlgorithm):
 						else:
 							thresh-=1
 			else:
+				desosm=self.deso(s,m)
+				desome=self.deso(m,e)
 				if m-s>1:
-					for act in self.deso(s,m):
-						yield act
+					if self.conc:
+						self.queue.append(iter(desosm))
+					else:
+						yield from desosm
 				if e-m>1:
-					for act in self.deso(m,e):
-						yield act
+					if self.conc:
+						self.queue.append(iter(desome))
+					else:
+						yield from desome
 				break
 class Reverser(BaseAlgorithm):
 	name="Reverser"
