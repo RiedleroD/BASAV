@@ -1,3 +1,5 @@
+*Currently on hold, see [here](https://riedler.wien/coding/).*
+
 This project is aimed to provide the user with as much information about Sorting algorithms as possible.I always value amount and quality of information over how pretty it is to look at.
 This being said, this project is a visualizer of sorting algorithms. You can see when new buckets are created, reads are displayed in green, writes in red. Stats are displayed for reads, swaps, inserts, bucket creation/deletion, and passing cycles.
 All Algorithms work via a sort-of-API that consists of 8 different statements. One statement per cycle can be returned.
