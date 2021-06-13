@@ -27,17 +27,14 @@ All known bugs will be fixed until a release is issued, except for minor and ver
 Only Linux is officially supported, but other ones should work too. If they don't, please file an issue.
 Depending on the severity of the issue, and the accessibility of the OS, it will get fixed more or less quickly.
 
-### How to Install
-Currently, no installation packages exist, so you have to run it from source. This will be changed before 1.0 and maybe even before 0.1.
+### How to Install and Run
+Currently, no installation packages exist, so you have to run main.py with python from source in "pyglet needed Codes" folder or you can run BASAV.exe from ".EXE App" folder. This opens the game in borderless window mode. You can close the program by pressing ESC.
 
 #### Dependencies
 Of course, python 3 ist required. The project is aimed at Python 3.8, but it should work for older versions too. Please file an issue if it doesn't.
 Dependencies installable through pip include:
 
 - pyglet
-
-#### running
-In order to start the program, you have to run main.py with python. This opens the game in borderless window mode. You can close the program by pressing ESC.
 
 ### Videos
 - [Coding logs](https://www.youtube.com/playlist?list=PLS2fPT7ug4bX_t_mjvWyx_KoADLQWTrnq)
