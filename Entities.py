@@ -204,15 +204,15 @@ class Label(Entity):
 		self.todo|=4096
 	def update_label_x(self):
 		if self.w>0 and self.w>0:
-			self.label.x=self.cx
+			self.label.x=int(self.cx)
 		else:
-			self.label.x=self.x
+			self.label.x=int(self.x)
 		self.todo&=~2048
 	def update_label_y(self):
 		if self.w>0 and self.w>0:
-			self.label.y=self.cy
+			self.label.y=int(self.cy)
 		else:
-			self.label.y=self.y
+			self.label.y=int(self.y)
 		self.todo&=~4096
 	def update_textanchor(self):
 		if self.w>0 and self.h>0:
