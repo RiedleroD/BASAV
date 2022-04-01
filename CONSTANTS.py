@@ -61,8 +61,8 @@ print("    defining main window…")
 class MainWin(pyglet.window.Window):
 	logic=None
 	def __init__(self):
-		config = pyglet.gl.Config(sample_buffers=1, samples=8)#because items otherwise flicker when they're over 1000
-		super().__init__(fullscreen=False,style=self.WINDOW_STYLE_BORDERLESS,caption="Riedlers Sound of Sorting",config=config,vsync=True,visible=False)
+		super().__init__(fullscreen=False,style=self.WINDOW_STYLE_BORDERLESS,caption="Riedlers Sound of Sorting",vsync=True,visible=False)
+		self.context.config.samples=8
 		self.maximize()
 		self.set_visible(True)
 	def on_draw(self):
