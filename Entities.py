@@ -315,7 +315,7 @@ class LabelNum(Label):
 		self.numlen=self.numtxtlen=numlen
 		self.set_num(num)
 		self.document=pyglet.text.decode_text(text)
-		self.label=pyglet.text.layout.IncrementalTextLayout(self.document,WIDTH,size,batch=batch,group=txtgroup,multiline=False)
+		self.label=pyglet.text.layout.IncrementalTextLayout(self.document,int(WIDTH-x),int(size*1.5),batch=batch,group=txtgroup,multiline=False,wrap_lines=False)
 		super().__init__(x,y,0,0,text,batch,anch,color,bgcolor,size,txtgroup,bggroup)
 		self.todo|=512
 	def set_num(self,num:int):
