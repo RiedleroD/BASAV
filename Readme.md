@@ -43,5 +43,14 @@ In order to start the program, you have to run main.py with python. This opens t
 - [Coding logs](https://www.youtube.com/playlist?list=PLS2fPT7ug4bX_t_mjvWyx_KoADLQWTrnq)
 - [Visualisations](https://www.youtube.com/playlist?list=PLS2fPT7ug4bW6Bbb7uuKZ0PDuBq_AnDNn)
 
-### Screenshots
-#### TODO
+### Current problems with this program
+
+- no graphics settings configurable over CLI, which might cause issues with hosts that don't like VSync, oversampling, etc.
+- I'm ticking the clock in the draw function (bad practice)
+- freezes sometimes, no idea why (possibly related to the previous issue)
+- the window is overloaded, which is… bad practice. I think? It overcomplicates things, anyway.
+- audio playback is one *giant* hack. It would need to be completely rewritten I think.
+- not compatible with pyglet 2.0
+  To achive, according to Benjamin, I have to:
+  - use GL_TRIANGLES instead of GL_QUADS (maybe there's a gl type for lines now?)
+  - tweak 'a few things'
