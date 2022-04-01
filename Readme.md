@@ -34,7 +34,7 @@ Currently, no installation packages exist, so you have to run it from source. Th
 Of course, python 3 ist required. The project is aimed at Python 3.8, but it should work for older versions too. Please file an issue if it doesn't.
 Dependencies installable through pip include:
 
-- pyglet
+- pyglet < 2.0
 
 #### running
 In order to start the program, you have to run main.py with python. This opens the game in borderless window mode. You can close the program by pressing ESC.
